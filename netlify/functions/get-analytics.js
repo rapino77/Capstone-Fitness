@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
   try {
     // Configure Airtable
     const base = new Airtable({
-      apiKey: process.env.AIRTABLE_API_KEY
+      token: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
     const params = event.queryStringParameters || {};
