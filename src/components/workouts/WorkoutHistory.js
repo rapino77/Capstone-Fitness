@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, subDays } from 'date-fns';
 import axios from 'axios';
 
@@ -19,7 +19,7 @@ const WorkoutHistory = () => {
     hasMore: false
   });
 
-  const fetchWorkouts = async (resetOffset = false) => {
+  const fetchWorkouts = useCallback(async (resetOffset = false) => {
     try {
       setIsLoading(true);
       const offset = resetOffset ? 0 : pagination.offset;
@@ -45,11 +45,11 @@ const WorkoutHistory = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters, pagination]);
 
   useEffect(() => {
     fetchWorkouts(true);
-  }, [filters]);
+  }, [filters, fetchWorkouts]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -59,15 +59,6 @@ const WorkoutHistory = () => {
   const handleLoadMore = () => {
     const newOffset = pagination.offset + pagination.limit;
     setPagination(prev => ({ ...prev, offset: newOffset }));
-    fetchWorkouts();
-  };
-
-  const handleSort = (field) => {
-    setFilters(prev => ({
-      ...prev,
-      sortBy: field,
-      sortDirection: prev.sortBy === field && prev.sortDirection === 'desc' ? 'asc' : 'desc'
-    }));
   };
 
   const groupWorkoutsByDate = (workouts) => {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { format, subDays } from 'date-fns';
+import React, { useState, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
 import axios from 'axios';
 import {
   LineChart,
@@ -8,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -23,11 +22,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState(30);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [timeframe, refreshTrigger]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -61,7 +56,13 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeframe]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData, refreshTrigger]);
+
+
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 

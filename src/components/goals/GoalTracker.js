@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { format, differenceInDays } from 'date-fns';
+import React, { useState, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
 import axios from 'axios';
 
 const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
@@ -11,11 +11,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [progressNotes, setProgressNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    fetchGoals();
-  }, [filter, refreshTrigger]);
-
-  const fetchGoals = async () => {
+  const fetchGoals = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
@@ -34,7 +30,12 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals, refreshTrigger]);
+
 
   const handleProgressUpdate = async (goalId) => {
     if (!progressValue || progressValue === '') return;

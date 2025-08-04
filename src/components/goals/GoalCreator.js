@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { format, addDays, addWeeks, addMonths } from 'date-fns';
+import { format, addWeeks, addMonths } from 'date-fns';
 import axios from 'axios';
 
 const GoalCreator = ({ onGoalCreated, onCancel }) => {
