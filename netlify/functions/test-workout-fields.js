@@ -21,58 +21,70 @@ exports.handler = async (event, context) => {
       apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
-    // Test one simple field at a time
+    // Test creating records with different approaches
     const testResults = [];
     
-    // Test 1: Try Name field
+    // Test 1: Try creating empty record (like existing ones)
     try {
-      const record1 = await base('Workouts').create({ Name: 'Test Workout' });
+      const record1 = await base('Workouts').create({});
       testResults.push({
-        test: 'Name field',
+        test: 'Empty record',
         success: true,
         recordId: record1.id,
         fields: record1.fields
       });
     } catch (error) {
       testResults.push({
-        test: 'Name field',
+        test: 'Empty record',
         success: false,
         error: error.message
       });
     }
 
-    // Test 2: Try Exercise field
+    // Test 2: Try creating with Airtable auto ID
     try {
-      const record2 = await base('Workouts').create({ Exercise: 'Test Exercise' });
+      const record2 = await base('Workouts').create({
+        'Record ID': 'AUTO_GENERATED'
+      });
       testResults.push({
-        test: 'Exercise field',
+        test: 'Record ID field',
         success: true,
         recordId: record2.id,
         fields: record2.fields
       });
     } catch (error) {
       testResults.push({
-        test: 'Exercise field',
+        test: 'Record ID field',
         success: false,
         error: error.message
       });
     }
 
-    // Test 3: Try Title field
-    try {
-      const record3 = await base('Workouts').create({ Title: 'Test Title' });
-      testResults.push({
-        test: 'Title field',
-        success: true,
-        recordId: record3.id,
-        fields: record3.fields
-      });
-    } catch (error) {
-      testResults.push({
-        test: 'Title field',
-        success: false,
-        error: error.message
-      });
+    // Test 3: Common Airtable field variations
+    const commonFields = [
+      'Name', 'Exercise', 'Title', 'Workout', 'Activity',
+      'Exercise Name', 'Workout Name', 'Type', 'Description'
+    ];
+    
+    for (const fieldName of commonFields) {
+      try {
+        const recordData = {};
+        recordData[fieldName] = 'Test Value';
+        const record = await base('Workouts').create(recordData);
+        testResults.push({
+          test: `${fieldName} field`,
+          success: true,
+          recordId: record.id,
+          fields: record.fields
+        });
+        break; // Stop on first success
+      } catch (error) {
+        testResults.push({
+          test: `${fieldName} field`,
+          success: false,
+          error: error.message
+        });
+      }
     }
 
     return {
