@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, subDays } from 'date-fns';
 import axios from 'axios';
 
@@ -19,8 +19,7 @@ const WorkoutHistory = () => {
     hasMore: false
   });
 
-  // Fetch workouts function without useCallback to avoid dependency issues
-  const fetchWorkouts = async (resetOffset = false) => {
+  const fetchWorkouts = useCallback(async (resetOffset = false) => {
     try {
       setIsLoading(true);
       const offset = resetOffset ? 0 : pagination.offset;
@@ -35,23 +34,22 @@ const WorkoutHistory = () => {
       
       if (response.data.success) {
         setWorkouts(response.data.data);
-        setPagination(prev => ({
-          ...prev,
+        setPagination({
+          ...pagination,
           ...response.data.pagination,
-          offset: resetOffset ? 0 : prev.offset
-        }));
+          offset: resetOffset ? 0 : pagination.offset
+        });
       }
     } catch (error) {
       console.error('Failed to fetch workouts:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters, pagination]);
 
-  // Fetch workouts when filters change
   useEffect(() => {
     fetchWorkouts(true);
-  }, [filters.startDate, filters.endDate, filters.exercise, filters.sortBy, filters.sortDirection]);
+  }, [filters, fetchWorkouts]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
