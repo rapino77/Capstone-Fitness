@@ -68,44 +68,56 @@ exports.handler = async (event, context) => {
       ? `AND(${filterFormulas.join(', ')})` 
       : '';
 
-    // Query configuration
+    // Query configuration - remove sort since table has no fields
     const queryConfig = {
-      pageSize: Math.min(parseInt(limit), 100),
-      sort: [{
-        field: sortBy,
-        direction: sortDirection
-      }]
+      pageSize: Math.min(parseInt(limit), 100)
+      // Can't sort by fields that don't exist
     };
 
-    if (filterFormula) {
-      queryConfig.filterByFormula = filterFormula;
-    }
+    // Skip filter formula since table has no fields to filter on
+    // if (filterFormula) {
+    //   queryConfig.filterByFormula = filterFormula;
+    // }
 
     // Fetch records
     const records = [];
-    await base('Workouts')
-      .select(queryConfig)
-      .eachPage((pageRecords, fetchNextPage) => {
-        records.push(...pageRecords);
-        if (records.length < parseInt(limit)) {
-          fetchNextPage();
-        }
-      });
+    await new Promise((resolve, reject) => {
+      base('Workouts')
+        .select(queryConfig)
+        .eachPage(
+          (pageRecords, fetchNextPage) => {
+            records.push(...pageRecords);
+            if (records.length < parseInt(limit)) {
+              fetchNextPage();
+            } else {
+              resolve();
+            }
+          },
+          (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          }
+        );
+    });
 
     // Apply offset manually
     const offsetInt = parseInt(offset);
     const paginatedRecords = records.slice(offsetInt, offsetInt + parseInt(limit));
 
-    // Format response
+    // Format response - handle empty records
     const formattedRecords = paginatedRecords.map(record => ({
       id: record.id,
-      exercise: record.get('Exercise'),
-      sets: record.get('Sets'),
-      reps: record.get('Reps'),
-      weight: record.get('Weight'),
-      date: record.get('Date'),
-      notes: record.get('Notes'),
-      createdAt: record.get('CreatedAt')
+      exercise: record.get('Exercise') || 'Unknown Exercise',
+      sets: record.get('Sets') || 0,
+      reps: record.get('Reps') || 0,
+      weight: record.get('Weight') || 0,
+      date: record.get('Date') || new Date().toISOString().split('T')[0],
+      notes: record.get('Notes') || 'Empty record - add fields to Workouts table',
+      createdAt: record.get('CreatedAt') || 'Unknown',
+      isEmpty: Object.keys(record.fields).length === 0
     }));
 
     return {
