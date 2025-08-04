@@ -34,66 +34,29 @@ exports.handler = async (event, context) => {
 
     const data = JSON.parse(event.body);
     
-    // Validate required fields
-    const requiredFields = ['exercise', 'sets', 'reps', 'weight', 'date'];
-    const missingFields = requiredFields.filter(field => !data[field]);
-    
-    if (missingFields.length > 0) {
+    // For now, just require some data since table has no fields
+    if (!data || Object.keys(data).length === 0) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
-          error: 'Missing required fields',
-          missingFields 
+          error: 'No workout data provided'
         })
       };
     }
 
-    // Validate data types
-    if (typeof data.exercise !== 'string' || data.exercise.trim() === '') {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Exercise must be a non-empty string' })
-      };
-    }
-
-    const numericFields = ['sets', 'reps', 'weight'];
-    for (const field of numericFields) {
-      const value = Number(data[field]);
-      if (isNaN(value) || value <= 0) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: `${field} must be a positive number` })
-        };
-      }
-    }
-
-    // Validate date
-    const date = new Date(data.date);
-    if (isNaN(date.getTime())) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Invalid date format' })
-      };
-    }
+    // Basic validation - just log what we received since table has no fields yet
+    console.log('Received workout data:', JSON.stringify(data, null, 2));
 
     // Configure Airtable
     const base = new Airtable({
       apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
-    // Create record in Airtable
+    // Create record in Airtable - using empty record for now since table has no fields
+    console.log('Creating workout record with data:', data);
     const record = await base('Workouts').create({
-      Exercise: data.exercise,
-      Sets: Number(data.sets),
-      Reps: Number(data.reps),
-      Weight: Number(data.weight),
-      Date: data.date,
-      Notes: data.notes || '',
-      CreatedAt: new Date().toISOString()
+      // Empty record until fields are added to the table
     });
 
     return {
@@ -101,9 +64,11 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        message: 'Workout logged successfully',
-        id: record.id,
-        data: record.fields
+        message: 'Workout logged successfully (empty record created - add fields to Workouts table)',
+        recordId: record.id,
+        recordFields: record.fields,
+        receivedData: data,
+        note: 'Add Exercise, Sets, Reps, Weight, Date fields to your Airtable Workouts table to store actual data'
       })
     };
 
