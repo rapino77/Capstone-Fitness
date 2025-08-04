@@ -35,13 +35,12 @@ exports.handler = async (event, context) => {
     const data = JSON.parse(event.body);
     
     // Validate required fields
-    if (!data.weight || !data.date) {
+    if (!data.weight) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
-          error: 'Missing required fields',
-          requiredFields: ['weight', 'date']
+          error: 'Missing required field: weight'
         })
       };
     }
@@ -56,23 +55,25 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Validate date
-    const date = new Date(data.date);
-    if (isNaN(date.getTime())) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Invalid date format' })
-      };
-    }
+    // Validate date if provided
+    if (data.date) {
+      const date = new Date(data.date);
+      if (isNaN(date.getTime())) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Invalid date format' })
+        };
+      }
 
-    // Check if date is not in the future
-    if (date > new Date()) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Date cannot be in the future' })
-      };
+      // Check if date is not in the future
+      if (date > new Date()) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Date cannot be in the future' })
+        };
+      }
     }
 
     // Configure Airtable
@@ -80,14 +81,24 @@ exports.handler = async (event, context) => {
       apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
-    // Create record in Airtable
-    const record = await base('BodyWeight').create({
-      Weight: weight,
-      Date: data.date,
-      Unit: data.unit || 'lbs',
-      Notes: data.notes || '',
-      CreatedAt: new Date().toISOString()
-    });
+    // Create record in Airtable - start with minimal fields that work
+    const recordData = {
+      Weight: weight
+    };
+    
+    // Add optional fields only if they're provided and non-empty
+    if (data.date) {
+      recordData.Date = data.date;
+    }
+    if (data.unit) {
+      recordData.Unit = data.unit;
+    }
+    if (data.notes) {
+      recordData.Notes = data.notes;
+    }
+    
+    console.log('Creating record with data:', recordData);
+    const record = await base('BodyWeight').create(recordData);
 
     return {
       statusCode: 200,
