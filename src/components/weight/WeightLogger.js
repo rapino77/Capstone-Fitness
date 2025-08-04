@@ -17,7 +17,13 @@ const WeightLogger = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
   const [weightData, setWeightData] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    current: 0,
+    highest: 0,
+    lowest: 0,
+    average: 0,
+    change: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
   
   const {
@@ -40,8 +46,18 @@ const WeightLogger = () => {
       });
       
       if (response.data.success) {
-        setWeightData(response.data.data);
-        setStats(response.data.stats);
+        // Filter out invalid data entries
+        const validData = (response.data.data || []).filter(entry => {
+          return entry && 
+                 entry.weight && 
+                 !isNaN(Number(entry.weight)) && 
+                 entry.date && 
+                 !isNaN(new Date(entry.date).getTime());
+        });
+        
+        console.log('Filtered weight data:', validData);
+        setWeightData(validData);
+        setStats(response.data.stats || {});
       }
     } catch (error) {
       console.error('Failed to fetch weight data:', error);
@@ -77,11 +93,27 @@ const WeightLogger = () => {
   };
 
   const formatXAxis = (tickItem) => {
-    return format(new Date(tickItem), 'MM/dd');
+    try {
+      if (!tickItem) return '';
+      const date = new Date(tickItem);
+      if (isNaN(date.getTime())) return '';
+      return format(date, 'MM/dd');
+    } catch (error) {
+      console.warn('Invalid date in formatXAxis:', tickItem);
+      return '';
+    }
   };
 
   const formatTooltipDate = (value) => {
-    return format(new Date(value), 'MMM dd, yyyy');
+    try {
+      if (!value) return '';
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return '';
+      return format(date, 'MMM dd, yyyy');
+    } catch (error) {
+      console.warn('Invalid date in formatTooltipDate:', value);
+      return '';
+    }
   };
 
   return (
