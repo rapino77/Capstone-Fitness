@@ -76,14 +76,27 @@ exports.handler = async (event, context) => {
 
     // Fetch records
     const records = [];
-    await base('BodyWeight')
-      .select(queryConfig)
-      .eachPage((pageRecords, fetchNextPage) => {
-        records.push(...pageRecords);
-        if (records.length < parseInt(limit)) {
-          fetchNextPage();
-        }
-      });
+    await new Promise((resolve, reject) => {
+      base('BodyWeight')
+        .select(queryConfig)
+        .eachPage(
+          (pageRecords, fetchNextPage) => {
+            records.push(...pageRecords);
+            if (records.length < parseInt(limit)) {
+              fetchNextPage();
+            } else {
+              resolve();
+            }
+          },
+          (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          }
+        );
+    });
 
     // Format response
     let responseData;
