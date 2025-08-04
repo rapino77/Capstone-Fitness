@@ -19,7 +19,8 @@ const WorkoutHistory = () => {
     hasMore: false
   });
 
-  const fetchWorkouts = useCallback(async (resetOffset = false) => {
+  // Fetch workouts function without useCallback to avoid dependency issues
+  const fetchWorkouts = async (resetOffset = false) => {
     try {
       setIsLoading(true);
       const offset = resetOffset ? 0 : pagination.offset;
@@ -34,22 +35,23 @@ const WorkoutHistory = () => {
       
       if (response.data.success) {
         setWorkouts(response.data.data);
-        setPagination({
-          ...pagination,
+        setPagination(prev => ({
+          ...prev,
           ...response.data.pagination,
-          offset: resetOffset ? 0 : pagination.offset
-        });
+          offset: resetOffset ? 0 : prev.offset
+        }));
       }
     } catch (error) {
       console.error('Failed to fetch workouts:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [filters, pagination]);
+  };
 
+  // Fetch workouts when filters change
   useEffect(() => {
     fetchWorkouts(true);
-  }, [filters, fetchWorkouts]);
+  }, [filters.startDate, filters.endDate, filters.exercise, filters.sortBy, filters.sortDirection]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
