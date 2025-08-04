@@ -24,6 +24,14 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Check environment variables
+    if (!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) {
+      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN environment variable is not set');
+    }
+    if (!process.env.AIRTABLE_BASE_ID) {
+      throw new Error('AIRTABLE_BASE_ID environment variable is not set');
+    }
+
     // Parse query parameters
     const params = event.queryStringParameters || {};
     const { 
@@ -38,7 +46,7 @@ exports.handler = async (event, context) => {
 
     // Configure Airtable
     const base = new Airtable({
-      apiKey: process.env.AIRTABLE_API_KEY
+      apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
     // Build filter formula

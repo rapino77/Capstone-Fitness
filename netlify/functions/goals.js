@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
   try {
     // Configure Airtable
     const base = new Airtable({
-      apiKey: process.env.AIRTABLE_API_KEY
+      apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
     // Extract goal ID from path if present

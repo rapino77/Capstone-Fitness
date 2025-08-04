@@ -23,7 +23,7 @@ exports.handler = async (event, context) => {
   try {
     // Configure Airtable connection
     const base = new Airtable({
-      apiKey: process.env.AIRTABLE_API_KEY
+      apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
     // Test connection by fetching records from your first table
