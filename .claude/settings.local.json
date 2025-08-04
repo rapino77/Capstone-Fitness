@@ -5,7 +5,13 @@
       "Bash(npm start)",
       "Bash(rm:*)",
       "Bash(npm install:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
