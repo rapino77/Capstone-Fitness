@@ -36,15 +36,23 @@ exports.handler = async (event, context) => {
     for (const tableName of tablesToTest) {
       try {
         const records = [];
-        await base(tableName)
-          .select({
-            maxRecords: 1,
-            pageSize: 1
-          })
-          .eachPage((pageRecords, fetchNextPage) => {
-            records.push(...pageRecords);
-            // Don't fetch next page, we just want to test access
-          });
+        await new Promise((resolve, reject) => {
+          base(tableName)
+            .select({
+              maxRecords: 1,
+              pageSize: 1
+            })
+            .eachPage(
+              (pageRecords, fetchNextPage) => {
+                records.push(...pageRecords);
+                // Don't fetch next page, we just want to test access
+                resolve();
+              },
+              (error) => {
+                reject(error);
+              }
+            );
+        });
         
         tableTests[tableName] = {
           accessible: true,
