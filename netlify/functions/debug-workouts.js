@@ -52,25 +52,38 @@ exports.handler = async (event, context) => {
       }))
     };
 
-    // Try creating a minimal workout record
-    let createResult = null;
-    try {
-      const newRecord = await base('Workouts').create({
-        Exercise: 'Test Exercise',
-        Sets: 3,
-        Reps: 10,
-        Weight: 135
-      });
-      createResult = {
-        success: true,
-        recordId: newRecord.id,
-        fields: newRecord.fields
-      };
-    } catch (createError) {
-      createResult = {
-        success: false,
-        error: createError.message
-      };
+    // Try creating workout records with different field names
+    const fieldTests = [];
+    
+    // Test common field name variations
+    const testCases = [
+      { name: 'Standard fields', data: { Exercise: 'Test', Sets: 3, Reps: 10, Weight: 135 } },
+      { name: 'Lowercase fields', data: { exercise: 'Test', sets: 3, reps: 10, weight: 135 } },
+      { name: 'Title case fields', data: { Exercise: 'Test', Sets: 3, Reps: 10, Weight: 135, Date: '2025-08-04' } },
+      { name: 'Alternative names', data: { 'Exercise Name': 'Test', 'Set Count': 3, 'Rep Count': 10, 'Weight (lbs)': 135 } },
+      { name: 'Minimal test', data: { Name: 'Test Exercise' } },
+      { name: 'Another minimal', data: { Title: 'Test Exercise' } }
+    ];
+    
+    for (const testCase of testCases) {
+      try {
+        const newRecord = await base('Workouts').create(testCase.data);
+        fieldTests.push({
+          testName: testCase.name,
+          success: true,
+          recordId: newRecord.id,
+          fields: newRecord.fields,
+          sentData: testCase.data
+        });
+        break; // Stop on first success
+      } catch (createError) {
+        fieldTests.push({
+          testName: testCase.name,
+          success: false,
+          error: createError.message,
+          sentData: testCase.data
+        });
+      }
     }
 
     return {
@@ -80,7 +93,7 @@ exports.handler = async (event, context) => {
         success: true,
         message: 'Workouts table debug info',
         debugInfo,
-        createTest: createResult,
+        fieldTests,
         timestamp: new Date().toISOString()
       })
     };
