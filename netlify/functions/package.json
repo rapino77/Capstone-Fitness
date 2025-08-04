@@ -1,0 +1,9 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for fitness app",
+  "main": "index.js",
+  "dependencies": {
+    "airtable": "^0.12.2"
+  }
+}
