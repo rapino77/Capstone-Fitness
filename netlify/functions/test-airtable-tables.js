@@ -30,7 +30,16 @@ exports.handler = async (event, context) => {
     }).base(process.env.AIRTABLE_BASE_ID);
 
     const tableTests = {};
-    const tablesToTest = ['BodyWeight', 'Workouts', 'Goals', 'Progress Records'];
+    const tablesToTest = [
+      'BodyWeight', 
+      'Body Weight', 
+      'bodyweight',
+      'Workouts', 
+      'Goals', 
+      'Progress Records',
+      'Weight Logs',
+      'WeightLogs'
+    ];
 
     // Test each table
     for (const tableName of tablesToTest) {
