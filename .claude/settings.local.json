@@ -11,7 +11,8 @@
       "Bash(git commit:*)",
       "Bash(git ls-tree:*)",
       "Bash(git push:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
