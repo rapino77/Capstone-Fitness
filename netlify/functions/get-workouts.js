@@ -49,24 +49,9 @@ exports.handler = async (event, context) => {
       apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
-    // Build filter formula
-    let filterFormulas = [];
-    
-    if (startDate) {
-      filterFormulas.push(`IS_AFTER({Date}, '${startDate}')`);
-    }
-    
-    if (endDate) {
-      filterFormulas.push(`IS_BEFORE({Date}, '${endDate}')`);
-    }
-    
-    if (exercise) {
-      filterFormulas.push(`SEARCH(LOWER('${exercise}'), LOWER({Exercise}))`);
-    }
-
-    const filterFormula = filterFormulas.length > 0 
-      ? `AND(${filterFormulas.join(', ')})` 
-      : '';
+    // Skip filter formula since table has no fields
+    // Filters will cause errors on non-existent fields
+    const filterFormula = '';
 
     // Query configuration - remove sort since table has no fields
     const queryConfig = {
