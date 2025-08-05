@@ -135,10 +135,26 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
     try {
       console.log('Archiving goal:', goalId);
       
-      // Use the existing goals endpoint to update status to Archived
-      const response = await axios.put(`${process.env.REACT_APP_API_URL}/goals/${goalId}`, {
-        status: 'Archived'
-      });
+      let response;
+      try {
+        // First try to set status to "Archived"
+        response = await axios.put(`${process.env.REACT_APP_API_URL}/goals/${goalId}`, {
+          status: 'Archived'
+        });
+      } catch (archivedError) {
+        // If "Archived" doesn't exist as an option, check the error
+        if (archivedError.response?.data?.message?.includes('Insufficient permissions to create new select option')) {
+          console.log('Archived status not available, using alternative approach...');
+          
+          // For now, we'll keep it as "Completed" but add a note that it's archived
+          // You'll need to add "Archived" to your Airtable Status field options
+          alert('To archive goals, please add "Archived" as an option to the Status field in your Airtable base.\n\nGo to Airtable → Goals table → Status field → Customize field type → Add "Archived" option');
+          return;
+        } else {
+          // Re-throw if it's a different error
+          throw archivedError;
+        }
+      }
       
       console.log('Archive response:', response.data);
       
