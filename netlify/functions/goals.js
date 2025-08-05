@@ -16,6 +16,14 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Check environment variables
+    if (!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) {
+      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN environment variable is not set');
+    }
+    if (!process.env.AIRTABLE_BASE_ID) {
+      throw new Error('AIRTABLE_BASE_ID environment variable is not set');
+    }
+
     // Configure Airtable
     const base = new Airtable({
       apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
@@ -63,12 +71,24 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Goals API error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Event body:', event.body);
+    console.error('Event method:', event.httpMethod);
+    console.error('Environment check:', {
+      hasToken: !!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN,
+      hasBaseId: !!process.env.AIRTABLE_BASE_ID
+    });
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: 'Internal server error',
-        message: error.message
+        message: error.message,
+        debug: {
+          method: event.httpMethod,
+          hasBody: !!event.body,
+          bodyLength: event.body?.length || 0
+        }
       })
     };
   }
@@ -156,6 +176,13 @@ async function handleGetGoals(base, queryParams, goalId, headers) {
 // POST Create Goal
 async function handleCreateGoal(base, data, headers) {
   try {
+    console.log('Creating goal with data:', JSON.stringify(data, null, 2));
+    
+    // Check if data exists
+    if (!data) {
+      throw new Error('No data provided for goal creation');
+    }
+    
     // Validate required fields
     const requiredFields = ['goalTitle', 'goalType', 'targetValue', 'targetDate'];
     const missingFields = requiredFields.filter(field => !data[field]);
