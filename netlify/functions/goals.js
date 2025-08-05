@@ -194,17 +194,20 @@ async function handleCreateGoal(base, data, headers) {
       throw new Error('No data provided for goal creation');
     }
     
-    // Validate required fields
-    const requiredFields = ['goalTitle', 'goalType', 'targetValue', 'targetDate'];
+    // Validate required fields - only check fields that actually exist in Airtable
+    const requiredFields = ['goalType', 'targetValue', 'targetDate'];
     const missingFields = requiredFields.filter(field => !data[field]);
     
     if (missingFields.length > 0) {
+      console.log('Missing fields:', missingFields);
+      console.log('Received data:', data);
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
           error: 'Missing required fields',
-          missingFields 
+          missingFields,
+          receivedFields: Object.keys(data)
         })
       };
     }
