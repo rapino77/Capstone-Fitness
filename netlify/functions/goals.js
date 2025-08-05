@@ -16,23 +16,37 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Check environment variables
-    if (!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) {
-      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN environment variable is not set');
+    // Log incoming request details for debugging
+    console.log('=== GOALS API REQUEST ===');
+    console.log('Method:', event.httpMethod);
+    console.log('Path:', event.path);
+    console.log('Body:', event.body);
+    console.log('Headers:', event.headers);
+    
+    // Check environment variables - support both naming conventions
+    const apiKey = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN || process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    
+    if (!apiKey) {
+      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN or AIRTABLE_API_KEY environment variable is not set');
     }
-    if (!process.env.AIRTABLE_BASE_ID) {
+    if (!baseId) {
       throw new Error('AIRTABLE_BASE_ID environment variable is not set');
     }
 
     // Configure Airtable
     const base = new Airtable({
-      apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
-    }).base(process.env.AIRTABLE_BASE_ID);
+      apiKey: apiKey
+    }).base(baseId);
 
     // Extract goal ID from path if present
     const pathParts = event.path.split('/');
     const goalId = pathParts[pathParts.length - 1];
     const isSpecificGoal = goalId && goalId !== 'goals';
+    
+    console.log('Path parts:', pathParts);
+    console.log('Extracted goal ID:', goalId);
+    console.log('Is specific goal:', isSpecificGoal);
 
     switch (event.httpMethod) {
       case 'GET':

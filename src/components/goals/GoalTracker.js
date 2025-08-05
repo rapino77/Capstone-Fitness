@@ -150,7 +150,23 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
       console.error('Failed to archive goal - Full error:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error message:', error.message);
-      alert(error.response?.data?.error || error.message || 'Failed to archive goal');
+      console.error('Error status:', error.response?.status);
+      
+      // Show detailed error message from backend
+      const errorData = error.response?.data;
+      let errorMessage = 'Failed to archive goal';
+      
+      if (errorData) {
+        if (errorData.message) {
+          errorMessage = `${errorData.error || 'Error'}: ${errorData.message}`;
+        }
+        if (errorData.debug) {
+          console.error('Debug info:', errorData.debug);
+          errorMessage += `\n\nDebug info: ${JSON.stringify(errorData.debug, null, 2)}`;
+        }
+      }
+      
+      alert(errorMessage);
     }
   };
 
