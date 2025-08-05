@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const CelebrationSystem = ({ 
   show, 
@@ -9,6 +9,14 @@ const CelebrationSystem = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsAnimating(false);
+    setTimeout(() => {
+      setIsVisible(false);
+      if (onClose) onClose();
+    }, 300);
+  }, [onClose]);
 
   useEffect(() => {
     if (show) {
@@ -21,15 +29,7 @@ const CelebrationSystem = ({
 
       return () => clearTimeout(timer);
     }
-  }, [show, duration]);
-
-  const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(() => {
-      setIsVisible(false);
-      if (onClose) onClose();
-    }, 300);
-  };
+  }, [show, duration, handleClose]);
 
   if (!isVisible) return null;
 

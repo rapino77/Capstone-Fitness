@@ -12,7 +12,10 @@
       "Bash(git ls-tree:*)",
       "Bash(git push:*)",
       "Bash(find:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": []
   }
