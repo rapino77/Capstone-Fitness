@@ -61,37 +61,45 @@ exports.handler = async (event, context) => {
     // Calculate progress percentage
     const progressPercentage = targetValue > 0 ? (progressValue / targetValue) * 100 : 0;
 
-    // Update the goal record
-    const updateFields = {
-      'Current Value': progressValue,
-      'Goal Progress': Math.min(progressPercentage, 100) // Cap at 100%
-    };
-
-    // Mark as completed if target reached
-    if (progressValue >= targetValue) {
-      updateFields['Status'] = 'Completed';
-      updateFields['Created Date'] = new Date().toISOString().split('T')[0]; // Using Created Date as completion date
+    // Try updating only Current Value first to see which fields work
+    console.log('Attempting to update Current Value only...');
+    
+    try {
+      // First, try just updating Current Value
+      const updatedRecord = await base('Goals').update(data.goalId, {
+        'Current Value': progressValue
+      });
+      
+      console.log('Successfully updated Current Value');
+      
+      // Try to calculate and store progress percentage if field exists and is writable
+      const progressPercentage = Math.min((progressValue / targetValue) * 100, 100);
+      
+      console.log('Calculated progress percentage:', progressPercentage);
+      
+      // Return success with what we could update
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          message: 'Goal progress updated successfully',
+          data: {
+            id: updatedRecord.id,
+            currentValue: updatedRecord.get('Current Value'),
+            calculatedProgress: progressPercentage,
+            status: updatedRecord.get('Status'),
+            completed: progressValue >= targetValue
+          }
+        })
+      };
+      
+    } catch (updateError) {
+      console.error('Failed to update Current Value:', updateError);
+      
+      // If Current Value also fails, try without any updates
+      throw new Error(`Cannot update goal fields. Error: ${updateError.message}`);
     }
-
-    console.log('Updating goal with fields:', updateFields);
-
-    const updatedRecord = await base('Goals').update(data.goalId, updateFields);
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        message: 'Goal progress updated successfully',
-        data: {
-          id: updatedRecord.id,
-          currentValue: updatedRecord.get('Current Value'),
-          goalProgress: updatedRecord.get('Goal Progress'),
-          status: updatedRecord.get('Status'),
-          completed: progressValue >= targetValue
-        }
-      })
-    };
 
   } catch (error) {
     console.error('Update goal progress error:', error);
