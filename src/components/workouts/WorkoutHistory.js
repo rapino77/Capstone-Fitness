@@ -5,6 +5,7 @@ import axios from 'axios';
 const WorkoutHistory = () => {
   const [workouts, setWorkouts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(null);
   const [filters, setFilters] = useState({
     startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
@@ -70,6 +71,24 @@ const WorkoutHistory = () => {
     });
   };
 
+  const handleDeleteWorkout = async (workoutId) => {
+    if (window.confirm('Are you sure you want to delete this workout?')) {
+      setIsDeleting(workoutId);
+      try {
+        const response = await axios.delete(`${process.env.REACT_APP_API_URL}/delete-workout/${workoutId}`);
+        if (response.data.success) {
+          // Remove workout from local state
+          setWorkouts(prevWorkouts => prevWorkouts.filter(w => w.id !== workoutId));
+        }
+      } catch (error) {
+        console.error('Failed to delete workout:', error);
+        alert('Failed to delete workout. Please try again.');
+      } finally {
+        setIsDeleting(null);
+      }
+    }
+  };
+
   const groupWorkoutsByDate = (workouts) => {
     return workouts.reduce((groups, workout) => {
       const date = workout.date;
@@ -81,11 +100,51 @@ const WorkoutHistory = () => {
     }, {});
   };
 
-  const groupedWorkouts = groupWorkoutsByDate(workouts);
+  // Apply client-side filtering
+  const filteredWorkouts = workouts.filter(workout => {
+    // Filter by exercise name
+    if (filters.exercise && !workout.exercise.toLowerCase().includes(filters.exercise.toLowerCase())) {
+      return false;
+    }
+    
+    // Filter by date range
+    const workoutDate = new Date(workout.date);
+    const startDate = new Date(filters.startDate);
+    const endDate = new Date(filters.endDate);
+    
+    if (workoutDate < startDate || workoutDate > endDate) {
+      return false;
+    }
+    
+    return true;
+  });
+
+  // Sort workouts
+  const sortedWorkouts = [...filteredWorkouts].sort((a, b) => {
+    const direction = filters.sortDirection === 'asc' ? 1 : -1;
+    
+    switch (filters.sortBy) {
+      case 'Date':
+        return direction * (new Date(b.date) - new Date(a.date));
+      case 'Exercise':
+        return direction * a.exercise.localeCompare(b.exercise);
+      case 'Weight':
+        return direction * (b.weight - a.weight);
+      default:
+        return 0;
+    }
+  });
+
+  const groupedWorkouts = groupWorkoutsByDate(sortedWorkouts);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6">Workout History</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Workout History</h2>
+        <p className="text-sm text-gray-500">
+          Showing {sortedWorkouts.length} of {workouts.length} workouts
+        </p>
+      </div>
       
       {/* Filters */}
       <div className="mb-6 space-y-4">
@@ -134,16 +193,28 @@ const WorkoutHistory = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Sort By
             </label>
-            <select
-              name="sortBy"
-              value={filters.sortBy}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Date">Date</option>
-              <option value="Exercise">Exercise</option>
-              <option value="Weight">Weight</option>
-            </select>
+            <div className="flex space-x-2">
+              <select
+                name="sortBy"
+                value={filters.sortBy}
+                onChange={handleFilterChange}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Date">Date</option>
+                <option value="Exercise">Exercise</option>
+                <option value="Weight">Weight</option>
+              </select>
+              <button
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  sortDirection: prev.sortDirection === 'asc' ? 'desc' : 'asc' 
+                }))}
+                className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title={`Sort ${filters.sortDirection === 'asc' ? 'descending' : 'ascending'}`}
+              >
+                {filters.sortDirection === 'asc' ? '↑' : '↓'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -153,7 +224,7 @@ const WorkoutHistory = () => {
         <div className="flex justify-center items-center h-64">
           <p className="text-gray-500">Loading workouts...</p>
         </div>
-      ) : workouts.length > 0 ? (
+      ) : sortedWorkouts.length > 0 ? (
         <div className="space-y-6">
           {Object.entries(groupedWorkouts).map(([date, dateWorkouts]) => (
             <div key={date} className="border-b pb-4">
@@ -175,10 +246,28 @@ const WorkoutHistory = () => {
                         <p className="text-sm text-gray-500 mt-1">{workout.notes}</p>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">
-                        Total Volume: {workout.sets * workout.reps * workout.weight} lbs
-                      </p>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">
+                          Total Volume: {workout.sets * workout.reps * workout.weight} lbs
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteWorkout(workout.id)}
+                        disabled={isDeleting === workout.id}
+                        className={`text-red-600 hover:text-red-800 transition-colors ${
+                          isDeleting === workout.id ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        title="Delete workout"
+                      >
+                        {isDeleting === workout.id ? (
+                          <span className="text-sm">Deleting...</span>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -200,7 +289,11 @@ const WorkoutHistory = () => {
         </div>
       ) : (
         <div className="flex justify-center items-center h-64">
-          <p className="text-gray-500">No workouts found. Start logging your workouts!</p>
+          <p className="text-gray-500">
+            {workouts.length === 0 
+              ? "No workouts found. Start logging your workouts!" 
+              : "No workouts match your filters. Try adjusting your search criteria."}
+          </p>
         </div>
       )}
     </div>
