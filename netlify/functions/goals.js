@@ -132,7 +132,7 @@ async function handleGetGoals(base, queryParams, goalId, headers) {
       status = 'Active',
       goalType,
       priority,
-      sortBy = 'Created Date',
+      sortBy = 'created date',
       sortDirection = 'desc',
       limit = '50'
     } = params;
@@ -140,15 +140,11 @@ async function handleGetGoals(base, queryParams, goalId, headers) {
     let filterFormulas = [];
     
     if (status && status !== 'all') {
-      filterFormulas.push(`{Status} = '${status}'`);
+      filterFormulas.push(`{status} = '${status}'`);
     }
     
     if (goalType) {
-      filterFormulas.push(`{Goal Type} = '${goalType}'`);
-    }
-    
-    if (priority) {
-      filterFormulas.push(`{Priority} = '${priority}'`);
+      filterFormulas.push(`{goal type} = '${goalType}'`);
     }
 
     const queryConfig = {
@@ -242,18 +238,15 @@ async function handleCreateGoal(base, data, headers) {
       };
     }
 
-    // Create goal record
+    // Create goal record - using actual field names from Airtable
     const record = await base('Goals').create({
-      'User ID': data.userId || 'default-user',
-      'Goal Type': data.goalType,
-      'Goal Title': data.goalTitle,
-      'Target Value': Number(data.targetValue),
-      'Current Value': Number(data.currentValue) || 0,
-      'Target Date': data.targetDate,
-      'Exercise Name': data.exerciseName || '',
-      'Status': 'Active',
-      'Priority': data.priority || 'Medium',
-      'Notes': data.notes || ''
+      'user id': data.userId || 'default-user',
+      'goal type': data.goalType,
+      'target value': Number(data.targetValue),
+      'current value': Number(data.currentValue) || 0,
+      'target date': data.targetDate,
+      'exercise name': data.exerciseName || '',
+      'status': 'Active'
     });
 
     return {
@@ -276,18 +269,15 @@ async function handleUpdateGoal(base, goalId, data, headers) {
   try {
     const updateFields = {};
     
-    if (data.goalTitle) updateFields['Goal Title'] = data.goalTitle;
-    if (data.targetValue) updateFields['Target Value'] = Number(data.targetValue);
-    if (data.currentValue !== undefined) updateFields['Current Value'] = Number(data.currentValue);
-    if (data.targetDate) updateFields['Target Date'] = data.targetDate;
-    if (data.status) updateFields['Status'] = data.status;
-    if (data.priority) updateFields['Priority'] = data.priority;
-    if (data.notes !== undefined) updateFields['Notes'] = data.notes;
-    if (data.exerciseName !== undefined) updateFields['Exercise Name'] = data.exerciseName;
+    if (data.targetValue) updateFields['target value'] = Number(data.targetValue);
+    if (data.currentValue !== undefined) updateFields['current value'] = Number(data.currentValue);
+    if (data.targetDate) updateFields['target date'] = data.targetDate;
+    if (data.status) updateFields['status'] = data.status;
+    if (data.exerciseName !== undefined) updateFields['exercise name'] = data.exerciseName;
 
     // Set completion date if status changed to completed
     if (data.status === 'Completed') {
-      updateFields['Completed Date'] = new Date().toISOString().split('T')[0];
+      updateFields['created date'] = new Date().toISOString().split('T')[0];
     }
 
     const record = await base('Goals').update(goalId, updateFields);
@@ -330,19 +320,15 @@ async function handleDeleteGoal(base, goalId, headers) {
 function formatGoalRecord(record) {
   return {
     id: record.id,
-    userId: record.get('User ID'),
-    goalType: record.get('Goal Type'),
-    goalTitle: record.get('Goal Title'),
-    targetValue: record.get('Target Value'),
-    currentValue: record.get('Current Value') || 0,
-    targetDate: record.get('Target Date'),
-    exerciseName: record.get('Exercise Name'),
-    status: record.get('Status'),
-    priority: record.get('Priority'),
-    progressPercentage: record.get('Progress Percentage') || 0,
-    daysRemaining: record.get('Days Remaining'),
-    createdDate: record.get('Created Date'),
-    completedDate: record.get('Completed Date'),
-    notes: record.get('Notes')
+    userId: record.get('user id'),
+    goalType: record.get('goal type'),
+    goalTitle: record.get('goal type'), // Using goal type as title since no title field exists
+    targetValue: record.get('target value'),
+    currentValue: record.get('current value') || 0,
+    targetDate: record.get('target date'),
+    exerciseName: record.get('exercise name'),
+    status: record.get('status'),
+    progressPercentage: record.get('goal progress') || 0,
+    createdDate: record.get('created date')
   };
 }
