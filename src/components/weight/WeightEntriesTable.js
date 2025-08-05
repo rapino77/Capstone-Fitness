@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import axios from 'axios';
+// import { useTheme } from '../../context/ThemeContext'; // TODO: Apply theming
 
 const WeightEntriesTable = ({ weightEntries, onUpdate, onDelete, isLoading }) => {
+  // const { theme } = useTheme(); // TODO: Apply theming to table
   const [editingId, setEditingId] = useState(null);
   const [editingData, setEditingData] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);

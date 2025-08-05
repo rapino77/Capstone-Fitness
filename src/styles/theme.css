@@ -1,0 +1,215 @@
+/* Global theme variables and styles */
+:root {
+  /* Colors will be set dynamically by ThemeContext */
+}
+
+/* Base transitions for smooth theme changes */
+* {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Global body styling */
+body {
+  background-color: var(--color-backgroundSecondary);
+  color: var(--color-text);
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-backgroundTertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primaryHover);
+}
+
+/* Focus rings */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Themed form elements */
+.themed-input {
+  background-color: var(--color-background);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.themed-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.themed-input::placeholder {
+  color: var(--color-textTertiary);
+}
+
+.themed-button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  border: none;
+}
+
+.themed-button-primary:hover {
+  background-color: var(--color-primaryHover);
+}
+
+.themed-button-secondary {
+  background-color: var(--color-backgroundTertiary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.themed-button-secondary:hover {
+  background-color: var(--color-border);
+}
+
+/* Themed card styles */
+.themed-card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .themed-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Status colors */
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+.bg-success {
+  background-color: var(--color-success);
+}
+
+.bg-warning {
+  background-color: var(--color-warning);
+}
+
+.bg-error {
+  background-color: var(--color-error);
+}
+
+.bg-info {
+  background-color: var(--color-info);
+}
+
+/* Chart specific styles */
+.recharts-tooltip-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dark .recharts-tooltip-wrapper {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.recharts-default-tooltip {
+  background-color: var(--color-background) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--color-text) !important;
+}
+
+.recharts-tooltip-item {
+  color: var(--color-text) !important;
+}
+
+/* Table theming */
+.themed-table {
+  background-color: var(--color-background);
+}
+
+.themed-table thead {
+  background-color: var(--color-backgroundTertiary);
+}
+
+.themed-table th {
+  color: var(--color-textSecondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.themed-table td {
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-borderLight);
+}
+
+.themed-table tr:hover {
+  background-color: var(--color-backgroundSecondary);
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .themed-card {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .themed-card:first-child {
+    border-top: none;
+  }
+}

@@ -14,9 +14,11 @@ import {
   ComposedChart,
   Area
 } from 'recharts';
+import { useTheme } from '../../context/ThemeContext';
 import WeightEntriesTable from './WeightEntriesTable';
 
 const WeightLogger = () => {
+  const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
   const [weightData, setWeightData] = useState([]);
@@ -202,13 +204,27 @@ const WeightLogger = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-6">Log Body Weight</h2>
+      <div 
+        className="rounded-lg shadow-sm p-6 border transition-colors duration-200"
+        style={{
+          backgroundColor: theme.colors.background,
+          borderColor: theme.colors.border
+        }}
+      >
+        <h2 
+          className="text-2xl font-bold mb-6 transition-colors duration-200"
+          style={{ color: theme.colors.text }}
+        >
+          Log Body Weight
+        </h2>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label 
+                className="block text-sm font-medium mb-1 transition-colors duration-200"
+                style={{ color: theme.colors.text }}
+              >
                 Weight
               </label>
               <input
@@ -219,7 +235,13 @@ const WeightLogger = () => {
                   min: { value: 1, message: 'Weight must be positive' },
                   max: { value: 1000, message: 'Weight seems too high' }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-all duration-200"
+                style={{
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.border,
+                  color: theme.colors.text,
+                  '--tw-ring-color': theme.colors.primary
+                }}
                 placeholder="Enter weight"
               />
               {errors.weight && (
@@ -410,14 +432,24 @@ const WeightLogger = () => {
         ) : viewMode === 'chart' && weightData.length > 0 ? (
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={weightData}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke={theme.colors.chart.grid}
+              />
               <XAxis 
                 dataKey="date" 
                 tickFormatter={formatXAxis}
+                stroke={theme.colors.textSecondary}
               />
               <YAxis 
                 domain={['dataMin - 5', 'dataMax + 5']}
-                label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
+                label={{ 
+                  value: 'Weight (lbs)', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { textAnchor: 'middle', fill: theme.colors.textSecondary }
+                }}
+                stroke={theme.colors.textSecondary}
               />
               <Tooltip 
                 labelFormatter={formatTooltipDate}
@@ -427,22 +459,30 @@ const WeightLogger = () => {
                   if (name === '30-Day Average') return [`${value} lbs`, name];
                   return [value, name];
                 }}
+                contentStyle={{
+                  backgroundColor: theme.colors.background,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '8px',
+                  color: theme.colors.text
+                }}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{ color: theme.colors.text }}
+              />
               <Line 
                 type="monotone" 
                 dataKey="weight" 
-                stroke="#3B82F6" 
+                stroke={theme.colors.chart.primary} 
                 strokeWidth={2}
-                dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
-                activeDot={{ r: 6 }}
+                dot={{ fill: theme.colors.chart.primary, strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 6, fill: theme.colors.chart.primary }}
                 name="Weight"
               />
               {/* 7-day moving average */}
               <Line 
                 type="monotone" 
                 dataKey="ma7" 
-                stroke="#10B981" 
+                stroke={theme.colors.chart.tertiary} 
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
@@ -452,7 +492,7 @@ const WeightLogger = () => {
               <Line 
                 type="monotone" 
                 dataKey="ma30" 
-                stroke="#F59E0B" 
+                stroke={theme.colors.chart.quaternary} 
                 strokeWidth={2}
                 strokeDasharray="10 5"
                 dot={false}
@@ -507,13 +547,26 @@ const WeightLogger = () => {
             {correlationData.combinedData && correlationData.combinedData.length > 0 ? (
               <ResponsiveContainer width="100%" height={400}>
                 <ComposedChart data={correlationData.combinedData}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke={theme.colors.chart.grid}
+                  />
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={formatXAxis}
+                    stroke={theme.colors.textSecondary}
                   />
-                  <YAxis yAxisId="weight" orientation="left" domain={['dataMin - 5', 'dataMax + 5']} />
-                  <YAxis yAxisId="volume" orientation="right" />
+                  <YAxis 
+                    yAxisId="weight" 
+                    orientation="left" 
+                    domain={['dataMin - 5', 'dataMax + 5']}
+                    stroke={theme.colors.textSecondary}
+                  />
+                  <YAxis 
+                    yAxisId="volume" 
+                    orientation="right"
+                    stroke={theme.colors.textSecondary}
+                  />
                   <Tooltip 
                     labelFormatter={formatTooltipDate}
                     formatter={(value, name) => {
@@ -521,14 +574,22 @@ const WeightLogger = () => {
                       if (name === 'Training Volume') return [`${(value / 1000).toFixed(1)}k lbs`, name];
                       return [value, name];
                     }}
+                    contentStyle={{
+                      backgroundColor: theme.colors.background,
+                      border: `1px solid ${theme.colors.border}`,
+                      borderRadius: '8px',
+                      color: theme.colors.text
+                    }}
                   />
-                  <Legend />
+                  <Legend 
+                    wrapperStyle={{ color: theme.colors.text }}
+                  />
                   <Area
                     yAxisId="volume"
                     type="monotone"
                     dataKey="volume"
-                    fill="#93C5FD"
-                    stroke="#3B82F6"
+                    fill={`${theme.colors.chart.secondary}30`}
+                    stroke={theme.colors.chart.secondary}
                     fillOpacity={0.3}
                     name="Training Volume"
                   />
@@ -536,9 +597,9 @@ const WeightLogger = () => {
                     yAxisId="weight"
                     type="monotone"
                     dataKey="weight"
-                    stroke="#EF4444"
+                    stroke={theme.colors.chart.primary}
                     strokeWidth={3}
-                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: theme.colors.chart.primary, strokeWidth: 2, r: 4 }}
                     name="Body Weight"
                   />
                 </ComposedChart>
