@@ -23,19 +23,51 @@ const CelebrationSystem = ({
       setIsVisible(true);
       setIsAnimating(true);
       
+      // Play celebration sound effect (if supported)
+      try {
+        const celebrationSound = new Audio();
+        celebrationSound.volume = 0.3;
+        
+        // Different sounds for different milestones
+        if (type === 'milestone' && data.milestone) {
+          if (data.milestone === 100) {
+            // Victory sound for completion
+            celebrationSound.src = 'data:audio/wav;base64,UklGRvQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdADAAA=';
+          } else {
+            // Achievement sound for milestones
+            celebrationSound.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdADAAA=';
+          }
+          celebrationSound.play().catch(() => {
+            // Silently fail if audio isn't supported
+          });
+        }
+      } catch (error) {
+        // Silently fail if audio isn't supported
+      }
+      
       const timer = setTimeout(() => {
         handleClose();
       }, duration);
 
       return () => clearTimeout(timer);
     }
-  }, [show, duration, handleClose]);
+  }, [show, duration, handleClose, type, data.milestone]);
 
   if (!isVisible) return null;
 
   const getCelebrationContent = () => {
     switch (type) {
       case 'milestone':
+        // Use custom configuration if available, otherwise default
+        if (data.customConfig) {
+          return {
+            emoji: data.customConfig.emoji,
+            title: data.customConfig.title,
+            message: data.customConfig.message,
+            color: data.customConfig.color,
+            confetti: true
+          };
+        }
         return {
           emoji: '🎯',
           title: 'Milestone Achieved!',
@@ -110,7 +142,7 @@ const CelebrationSystem = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Confetti Effect */}
-          {content.confetti && <ConfettiRain />}
+          {content.confetti && <ConfettiRain milestone={data.milestone} />}
           
           {/* Content */}
           <div className="relative z-10 p-8 text-center text-white">
@@ -201,19 +233,80 @@ const CelebrationSystem = ({
 };
 
 // Confetti Animation Component
-const ConfettiRain = () => {
+const ConfettiRain = ({ milestone }) => {
   const [pieces, setPieces] = useState([]);
 
   useEffect(() => {
-    const confettiPieces = Array.from({ length: 50 }, (_, i) => ({
+    // Different confetti patterns based on milestone
+    const getConfettiConfig = (milestone) => {
+      switch (milestone) {
+        case 25:
+          return {
+            count: 30,
+            colors: ['#10B981', '#34D399', '#6EE7B7'], // Green tones
+            shapes: ['circle']
+          };
+        case 50:
+          return {
+            count: 40,
+            colors: ['#F59E0B', '#FBBF24', '#FCD34D'], // Orange/yellow tones
+            shapes: ['circle', 'square']
+          };
+        case 75:
+          return {
+            count: 50,
+            colors: ['#8B5CF6', '#A78BFA', '#C4B5FD'], // Purple tones
+            shapes: ['circle', 'square', 'triangle']
+          };
+        case 100:
+          return {
+            count: 80,
+            colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#FF1493'], // Rainbow
+            shapes: ['circle', 'square', 'triangle', 'star']
+          };
+        default:
+          return {
+            count: 50,
+            colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'],
+            shapes: ['circle']
+          };
+      }
+    };
+
+    const config = getConfettiConfig(milestone);
+    
+    const confettiPieces = Array.from({ length: config.count }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       animationDelay: Math.random() * 3,
       animationDuration: 3 + Math.random() * 2,
-      color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'][Math.floor(Math.random() * 6)]
+      color: config.colors[Math.floor(Math.random() * config.colors.length)],
+      shape: config.shapes[Math.floor(Math.random() * config.shapes.length)]
     }));
     setPieces(confettiPieces);
-  }, []);
+  }, [milestone]);
+
+  const getShapeStyle = (shape) => {
+    switch (shape) {
+      case 'square':
+        return { borderRadius: '0' };
+      case 'triangle':
+        return {
+          width: 0,
+          height: 0,
+          backgroundColor: 'transparent',
+          borderLeft: '4px solid transparent',
+          borderRight: '4px solid transparent',
+          borderBottom: '8px solid'
+        };
+      case 'star':
+        return {
+          clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+        };
+      default: // circle
+        return { borderRadius: '50%' };
+    }
+  };
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -223,8 +316,10 @@ const ConfettiRain = () => {
           className="absolute w-2 h-2 opacity-80"
           style={{
             left: `${piece.left}%`,
-            backgroundColor: piece.color,
-            animation: `confetti-fall ${piece.animationDuration}s ${piece.animationDelay}s ease-out infinite`
+            backgroundColor: piece.shape === 'triangle' ? 'transparent' : piece.color,
+            borderBottomColor: piece.shape === 'triangle' ? piece.color : 'transparent',
+            animation: `confetti-fall ${piece.animationDuration}s ${piece.animationDelay}s ease-out infinite`,
+            ...getShapeStyle(piece.shape)
           }}
         />
       ))}
@@ -283,15 +378,52 @@ export const useCelebration = () => {
 };
 
 // Predefined celebration triggers
-export const celebrateMilestone = (goalTitle, milestone, progress) => ({
-  type: 'milestone',
-  data: {
-    goalTitle,
-    milestone,
-    progress,
-    shareMessage: `🎯 Just reached ${milestone}% of my fitness goal: "${goalTitle}"! #FitnessGoals #Progress`
-  }
-});
+export const celebrateMilestone = (goalTitle, milestone, progress) => {
+  // Customize celebration based on milestone level
+  const milestoneConfig = {
+    25: {
+      emoji: '🌟',
+      title: 'Quarter Way There!',
+      message: `Great start! You've reached ${milestone}% of your goal: "${goalTitle}"`,
+      color: 'bg-gradient-to-r from-green-400 to-green-600',
+      shareMessage: `🌟 Quarter milestone reached! ${milestone}% of my fitness goal: "${goalTitle}"! #FitnessGoals #Progress`
+    },
+    50: {
+      emoji: '🔥',
+      title: 'Halfway Champion!',
+      message: `Amazing progress! You're halfway to your goal: "${goalTitle}"`,
+      color: 'bg-gradient-to-r from-orange-400 to-orange-600',
+      shareMessage: `🔥 Halfway there! ${milestone}% of my fitness goal: "${goalTitle}"! #FitnessGoals #Progress`
+    },
+    75: {
+      emoji: '⚡',
+      title: 'Almost There!',
+      message: `Incredible! You've reached ${milestone}% of your goal: "${goalTitle}"`,
+      color: 'bg-gradient-to-r from-purple-400 to-purple-600',
+      shareMessage: `⚡ ${milestone}% complete! Almost achieved my fitness goal: "${goalTitle}"! #FitnessGoals #Progress`
+    },
+    100: {
+      emoji: '🏆',
+      title: 'Goal Completed!',
+      message: `Congratulations! You've achieved your goal: "${goalTitle}"`,
+      color: 'bg-gradient-to-r from-yellow-400 to-yellow-600',
+      shareMessage: `🏆 Goal achieved! Just completed: "${goalTitle}" #FitnessGoals #Achievement`
+    }
+  };
+
+  const config = milestoneConfig[milestone] || milestoneConfig[25];
+
+  return {
+    type: 'milestone',
+    data: {
+      goalTitle,
+      milestone,
+      progress,
+      customConfig: config,
+      shareMessage: config.shareMessage
+    }
+  };
+};
 
 export const celebrateGoalCompletion = (goalTitle, totalDays) => ({
   type: 'goal_completed',
