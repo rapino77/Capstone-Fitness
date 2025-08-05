@@ -39,7 +39,22 @@ exports.handler = async (event, context) => {
         return await handleGetGoals(base, event.queryStringParameters, isSpecificGoal ? goalId : null, headers);
       
       case 'POST':
-        return await handleCreateGoal(base, JSON.parse(event.body), headers);
+        let parsedBody;
+        try {
+          parsedBody = JSON.parse(event.body || '{}');
+          console.log('Parsed POST body successfully:', parsedBody);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ 
+              error: 'Invalid JSON in request body',
+              message: parseError.message 
+            })
+          };
+        }
+        return await handleCreateGoal(base, parsedBody, headers);
       
       case 'PUT':
         if (!isSpecificGoal) {
