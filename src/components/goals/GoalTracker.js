@@ -42,18 +42,22 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
 
     try {
       setIsUpdating(true);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/goal-progress`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/update-goal-progress`, {
         goalId,
         progressValue: Number(progressValue),
-        notes: progressNotes,
-        progressType: 'Manual Update'
+        notes: progressNotes
       });
       
       if (response.data.success) {
         // Update local state with new goal data
         setGoals(prevGoals => 
           prevGoals.map(goal => 
-            goal.id === goalId ? response.data.data.goal : goal
+            goal.id === goalId ? {
+              ...goal,
+              currentValue: response.data.data.currentValue,
+              progressPercentage: response.data.data.goalProgress,
+              status: response.data.data.status
+            } : goal
           )
         );
         
@@ -61,17 +65,15 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         setProgressValue('');
         setProgressNotes('');
         
-        if (response.data.data.milestone) {
-          // Show milestone celebration
-          alert(`🎉 Milestone achieved! You've reached a major progress point!`);
-        }
-        
         if (response.data.data.completed) {
           // Show completion celebration
           alert(`🏆 Congratulations! Goal completed successfully!`);
         }
 
-        if (onUpdateGoal) onUpdateGoal(response.data.data.goal);
+        if (onUpdateGoal) onUpdateGoal();
+        
+        // Refresh goals to get updated data
+        fetchGoals();
       }
     } catch (error) {
       console.error('Failed to update progress:', error);
