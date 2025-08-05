@@ -21,29 +21,29 @@ const WorkoutHistory = () => {
 
   const isFetching = useRef(false);
 
-  const fetchWorkouts = useCallback(async (resetOffset = false) => {
+  const fetchWorkouts = useCallback(async (resetOffset = false, customOffset = null) => {
     if (isFetching.current) return; // Prevent multiple simultaneous fetches
     
     try {
       isFetching.current = true;
       setIsLoading(true);
-      const offset = resetOffset ? 0 : pagination.offset;
+      const offset = resetOffset ? 0 : (customOffset !== null ? customOffset : 0);
       
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
         params: {
           ...filters,
           offset,
-          limit: pagination.limit
+          limit: 20 // Use fixed limit for now
         }
       });
       
       if (response.data.success) {
         setWorkouts(response.data.data);
-        setPagination({
-          ...pagination,
+        setPagination(prevPagination => ({
+          ...prevPagination,
           ...response.data.pagination,
-          offset: resetOffset ? 0 : pagination.offset
-        });
+          offset: resetOffset ? 0 : prevPagination.offset
+        }));
       }
     } catch (error) {
       console.error('Failed to fetch workouts:', error);
@@ -51,7 +51,7 @@ const WorkoutHistory = () => {
       setIsLoading(false);
       isFetching.current = false;
     }
-  }, [filters, pagination.limit]); // Only depend on limit, not entire pagination object
+  }, [filters]); // Only depend on filters
 
   useEffect(() => {
     fetchWorkouts(true);
@@ -63,8 +63,11 @@ const WorkoutHistory = () => {
   };
 
   const handleLoadMore = () => {
-    const newOffset = pagination.offset + pagination.limit;
-    setPagination(prev => ({ ...prev, offset: newOffset }));
+    setPagination(prev => {
+      const newOffset = prev.offset + prev.limit;
+      fetchWorkouts(false, newOffset);
+      return { ...prev, offset: newOffset };
+    });
   };
 
   const groupWorkoutsByDate = (workouts) => {
