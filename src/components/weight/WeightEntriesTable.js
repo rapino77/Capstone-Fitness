@@ -290,6 +290,15 @@ const WeightEntriesTable = ({ weightEntries, onUpdate, onDelete, isLoading }) =>
             Range: {Math.min(...weightEntries.map(e => e.weight)).toFixed(1)} - {Math.max(...weightEntries.map(e => e.weight)).toFixed(1)} lbs
           </span>
         </div>
+        {/* Debug info for troubleshooting */}
+        <div className="mt-2 text-xs text-gray-500">
+          <details>
+            <summary className="cursor-pointer hover:text-gray-700">Debug: Click to see all weights</summary>
+            <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
+              All weights: [{weightEntries.map(e => e.weight).sort((a, b) => b - a).join(', ')}]
+            </div>
+          </details>
+        </div>
       </div>
     </div>
   );

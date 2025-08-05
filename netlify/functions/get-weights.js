@@ -213,6 +213,7 @@ exports.handler = async (event, context) => {
       // Calculate basic statistics
       const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
       console.log('Calculating stats for weights:', weights);
+      console.log('Raw response data for debugging:', responseData.map(d => ({ date: d.date, weight: d.weight, id: d.id || 'no-id' })));
       
       // Calculate period-specific weight changes
       const calculatePeriodChange = (data, days) => {
