@@ -39,8 +39,11 @@ const calculateWeightTrend = (data, period = 7) => {
     };
   }
   
-  const maKey = `ma${period}`;
-  const validData = data.filter(item => item[maKey] !== undefined);
+  // Sort data by date to ensure chronological order
+  const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Use raw weight data instead of moving averages for trend calculation
+  const validData = sortedData.filter(item => item.weight && !isNaN(item.weight) && item.weight > 0);
   
   if (validData.length < 2) {
     return {
@@ -50,14 +53,24 @@ const calculateWeightTrend = (data, period = 7) => {
     };
   }
   
-  const recent = validData[validData.length - 1];
-  const older = validData[Math.max(0, validData.length - period)];
+  // Get the most recent data points for the specified period
+  const recentData = validData.slice(-Math.min(period, validData.length));
   
-  const recentWeight = recent[maKey];
-  const olderWeight = older[maKey];
-  const daysDiff = Math.max(1, (new Date(recent.date) - new Date(older.date)) / (1000 * 60 * 60 * 24));
+  if (recentData.length < 2) {
+    return {
+      direction: 'insufficient_data',
+      rate: 0,
+      confidence: 0
+    };
+  }
   
-  const weightChange = recentWeight - olderWeight;
+  const oldest = recentData[0];
+  const newest = recentData[recentData.length - 1];
+  
+  const weightChange = newest.weight - oldest.weight;
+  const daysDiff = Math.max(1, (new Date(newest.date) - new Date(oldest.date)) / (1000 * 60 * 60 * 24));
+  
+  // Calculate rate per week
   const ratePerWeek = (weightChange / daysDiff) * 7;
   
   let direction;
@@ -69,14 +82,19 @@ const calculateWeightTrend = (data, period = 7) => {
     direction = 'losing';
   }
   
-  const confidence = Math.min(validData.length / period, 1) * 100;
+  // Confidence based on how much data we have and time span
+  const minDaysForConfidence = period;
+  const confidenceFromDataPoints = Math.min(recentData.length / Math.max(period / 2, 3), 1);
+  const confidenceFromTimespan = Math.min(daysDiff / minDaysForConfidence, 1);
+  const confidence = (confidenceFromDataPoints * confidenceFromTimespan) * 100;
   
   return {
     direction,
     rate: Number(ratePerWeek.toFixed(2)),
     confidence: Number(confidence.toFixed(1)),
     period,
-    dataPoints: validData.length
+    dataPoints: recentData.length,
+    daysCovered: Math.round(daysDiff)
   };
 };
 
@@ -196,19 +214,42 @@ exports.handler = async (event, context) => {
       const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
       console.log('Calculating stats for weights:', weights);
       
+      // Calculate period-specific weight changes
+      const calculatePeriodChange = (data, days) => {
+        if (!data || data.length < 2) return 0;
+        
+        const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const now = new Date();
+        const periodStart = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+        
+        // Find entries within the period
+        const periodData = sortedData.filter(entry => new Date(entry.date) >= periodStart);
+        
+        if (periodData.length < 2) return 0;
+        
+        const oldestInPeriod = periodData[0].weight;
+        const newestInPeriod = periodData[periodData.length - 1].weight;
+        
+        return newestInPeriod - oldestInPeriod;
+      };
+      
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
         highest: Math.max(...weights),
         lowest: Math.min(...weights),
         average: weights.reduce((a, b) => a + b, 0) / weights.length,
-        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0,
+        change7Day: calculatePeriodChange(responseData, 7),
+        change30Day: calculatePeriodChange(responseData, 30),
+        change90Day: calculatePeriodChange(responseData, 90),
         dataPoints: weights.length
       } : {
         current: 0,
         highest: 0,
         lowest: 0,
         average: 0,
-        change: 0,
+        change7Day: 0,
+        change30Day: 0,
+        change90Day: 0,
         dataPoints: 0
       };
       
@@ -249,19 +290,42 @@ exports.handler = async (event, context) => {
       const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
       console.log('Standard format - calculating stats for weights:', weights);
       
+      // Calculate period-specific weight changes
+      const calculatePeriodChange = (data, days) => {
+        if (!data || data.length < 2) return 0;
+        
+        const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const now = new Date();
+        const periodStart = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+        
+        // Find entries within the period
+        const periodData = sortedData.filter(entry => new Date(entry.date) >= periodStart);
+        
+        if (periodData.length < 2) return 0;
+        
+        const oldestInPeriod = periodData[0].weight;
+        const newestInPeriod = periodData[periodData.length - 1].weight;
+        
+        return newestInPeriod - oldestInPeriod;
+      };
+      
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
         highest: Math.max(...weights),
         lowest: Math.min(...weights),
         average: weights.reduce((a, b) => a + b, 0) / weights.length,
-        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0,
+        change7Day: calculatePeriodChange(responseData, 7),
+        change30Day: calculatePeriodChange(responseData, 30),
+        change90Day: calculatePeriodChange(responseData, 90),
         dataPoints: weights.length
       } : {
         current: 0,
         highest: 0,
         lowest: 0,
         average: 0,
-        change: 0,
+        change7Day: 0,
+        change30Day: 0,
+        change90Day: 0,
         dataPoints: 0
       };
       

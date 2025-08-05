@@ -29,7 +29,9 @@ const WeightLogger = () => {
     highest: 0,
     lowest: 0,
     average: 0,
-    change: 0,
+    change7Day: 0,
+    change30Day: 0,
+    change90Day: 0,
     trends: null
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -353,17 +355,59 @@ const WeightLogger = () => {
                 className="text-sm font-medium transition-colors duration-200"
                 style={{ color: theme.colors.textSecondary }}
               >
-                Total Change
+                7-Day Change
               </p>
               <p 
                 className="text-2xl font-bold transition-colors duration-200"
                 style={{ 
-                  color: stats.change > 0 ? theme.colors.error : theme.colors.success 
+                  color: stats.change7Day > 0 ? theme.colors.error : stats.change7Day < 0 ? theme.colors.success : theme.colors.text
                 }}
               >
-                {stats.change > 0 ? '+' : ''}{stats.change?.toFixed(1) || '0'} lbs
+                {stats.change7Day > 0 ? '+' : ''}{stats.change7Day?.toFixed(1) || '0'} lbs
               </p>
             </div>
+            <div 
+              className="p-4 rounded transition-colors duration-200"
+              style={{ backgroundColor: theme.colors.backgroundTertiary }}
+            >
+              <p 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                30-Day Change
+              </p>
+              <p 
+                className="text-2xl font-bold transition-colors duration-200"
+                style={{ 
+                  color: stats.change30Day > 0 ? theme.colors.error : stats.change30Day < 0 ? theme.colors.success : theme.colors.text
+                }}
+              >
+                {stats.change30Day > 0 ? '+' : ''}{stats.change30Day?.toFixed(1) || '0'} lbs
+              </p>
+            </div>
+            <div 
+              className="p-4 rounded transition-colors duration-200"
+              style={{ backgroundColor: theme.colors.backgroundTertiary }}
+            >
+              <p 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                90-Day Change
+              </p>
+              <p 
+                className="text-2xl font-bold transition-colors duration-200"
+                style={{ 
+                  color: stats.change90Day > 0 ? theme.colors.error : stats.change90Day < 0 ? theme.colors.success : theme.colors.text
+                }}
+              >
+                {stats.change90Day > 0 ? '+' : ''}{stats.change90Day?.toFixed(1) || '0'} lbs
+              </p>
+            </div>
+          </div>
+
+          {/* Additional stats row */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div 
               className="p-4 rounded transition-colors duration-200"
               style={{ backgroundColor: theme.colors.backgroundTertiary }}
