@@ -64,12 +64,6 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         
         const isCompleted = response.data.data.status === 'Completed';
         
-        console.log('=== PROGRESS CALCULATION DEBUG ===');
-        console.log('Updated goal:', updatedGoal);
-        console.log('New current value:', newCurrentValue);
-        console.log('Target value:', targetValue);
-        console.log('Calculated new progress:', newProgressPercentage);
-        console.log('Backend goalProgress:', response.data.data.goalProgress);
         
         // Update the goal with new values
         setGoals(prevGoals => 
@@ -88,65 +82,34 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         setProgressNotes('');
         
         // Check for milestone achievements
-        console.log('=== MILESTONE DEBUG ===');
-        console.log('Old progress percentage:', oldProgressPercentage);
-        console.log('New progress percentage:', newProgressPercentage);
-        console.log('Response data:', response.data.data);
+        console.log('Progress:', oldProgressPercentage.toFixed(1), '% →', newProgressPercentage.toFixed(1), '%');
         
         const milestones = [25, 50, 75, 100];
         const passedMilestone = milestones.find(milestone => 
           oldProgressPercentage < milestone && newProgressPercentage >= milestone
         );
         
-        console.log('Passed milestone:', passedMilestone);
-        console.log('Milestone check results:', milestones.map(m => ({
-          milestone: m,
-          oldBelow: oldProgressPercentage < m,
-          newAbove: newProgressPercentage >= m,
-          passed: oldProgressPercentage < m && newProgressPercentage >= m
-        })));
-        
         if (passedMilestone) {
-          console.log('=== TRIGGERING CELEBRATION ===');
-          console.log('Milestone:', passedMilestone);
-          console.log('Goal title:', updatedGoal.goalTitle);
+          console.log('🎉 Milestone achieved:', passedMilestone, '%');
           
           if (passedMilestone === 100 || isCompleted) {
             // Goal completed celebration
-            console.log('Triggering goal completion celebration');
             const celebrationData = celebrateGoalCompletion(
               updatedGoal.goalTitle, 
               Math.abs(new Date(updatedGoal.targetDate) - new Date(updatedGoal.createdDate)) / (1000 * 60 * 60 * 24)
             );
-            console.log('Celebration data:', celebrationData);
             celebrate(celebrationData.type, celebrationData.data);
-            
-            // The goal will automatically disappear from active view due to filtering
-            // No need to manually remove it since it's now archived
           } else {
             // Milestone celebration
-            console.log('Triggering milestone celebration for', passedMilestone, '%');
             const celebrationData = celebrateMilestone(
               updatedGoal.goalTitle,
               passedMilestone,
               newProgressPercentage
             );
-            console.log('Celebration data:', celebrationData);
             celebrate(celebrationData.type, celebrationData.data);
           }
-        } else {
-          console.log('No milestone passed - no celebration triggered');
         }
         
-        // TEST: Force trigger a celebration to test the system
-        if (newProgressPercentage > 10) {
-          console.log('=== TESTING CELEBRATION SYSTEM ===');
-          setTimeout(() => {
-            console.log('Forcing test celebration...');
-            const testCelebration = celebrateMilestone(updatedGoal.goalTitle, 50, newProgressPercentage);
-            celebrate(testCelebration.type, testCelebration.data);
-          }, 2000);
-        }
 
         if (onUpdateGoal) onUpdateGoal();
         
