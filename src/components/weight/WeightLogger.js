@@ -36,6 +36,7 @@ const WeightLogger = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('chart'); // 'chart', 'table', 'correlation'
+  const [isResetting, setIsResetting] = useState(false);
   
   const {
     register,
@@ -183,6 +184,71 @@ const WeightLogger = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetWeights = async () => {
+    const confirmation = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL weight entries!\n\n' +
+      'This action cannot be undone. Are you absolutely sure you want to reset all weight data?'
+    );
+
+    if (!confirmation) return;
+
+    const doubleConfirmation = window.confirm(
+      '🚨 FINAL CONFIRMATION 🚨\n\n' +
+      'You are about to delete ALL weight history permanently.\n\n' +
+      'Type "DELETE" in the next prompt to confirm this irreversible action.'
+    );
+
+    if (!doubleConfirmation) return;
+
+    const finalConfirmation = window.prompt(
+      'Type "DELETE" exactly (all caps) to confirm deletion of all weight entries:'
+    );
+
+    if (finalConfirmation !== 'DELETE') {
+      alert('Reset cancelled. Weight entries were not deleted.');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const response = await axios.delete(`${process.env.REACT_APP_API_URL}/reset-weights`);
+      
+      if (response.data.success) {
+        setSubmitMessage({ 
+          type: 'success', 
+          text: `Successfully deleted ${response.data.deletedCount} weight entries. All weight data has been reset.` 
+        });
+        
+        // Clear all local state
+        setWeightData([]);
+        setAllWeightEntries([]);
+        setStats({
+          current: 0,
+          highest: 0,
+          lowest: 0,
+          average: 0,
+          change7Day: 0,
+          change30Day: 0,
+          change90Day: 0,
+          trends: null
+        });
+        
+        // Refresh data to confirm deletion
+        setTimeout(() => {
+          fetchWeightData();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Failed to reset weight entries:', error);
+      setSubmitMessage({ 
+        type: 'error', 
+        text: error.response?.data?.error || 'Failed to reset weight entries. Please try again.' 
+      });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -528,6 +594,14 @@ const WeightLogger = () => {
               }`}
             >
               Weight vs Performance
+            </button>
+            <button
+              onClick={handleResetWeights}
+              disabled={isResetting || isLoading}
+              className="px-3 py-1 rounded text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border border-red-600"
+              title="Reset all weight entries (permanent deletion)"
+            >
+              {isResetting ? 'Resetting...' : 'Reset All'}
             </button>
           </div>
         </div>
