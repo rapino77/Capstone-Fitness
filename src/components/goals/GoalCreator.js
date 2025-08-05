@@ -145,10 +145,19 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
     console.log('=== END DEBUG ===');
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/goals`, {
-        ...data,
-        userId: 'default-user'
-      });
+      // Only send fields that exist in Airtable
+      const goalData = {
+        userId: 'default-user',
+        goalType: data.goalType,
+        targetValue: data.targetValue,
+        currentValue: data.currentValue || 0,
+        targetDate: data.targetDate,
+        exerciseName: data.exerciseName || ''
+      };
+      
+      console.log('Sending goal data:', goalData);
+      
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/goals`, goalData);
       
       if (response.data.success) {
         setSubmitMessage({ type: 'success', text: 'Goal created successfully!' });
@@ -157,6 +166,7 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
         }, 1500);
       }
     } catch (error) {
+      console.error('Goal creation error:', error.response?.data || error);
       setSubmitMessage({ 
         type: 'error', 
         text: error.response?.data?.error || 'Failed to create goal' 

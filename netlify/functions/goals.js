@@ -238,20 +238,21 @@ async function handleCreateGoal(base, data, headers) {
       };
     }
 
-    // Create goal record - using actual field names from Airtable
-    const record = await base('Goals').create({
+    // Create goal record - using only confirmed field names from Airtable
+    const goalData = {
       'User ID': data.userId || 'default-user',
       'Goal Type': data.goalType,
       'Target Value': Number(data.targetValue),
       'Current Value': Number(data.currentValue) || 0,
       'Target Date': data.targetDate,
       'Exercise Name': data.exerciseName || '',
-      'Status': 'Active',
-      'Priority': data.priority || 'Medium',
-      'Notes': data.notes || '',
-      'Goal Title': data.goalTitle || data.goalType,
-      'Created Date': new Date().toISOString().split('T')[0]
-    });
+      'Status': 'Active'
+    };
+    
+    // Log what we're trying to create
+    console.log('Creating goal with data:', goalData);
+    
+    const record = await base('Goals').create(goalData);
 
     return {
       statusCode: 201,
@@ -331,24 +332,38 @@ function formatGoalRecord(record) {
   const today = new Date();
   const daysRemaining = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
   
+  // Build goalTitle from available data
+  const goalType = record.get('Goal Type');
+  const exerciseName = record.get('Exercise Name');
+  let goalTitle = goalType;
+  
+  if (exerciseName) {
+    if (goalType === 'Exercise PR') {
+      goalTitle = `${exerciseName} PR Goal`;
+    } else if (goalType === 'Frequency') {
+      goalTitle = `${exerciseName} Frequency Goal`;
+    }
+  }
+  
   return {
     id: record.id,
     userId: record.get('User ID'),
-    goalType: record.get('Goal Type'),
-    goalTitle: record.get('Goal Title') || record.get('Goal Type'),
+    goalType: goalType,
+    goalTitle: goalTitle,
     targetValue: record.get('Target Value'),
     currentValue: currentValue,
     targetDate: record.get('Target Date'),
-    exerciseName: record.get('Exercise Name'),
+    exerciseName: record.get('Exercise Name') || '',
     status: record.get('Status'),
-    priority: record.get('Priority') || 'Medium',
-    notes: record.get('Notes') || '',
+    priority: 'Medium', // Default since field may not exist
+    notes: '', // Default since field may not exist
     progressPercentage: Math.round(progressPercentage * 100) / 100,
-    createdDate: record.get('Created Date'),
+    createdDate: record.get('Target Date'), // Use target date as created date fallback
     daysRemaining: daysRemaining,
     milestoneStatus: calculateMilestoneStatus(progressPercentage),
     isOverdue: daysRemaining < 0 && record.get('Status') === 'Active',
-    urgencyLevel: calculateUrgencyLevel(daysRemaining, progressPercentage)
+    urgencyLevel: calculateUrgencyLevel(daysRemaining, progressPercentage),
+    completionDate: record.get('Status') === 'Archived' ? new Date().toISOString().split('T')[0] : null
   };
 }
 

@@ -83,8 +83,7 @@ exports.handler = async (event, context) => {
         console.log('Goal completed! Archiving...');
         try {
           const archivedRecord = await base('Goals').update(data.goalId, {
-            'Status': 'Archived',
-            'Completion Date': new Date().toISOString().split('T')[0]
+            'Status': 'Archived'
           });
           finalStatus = 'Archived';
           console.log('Goal successfully archived');
