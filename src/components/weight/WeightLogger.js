@@ -70,6 +70,7 @@ const WeightLogger = () => {
         });
         
         console.log('Filtered weight data:', validData);
+        console.log('Received stats:', chartResponse.data.stats);
         setWeightData(validData);
         setStats(chartResponse.data.stats || {});
       }
@@ -313,31 +314,88 @@ const WeightLogger = () => {
       </div>
 
       {stats && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-bold mb-4">Weight Statistics</h3>
+        <div 
+          className="rounded-lg shadow-sm p-6 border transition-colors duration-200"
+          style={{
+            backgroundColor: theme.colors.background,
+            borderColor: theme.colors.border
+          }}
+        >
+          <h3 
+            className="text-xl font-bold mb-4 transition-colors duration-200"
+            style={{ color: theme.colors.text }}
+          >
+            Weight Statistics
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded">
-              <p className="text-sm text-gray-600">Current Weight</p>
-              <p className="text-2xl font-bold text-blue-600">
+            <div 
+              className="p-4 rounded transition-colors duration-200"
+              style={{ backgroundColor: theme.colors.backgroundTertiary }}
+            >
+              <p 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                Current Weight
+              </p>
+              <p 
+                className="text-2xl font-bold transition-colors duration-200"
+                style={{ color: theme.colors.primary }}
+              >
                 {stats.current?.toFixed(1) || '-'} lbs
               </p>
             </div>
-            <div className="bg-gray-50 p-4 rounded">
-              <p className="text-sm text-gray-600">Total Change</p>
-              <p className={`text-2xl font-bold ${stats.change > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <div 
+              className="p-4 rounded transition-colors duration-200"
+              style={{ backgroundColor: theme.colors.backgroundTertiary }}
+            >
+              <p 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                Total Change
+              </p>
+              <p 
+                className="text-2xl font-bold transition-colors duration-200"
+                style={{ 
+                  color: stats.change > 0 ? theme.colors.error : theme.colors.success 
+                }}
+              >
                 {stats.change > 0 ? '+' : ''}{stats.change?.toFixed(1) || '0'} lbs
               </p>
             </div>
-            <div className="bg-gray-50 p-4 rounded">
-              <p className="text-sm text-gray-600">Highest</p>
-              <p className="text-2xl font-bold text-gray-700">
-                {stats.highest?.toFixed(1) || '-'} lbs
+            <div 
+              className="p-4 rounded transition-colors duration-200"
+              style={{ backgroundColor: theme.colors.backgroundTertiary }}
+            >
+              <p 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                Highest
+              </p>
+              <p 
+                className="text-2xl font-bold transition-colors duration-200"
+                style={{ color: theme.colors.text }}
+              >
+                {(stats.highest && stats.highest > 0) ? stats.highest.toFixed(1) : '-'} lbs
               </p>
             </div>
-            <div className="bg-gray-50 p-4 rounded">
-              <p className="text-sm text-gray-600">Lowest</p>
-              <p className="text-2xl font-bold text-gray-700">
-                {stats.lowest?.toFixed(1) || '-'} lbs
+            <div 
+              className="p-4 rounded transition-colors duration-200"
+              style={{ backgroundColor: theme.colors.backgroundTertiary }}
+            >
+              <p 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                Lowest
+              </p>
+              <p 
+                className="text-2xl font-bold transition-colors duration-200"
+                style={{ color: theme.colors.text }}
+              >
+                {(stats.lowest && stats.lowest > 0) ? stats.lowest.toFixed(1) : '-'} lbs
               </p>
             </div>
           </div>

@@ -193,14 +193,26 @@ exports.handler = async (event, context) => {
       const dataWithTrends = calculateAllMovingAverages(responseData);
       
       // Calculate basic statistics
-      const weights = responseData.map(d => d.weight);
-      const stats = {
+      const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
+      console.log('Calculating stats for weights:', weights);
+      
+      const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
         highest: Math.max(...weights),
         lowest: Math.min(...weights),
         average: weights.reduce((a, b) => a + b, 0) / weights.length,
-        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0
+        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0,
+        dataPoints: weights.length
+      } : {
+        current: 0,
+        highest: 0,
+        lowest: 0,
+        average: 0,
+        change: 0,
+        dataPoints: 0
       };
+      
+      console.log('Final calculated stats:', stats);
 
       // Calculate trend analysis
       const trend7Day = calculateWeightTrend(dataWithTrends, 7);
@@ -234,14 +246,26 @@ exports.handler = async (event, context) => {
       }));
 
       // Calculate basic statistics for standard format too
-      const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w));
+      const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
+      console.log('Standard format - calculating stats for weights:', weights);
+      
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
         highest: Math.max(...weights),
         lowest: Math.min(...weights),
         average: weights.reduce((a, b) => a + b, 0) / weights.length,
-        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0
-      } : {};
+        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0,
+        dataPoints: weights.length
+      } : {
+        current: 0,
+        highest: 0,
+        lowest: 0,
+        average: 0,
+        change: 0,
+        dataPoints: 0
+      };
+      
+      console.log('Standard format - final calculated stats:', stats);
 
       return {
         statusCode: 200,
