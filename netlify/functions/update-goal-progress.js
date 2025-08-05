@@ -77,19 +77,37 @@ exports.handler = async (event, context) => {
       
       console.log('Calculated progress percentage:', progressPercentage);
       
+      // Check if goal is completed and archive it
+      let finalStatus = updatedRecord.get('Status');
+      if (progressValue >= targetValue && finalStatus !== 'Archived') {
+        console.log('Goal completed! Archiving...');
+        try {
+          const archivedRecord = await base('Goals').update(data.goalId, {
+            'Status': 'Archived',
+            'Completion Date': new Date().toISOString().split('T')[0]
+          });
+          finalStatus = 'Archived';
+          console.log('Goal successfully archived');
+        } catch (archiveError) {
+          console.error('Failed to archive goal:', archiveError);
+          // Continue even if archiving fails
+        }
+      }
+      
       // Return success with what we could update
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
-          message: 'Goal progress updated successfully',
+          message: progressValue >= targetValue ? 'Goal completed and archived!' : 'Goal progress updated successfully',
           data: {
             id: updatedRecord.id,
             currentValue: updatedRecord.get('Current Value'),
             calculatedProgress: progressPercentage,
-            status: updatedRecord.get('Status'),
-            completed: progressValue >= targetValue
+            status: finalStatus,
+            completed: progressValue >= targetValue,
+            goalProgress: progressPercentage
           }
         })
       };

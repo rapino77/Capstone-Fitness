@@ -12,6 +12,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [progressNotes, setProgressNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const { celebration, celebrate, closeCelebration } = useCelebration();
 
   const fetchGoals = useCallback(async () => {
@@ -19,7 +20,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
       setIsLoading(true);
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
         params: {
-          status: filter,
+          status: 'all', // Always fetch all goals, we'll filter in the component
           sortBy: 'Created Date',
           sortDirection: 'desc'
         }
@@ -33,7 +34,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     fetchGoals();
@@ -86,6 +87,11 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
               Math.abs(new Date(updatedGoal.targetDate) - new Date(updatedGoal.createdDate)) / (1000 * 60 * 60 * 24)
             );
             celebrate(celebrationData.type, celebrationData.data);
+            
+            // Remove the completed goal from active list after a delay
+            setTimeout(() => {
+              setGoals(prevGoals => prevGoals.filter(g => g.id !== goalId));
+            }, 3000);
           } else {
             // Milestone celebration
             const celebrationData = celebrateMilestone(
@@ -177,9 +183,15 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
     return { text: `${daysRemaining} days left`, color: 'text-gray-600' };
   };
 
-  const filteredGoals = goals.filter(goal => 
-    filter === 'all' || goal.status === filter
-  );
+  const filteredGoals = goals.filter(goal => {
+    if (showArchived) {
+      return goal.status === 'Archived';
+    }
+    if (filter === 'all') {
+      return goal.status !== 'Archived';
+    }
+    return goal.status === filter && goal.status !== 'Archived';
+  });
 
   if (isLoading) {
     return (
@@ -193,42 +205,84 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Goal Tracker</h2>
-        
-        <div className="flex items-center space-x-4">
-          {/* Refresh Button */}
-          <button
-            onClick={handleRefreshAllGoals}
-            disabled={isRefreshingAll}
-            className="px-3 py-2 bg-green-100 text-green-700 rounded-md text-sm font-medium hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-          >
-            <span>{isRefreshingAll ? 'Refreshing...' : 'Refresh Progress'}</span>
-          </button>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {showArchived ? 'Archived Goals' : 'Goal Tracker'}
+          </h2>
+          
+          <div className="flex items-center space-x-4">
+            {/* Archive Toggle */}
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-2 ${
+                showArchived 
+                  ? 'bg-gray-600 text-white hover:bg-gray-700' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              <span>{showArchived ? 'View Active' : 'View Archived'}</span>
+            </button>
 
-          {/* Filter Tabs */}
-          <div className="flex space-x-1">
-            {['Active', 'Completed', 'Paused', 'all'].map((status) => (
+            {/* Refresh Button - only show for active goals */}
+            {!showArchived && (
               <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  filter === status
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                onClick={handleRefreshAllGoals}
+                disabled={isRefreshingAll}
+                className="px-3 py-2 bg-green-100 text-green-700 rounded-md text-sm font-medium hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
               >
-                {status === 'all' ? 'All' : status}
+                <span>{isRefreshingAll ? 'Refreshing...' : 'Refresh Progress'}</span>
               </button>
-            ))}
+            )}
+
+            {/* Filter Tabs - only show for active goals */}
+            {!showArchived && (
+              <div className="flex space-x-1">
+                {['Active', 'Completed', 'Paused', 'all'].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setFilter(status)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      filter === status
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {status === 'all' ? 'All' : status}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Archived Goals Info */}
+        {showArchived && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-600">
+              These are your completed goals that have been automatically archived. 
+              You can review your past achievements and the progress you made.
+            </p>
+          </div>
+        )}
       </div>
 
       {filteredGoals.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No {filter.toLowerCase()} goals found.</p>
-          <p className="text-gray-400 text-sm mt-2">Create your first goal to get started!</p>
+          <p className="text-gray-500 text-lg">
+            {showArchived 
+              ? 'No archived goals yet.' 
+              : `No ${filter.toLowerCase()} goals found.`}
+          </p>
+          <p className="text-gray-400 text-sm mt-2">
+            {showArchived 
+              ? 'Completed goals will appear here automatically.' 
+              : 'Create your first goal to get started!'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -253,12 +307,21 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
                       <span>{goal.goalType}</span>
                       {goal.exerciseName && <span>• {goal.exerciseName}</span>}
-                      <span>• Target: {format(new Date(goal.targetDate), 'MMM dd, yyyy')}</span>
-                      <span className={`• ${daysStatus.color}`}>{daysStatus.text}</span>
+                      {showArchived ? (
+                        <>
+                          <span>• Completed: {goal.completionDate ? format(new Date(goal.completionDate), 'MMM dd, yyyy') : 'N/A'}</span>
+                          <span className="text-green-600">• Achieved: {goal.currentValue} / {goal.targetValue}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>• Target: {format(new Date(goal.targetDate), 'MMM dd, yyyy')}</span>
+                          <span className={`• ${daysStatus.color}`}>{daysStatus.text}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   
-                  {goal.status === 'Active' && (
+                  {!showArchived && goal.status === 'Active' && (
                     <div className="flex space-x-2">
                       <button
                         onClick={() => setSelectedGoal(selectedGoal === goal.id ? null : goal.id)}
@@ -275,13 +338,22 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
                     </div>
                   )}
                   
-                  {goal.status === 'Paused' && (
+                  {!showArchived && goal.status === 'Paused' && (
                     <button
                       onClick={() => handleStatusChange(goal.id, 'Active')}
                       className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-sm hover:bg-green-200"
                     >
                       Resume
                     </button>
+                  )}
+                  
+                  {showArchived && (
+                    <div className="flex items-center space-x-2 text-sm text-green-600">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">Goal Achieved!</span>
+                    </div>
                   )}
                 </div>
 
@@ -340,8 +412,8 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
                   </div>
                 </div>
 
-                {/* Progress Update Form */}
-                {selectedGoal === goal.id && (
+                {/* Progress Update Form - only for active goals */}
+                {!showArchived && selectedGoal === goal.id && (
                   <div className="bg-gray-50 rounded-md p-4 mt-3">
                     <h4 className="font-medium text-gray-900 mb-3">Update Progress</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
