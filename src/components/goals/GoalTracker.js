@@ -57,7 +57,9 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         const updatedGoal = goals.find(g => g.id === goalId);
         const oldProgressPercentage = updatedGoal?.progressPercentage || 0;
         const newProgressPercentage = response.data.data.goalProgress || 0;
+        const isArchived = response.data.data.status === 'Archived';
         
+        // Update the goal with new values
         setGoals(prevGoals => 
           prevGoals.map(goal => 
             goal.id === goalId ? {
@@ -80,7 +82,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         );
         
         if (passedMilestone) {
-          if (passedMilestone === 100) {
+          if (passedMilestone === 100 || isArchived) {
             // Goal completed celebration
             const celebrationData = celebrateGoalCompletion(
               updatedGoal.goalTitle, 
@@ -88,10 +90,8 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
             );
             celebrate(celebrationData.type, celebrationData.data);
             
-            // Remove the completed goal from active list after a delay
-            setTimeout(() => {
-              setGoals(prevGoals => prevGoals.filter(g => g.id !== goalId));
-            }, 3000);
+            // The goal will automatically disappear from active view due to filtering
+            // No need to manually remove it since it's now archived
           } else {
             // Milestone celebration
             const celebrationData = celebrateMilestone(
