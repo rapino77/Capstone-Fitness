@@ -1,5 +1,85 @@
 const Airtable = require('airtable');
 
+// Import weight calculation utilities
+const calculateMovingAverage = (data, days) => {
+  if (!data || data.length === 0) return [];
+  
+  const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  return sortedData.map((item, index) => {
+    const startIndex = Math.max(0, index - days + 1);
+    const relevantData = sortedData.slice(startIndex, index + 1);
+    
+    const sum = relevantData.reduce((acc, curr) => acc + curr.weight, 0);
+    const average = sum / relevantData.length;
+    
+    return {
+      ...item,
+      [`ma${days}`]: Number(average.toFixed(1)),
+      [`ma${days}Count`]: relevantData.length
+    };
+  });
+};
+
+const calculateAllMovingAverages = (data) => {
+  if (!data || data.length === 0) return [];
+  
+  const dataWith7Day = calculateMovingAverage(data, 7);
+  const dataWithBoth = calculateMovingAverage(dataWith7Day, 30);
+  
+  return dataWithBoth;
+};
+
+const calculateWeightTrend = (data, period = 7) => {
+  if (!data || data.length < 2) {
+    return {
+      direction: 'insufficient_data',
+      rate: 0,
+      confidence: 0
+    };
+  }
+  
+  const maKey = `ma${period}`;
+  const validData = data.filter(item => item[maKey] !== undefined);
+  
+  if (validData.length < 2) {
+    return {
+      direction: 'insufficient_data',
+      rate: 0,
+      confidence: 0
+    };
+  }
+  
+  const recent = validData[validData.length - 1];
+  const older = validData[Math.max(0, validData.length - period)];
+  
+  const recentWeight = recent[maKey];
+  const olderWeight = older[maKey];
+  const daysDiff = Math.max(1, (new Date(recent.date) - new Date(older.date)) / (1000 * 60 * 60 * 24));
+  
+  const weightChange = recentWeight - olderWeight;
+  const ratePerWeek = (weightChange / daysDiff) * 7;
+  
+  let direction;
+  if (Math.abs(ratePerWeek) < 0.1) {
+    direction = 'maintaining';
+  } else if (ratePerWeek > 0) {
+    direction = 'gaining';
+  } else {
+    direction = 'losing';
+  }
+  
+  const confidence = Math.min(validData.length / period, 1) * 100;
+  
+  return {
+    direction,
+    rate: Number(ratePerWeek.toFixed(2)),
+    confidence: Number(confidence.toFixed(1)),
+    period,
+    dataPoints: validData.length
+  };
+};
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -109,7 +189,10 @@ exports.handler = async (event, context) => {
         unit: record.get('Unit') || 'lbs'
       }));
 
-      // Calculate statistics
+      // Calculate moving averages
+      const dataWithTrends = calculateAllMovingAverages(responseData);
+      
+      // Calculate basic statistics
       const weights = responseData.map(d => d.weight);
       const stats = {
         current: weights[weights.length - 1] || 0,
@@ -119,13 +202,23 @@ exports.handler = async (event, context) => {
         change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0
       };
 
+      // Calculate trend analysis
+      const trend7Day = calculateWeightTrend(dataWithTrends, 7);
+      const trend30Day = calculateWeightTrend(dataWithTrends, 30);
+
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
-          data: responseData,
-          stats,
+          data: dataWithTrends,
+          stats: {
+            ...stats,
+            trends: {
+              '7day': trend7Day,
+              '30day': trend30Day
+            }
+          },
           count: responseData.length
         })
       };
