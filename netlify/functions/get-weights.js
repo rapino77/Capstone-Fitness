@@ -30,6 +30,43 @@ const calculateAllMovingAverages = (data) => {
   return dataWithBoth;
 };
 
+// Calculate rolling period weight changes
+const calculatePeriodChange = (data, days) => {
+  if (!data || data.length < 2) return 0;
+  
+  const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const mostRecentEntry = sortedData[sortedData.length - 1];
+  
+  if (!mostRecentEntry) return 0;
+  
+  const mostRecentDate = new Date(mostRecentEntry.date);
+  const periodStartDate = new Date(mostRecentDate.getTime() - (days * 24 * 60 * 60 * 1000));
+  
+  // Find the entry closest to the period start date (but not after most recent)
+  let periodStartEntry = null;
+  let smallestTimeDiff = Infinity;
+  
+  for (const entry of sortedData) {
+    const entryDate = new Date(entry.date);
+    if (entryDate <= mostRecentDate) {
+      const timeDiff = Math.abs(entryDate.getTime() - periodStartDate.getTime());
+      if (timeDiff < smallestTimeDiff) {
+        smallestTimeDiff = timeDiff;
+        periodStartEntry = entry;
+      }
+    }
+  }
+  
+  if (!periodStartEntry || periodStartEntry.date === mostRecentEntry.date) {
+    return 0;
+  }
+  
+  const change = mostRecentEntry.weight - periodStartEntry.weight;
+  console.log(`${days}-day change: ${mostRecentEntry.weight} - ${periodStartEntry.weight} = ${change} (from ${periodStartEntry.date} to ${mostRecentEntry.date})`);
+  
+  return change;
+};
+
 const calculateWeightTrend = (data, period = 7) => {
   if (!data || data.length < 2) {
     return {
@@ -218,43 +255,6 @@ exports.handler = async (event, context) => {
       console.log('All weights sorted high to low:', [...weights].sort((a, b) => b - a));
       console.log('Raw responseData weights:', responseData.map(d => ({ date: d.date, weight: d.weight })));
       
-      // Calculate rolling period weight changes
-      const calculatePeriodChange = (data, days) => {
-        if (!data || data.length < 2) return 0;
-        
-        const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const mostRecentEntry = sortedData[sortedData.length - 1];
-        
-        if (!mostRecentEntry) return 0;
-        
-        const mostRecentDate = new Date(mostRecentEntry.date);
-        const periodStartDate = new Date(mostRecentDate.getTime() - (days * 24 * 60 * 60 * 1000));
-        
-        // Find the entry closest to the period start date (but not after most recent)
-        let periodStartEntry = null;
-        let smallestTimeDiff = Infinity;
-        
-        for (const entry of sortedData) {
-          const entryDate = new Date(entry.date);
-          if (entryDate <= mostRecentDate) {
-            const timeDiff = Math.abs(entryDate.getTime() - periodStartDate.getTime());
-            if (timeDiff < smallestTimeDiff) {
-              smallestTimeDiff = timeDiff;
-              periodStartEntry = entry;
-            }
-          }
-        }
-        
-        if (!periodStartEntry || periodStartEntry.date === mostRecentEntry.date) {
-          return 0;
-        }
-        
-        const change = mostRecentEntry.weight - periodStartEntry.weight;
-        console.log(`${days}-day change: ${mostRecentEntry.weight} - ${periodStartEntry.weight} = ${change} (from ${periodStartEntry.date} to ${mostRecentEntry.date})`);
-        
-        return change;
-      };
-      
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
         highest: Math.max(...weights),
@@ -311,43 +311,6 @@ exports.handler = async (event, context) => {
       // Calculate basic statistics for standard format too
       const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
       console.log('Standard format - calculating stats for weights:', weights);
-      
-      // Calculate rolling period weight changes
-      const calculatePeriodChange = (data, days) => {
-        if (!data || data.length < 2) return 0;
-        
-        const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const mostRecentEntry = sortedData[sortedData.length - 1];
-        
-        if (!mostRecentEntry) return 0;
-        
-        const mostRecentDate = new Date(mostRecentEntry.date);
-        const periodStartDate = new Date(mostRecentDate.getTime() - (days * 24 * 60 * 60 * 1000));
-        
-        // Find the entry closest to the period start date (but not after most recent)
-        let periodStartEntry = null;
-        let smallestTimeDiff = Infinity;
-        
-        for (const entry of sortedData) {
-          const entryDate = new Date(entry.date);
-          if (entryDate <= mostRecentDate) {
-            const timeDiff = Math.abs(entryDate.getTime() - periodStartDate.getTime());
-            if (timeDiff < smallestTimeDiff) {
-              smallestTimeDiff = timeDiff;
-              periodStartEntry = entry;
-            }
-          }
-        }
-        
-        if (!periodStartEntry || periodStartEntry.date === mostRecentEntry.date) {
-          return 0;
-        }
-        
-        const change = mostRecentEntry.weight - periodStartEntry.weight;
-        console.log(`${days}-day change: ${mostRecentEntry.weight} - ${periodStartEntry.weight} = ${change} (from ${periodStartEntry.date} to ${mostRecentEntry.date})`);
-        
-        return change;
-      };
       
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
