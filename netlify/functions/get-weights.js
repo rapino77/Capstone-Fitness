@@ -210,38 +210,13 @@ exports.handler = async (event, context) => {
       // Calculate moving averages
       const dataWithTrends = calculateAllMovingAverages(responseData);
       
-      // Calculate basic statistics with detailed debugging
-      console.log('=== DEBUGGING WEIGHT STATS CALCULATION ===');
-      console.log('Total records from Airtable:', records.length);
-      
-      // Log every single record's weight data
-      records.forEach((record, index) => {
-        console.log(`Record ${index + 1}:`, {
-          id: record.id,
-          weight: record.get('Weight'),
-          weightType: typeof record.get('Weight'),
-          date: record.get('Date'),
-          unit: record.get('Unit')
-        });
-      });
-      
-      console.log('ResponseData after mapping:', responseData.map(d => ({ 
-        date: d.date, 
-        weight: d.weight, 
-        weightType: typeof d.weight,
-        id: d.id || 'no-id' 
-      })));
-      
+      // Calculate basic statistics
       const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w) && w > 0);
-      console.log('Filtered weights array:', weights);
-      console.log('Weights sorted high to low:', [...weights].sort((a, b) => b - a));
+      console.log('Calculating stats for weights:', weights);
       
-      const highest = weights.length > 0 ? Math.max(...weights) : 0;
-      const lowest = weights.length > 0 ? Math.min(...weights) : 0;
-      
-      console.log('Calculated highest:', highest);
-      console.log('Calculated lowest:', lowest);
-      console.log('=== END DEBUGGING ===');
+      // Debug logging to find the 175 lbs issue
+      console.log('All weights sorted high to low:', [...weights].sort((a, b) => b - a));
+      console.log('Raw responseData weights:', responseData.map(d => ({ date: d.date, weight: d.weight })));
       
       // Calculate period-specific weight changes
       const calculatePeriodChange = (data, days) => {
@@ -264,8 +239,8 @@ exports.handler = async (event, context) => {
       
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
-        highest: highest,
-        lowest: lowest,
+        highest: Math.max(...weights),
+        lowest: Math.min(...weights),
         average: weights.reduce((a, b) => a + b, 0) / weights.length,
         change7Day: calculatePeriodChange(responseData, 7),
         change30Day: calculatePeriodChange(responseData, 30),
@@ -340,8 +315,8 @@ exports.handler = async (event, context) => {
       
       const stats = weights.length > 0 ? {
         current: weights[weights.length - 1] || 0,
-        highest: highest,
-        lowest: lowest,
+        highest: Math.max(...weights),
+        lowest: Math.min(...weights),
         average: weights.reduce((a, b) => a + b, 0) / weights.length,
         change7Day: calculatePeriodChange(responseData, 7),
         change30Day: calculatePeriodChange(responseData, 30),
