@@ -35,13 +35,13 @@ exports.handler = async (event, context) => {
     // Parse query parameters
     const params = event.queryStringParameters || {};
     const { 
-      startDate, 
-      endDate, 
-      exercise, 
+      // startDate, 
+      // endDate, 
+      // exercise, 
       limit = '100',
-      offset = '0',
-      sortBy = 'Date',
-      sortDirection = 'desc'
+      offset = '0'
+      // sortBy = 'Date',
+      // sortDirection = 'desc'
     } = params;
 
     // Configure Airtable
@@ -51,7 +51,7 @@ exports.handler = async (event, context) => {
 
     // Skip filter formula since table has no fields
     // Filters will cause errors on non-existent fields
-    const filterFormula = '';
+    // const filterFormula = '';
 
     // Query configuration - remove sort since table has no fields
     const queryConfig = {

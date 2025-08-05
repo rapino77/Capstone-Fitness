@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import axios from 'axios';
@@ -71,7 +71,7 @@ const WeightLogger = () => {
     }
   };
 
-  const fetchCorrelationData = async () => {
+  const fetchCorrelationData = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-weight-performance-correlation`);
       
@@ -119,22 +119,19 @@ const WeightLogger = () => {
         }
       });
     }
-  };
+  }, []); // No dependencies needed for this function
 
   useEffect(() => {
     fetchWeightData();
-    // Only fetch correlation data if we're not already loading
-    if (!isLoading) {
-      fetchCorrelationData();
-    }
-  }, []);
+    fetchCorrelationData();
+  }, [fetchCorrelationData]);
 
-  // Fetch correlation data when weight data is loaded
+  // Refetch correlation data when weight data changes (after logging new weight)
   useEffect(() => {
-    if (!isLoading && weightData.length > 0) {
+    if (!isLoading && weightData.length > 0 && showCorrelation) {
       fetchCorrelationData();
     }
-  }, [isLoading, weightData.length]);
+  }, [isLoading, weightData.length, showCorrelation, fetchCorrelationData]); // Include all dependencies
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);

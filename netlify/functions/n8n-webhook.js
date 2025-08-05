@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
     }
 
     const data = JSON.parse(event.body);
-    const { action, type, payload } = data;
+    const { action, /* type, */ payload } = data;
 
     // Configure Airtable
     const base = new Airtable({
