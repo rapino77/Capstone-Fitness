@@ -133,17 +133,24 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
 
   const handleArchiveGoal = async (goalId) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/archive-completed-goals`, {
-        goalId
+      console.log('Archiving goal:', goalId);
+      
+      // Use the existing goals endpoint to update status to Archived
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}/goals/${goalId}`, {
+        status: 'Archived'
       });
+      
+      console.log('Archive response:', response.data);
       
       if (response.data.success) {
         fetchGoals(); // Refresh the list
         alert('Goal archived successfully!');
       }
     } catch (error) {
-      console.error('Failed to archive goal:', error);
-      alert(error.response?.data?.error || 'Failed to archive goal');
+      console.error('Failed to archive goal - Full error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error message:', error.message);
+      alert(error.response?.data?.error || error.message || 'Failed to archive goal');
     }
   };
 

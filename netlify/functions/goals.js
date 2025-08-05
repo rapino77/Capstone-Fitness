@@ -275,6 +275,10 @@ async function handleCreateGoal(base, data, headers) {
 // PUT Update Goal
 async function handleUpdateGoal(base, goalId, data, headers) {
   try {
+    console.log('=== PUT UPDATE GOAL DEBUG ===');
+    console.log('Goal ID:', goalId);
+    console.log('Update data:', data);
+    
     const updateFields = {};
     
     if (data.targetValue) updateFields['Target Value'] = Number(data.targetValue);
@@ -282,6 +286,8 @@ async function handleUpdateGoal(base, goalId, data, headers) {
     if (data.targetDate) updateFields['Target Date'] = data.targetDate;
     if (data.status) updateFields['Status'] = data.status;
     if (data.exerciseName !== undefined) updateFields['Exercise Name'] = data.exerciseName;
+    
+    console.log('Update fields:', updateFields);
 
     // Set completion date if status changed to completed
     if (data.status === 'Completed') {
