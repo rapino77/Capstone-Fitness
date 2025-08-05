@@ -188,84 +188,113 @@ exports.handler = async (event, context) => {
     // Fetch weight data
     console.log('Fetching weight data...');
     const weightRecords = [];
-    await new Promise((resolve, reject) => {
-      base('BodyWeight')
-        .select(queryConfig)
-        .eachPage(
-          (pageRecords, fetchNextPage) => {
-            weightRecords.push(...pageRecords);
-            if (weightRecords.length < parseInt(limit)) {
-              fetchNextPage();
-            } else {
-              resolve();
+    try {
+      await new Promise((resolve, reject) => {
+        base('BodyWeight')
+          .select(queryConfig)
+          .eachPage(
+            (pageRecords, fetchNextPage) => {
+              weightRecords.push(...pageRecords);
+              if (weightRecords.length < parseInt(limit)) {
+                fetchNextPage();
+              } else {
+                resolve();
+              }
+            },
+            (error) => {
+              if (error) {
+                console.error('Error fetching weight data:', error);
+                // Don't reject - just resolve with empty data
+                resolve();
+              } else {
+                resolve();
+              }
             }
-          },
-          (error) => {
-            if (error) reject(error);
-            else resolve();
-          }
-        );
-    });
+          );
+      });
+    } catch (error) {
+      console.error('Weight data fetch error:', error);
+      // Continue with empty weight data
+    }
 
     // Fetch workout data for performance metrics
     console.log('Fetching workout data...');
     const workoutRecords = [];
-    await new Promise((resolve, reject) => {
-      base('Workouts')
-        .select({
-          ...queryConfig,
-          fields: ['Date', 'Duration', 'Notes']
-        })
-        .eachPage(
-          (pageRecords, fetchNextPage) => {
-            workoutRecords.push(...pageRecords);
-            if (workoutRecords.length < parseInt(limit)) {
-              fetchNextPage();
-            } else {
-              resolve();
+    try {
+      await new Promise((resolve, reject) => {
+        base('Workouts')
+          .select({
+            ...queryConfig,
+            fields: ['Date', 'Duration', 'Notes']
+          })
+          .eachPage(
+            (pageRecords, fetchNextPage) => {
+              workoutRecords.push(...pageRecords);
+              if (workoutRecords.length < parseInt(limit)) {
+                fetchNextPage();
+              } else {
+                resolve();
+              }
+            },
+            (error) => {
+              if (error) {
+                console.error('Error fetching workout data:', error);
+                resolve();
+              } else {
+                resolve();
+              }
             }
-          },
-          (error) => {
-            if (error) reject(error);
-            else resolve();
-          }
-        );
-    });
+          );
+      });
+    } catch (error) {
+      console.error('Workout data fetch error:', error);
+      // Continue with empty workout data
+    }
 
     // Fetch exercise data to calculate training volume
     console.log('Fetching exercise data...');
     const exerciseRecords = [];
-    await new Promise((resolve, reject) => {
-      base('Exercises')
-        .select({
-          pageSize: Math.min(parseInt(limit) * 10, 100), // More exercises per workout
-          sort: [{ field: 'Workout ID', direction: 'asc' }]
-        })
-        .eachPage(
-          (pageRecords, fetchNextPage) => {
-            exerciseRecords.push(...pageRecords);
-            if (exerciseRecords.length < parseInt(limit) * 10) {
-              fetchNextPage();
-            } else {
-              resolve();
+    try {
+      await new Promise((resolve, reject) => {
+        base('Exercises')
+          .select({
+            pageSize: Math.min(parseInt(limit) * 10, 100), // More exercises per workout
+            sort: [{ field: 'Workout ID', direction: 'asc' }]
+          })
+          .eachPage(
+            (pageRecords, fetchNextPage) => {
+              exerciseRecords.push(...pageRecords);
+              if (exerciseRecords.length < parseInt(limit) * 10) {
+                fetchNextPage();
+              } else {
+                resolve();
+              }
+            },
+            (error) => {
+              if (error) {
+                console.error('Error fetching exercise data:', error);
+                resolve();
+              } else {
+                resolve();
+              }
             }
-          },
-          (error) => {
-            if (error) reject(error);
-            else resolve();
-          }
-        );
-    });
+          );
+      });
+    } catch (error) {
+      console.error('Exercise data fetch error:', error);
+      // Continue with empty exercise data
+    }
 
     // Process weight data with moving averages
-    const weightData = weightRecords.map(record => ({
+    console.log(`Processing ${weightRecords.length} weight records`);
+    const weightData = weightRecords.length > 0 ? weightRecords.map(record => ({
       date: record.get('Date'),
       weight: record.get('Weight'),
       unit: record.get('Unit') || 'lbs'
-    }));
+    })).filter(item => item.date && item.weight && !isNaN(item.weight)) : [];
 
     // Calculate moving averages for weight data
-    const weightDataWithMA = weightData.map((item, index) => {
+    const weightDataWithMA = weightData.length > 0 ? weightData.map((item, index) => {
       // 7-day moving average
       const start7 = Math.max(0, index - 6);
       const recent7 = weightData.slice(start7, index + 1);
@@ -281,42 +310,53 @@ exports.handler = async (event, context) => {
         ma7: Number(ma7.toFixed(1)),
         ma30: Number(ma30.toFixed(1))
       };
-    });
+    }) : [];
 
     // Process workout data to calculate daily training volume
+    console.log(`Processing ${workoutRecords.length} workout records and ${exerciseRecords.length} exercise records`);
     const workoutVolumeMap = new Map();
     
-    // Group exercises by workout
-    const exercisesByWorkout = new Map();
-    exerciseRecords.forEach(record => {
-      const workoutId = record.get('Workout ID');
-      if (workoutId && workoutId.length > 0) {
-        const workoutRef = workoutId[0];
-        if (!exercisesByWorkout.has(workoutRef)) {
-          exercisesByWorkout.set(workoutRef, []);
+    if (workoutRecords.length > 0 && exerciseRecords.length > 0) {
+      // Group exercises by workout
+      const exercisesByWorkout = new Map();
+      exerciseRecords.forEach(record => {
+        try {
+          const workoutId = record.get('Workout ID');
+          if (workoutId && workoutId.length > 0) {
+            const workoutRef = workoutId[0];
+            if (!exercisesByWorkout.has(workoutRef)) {
+              exercisesByWorkout.set(workoutRef, []);
+            }
+            exercisesByWorkout.get(workoutRef).push({
+              sets: record.get('Sets') || 0,
+              reps: record.get('Reps') || 0,
+              weight: record.get('Weight') || 0
+            });
+          }
+        } catch (error) {
+          console.error('Error processing exercise record:', error);
         }
-        exercisesByWorkout.get(workoutRef).push({
-          sets: record.get('Sets') || 0,
-          reps: record.get('Reps') || 0,
-          weight: record.get('Weight') || 0
-        });
-      }
-    });
+      });
 
-    // Calculate total volume per workout
-    workoutRecords.forEach(workout => {
-      const workoutId = workout.id;
-      const date = workout.get('Date');
-      const exercises = exercisesByWorkout.get(workoutId) || [];
-      
-      const totalVolume = exercises.reduce((sum, exercise) => {
-        return sum + (exercise.sets * exercise.reps * exercise.weight);
-      }, 0);
+      // Calculate total volume per workout
+      workoutRecords.forEach(workout => {
+        try {
+          const workoutId = workout.id;
+          const date = workout.get('Date');
+          const exercises = exercisesByWorkout.get(workoutId) || [];
+          
+          const totalVolume = exercises.reduce((sum, exercise) => {
+            return sum + (exercise.sets * exercise.reps * exercise.weight);
+          }, 0);
 
-      if (date && totalVolume > 0) {
-        workoutVolumeMap.set(date, (workoutVolumeMap.get(date) || 0) + totalVolume);
-      }
-    });
+          if (date && totalVolume > 0) {
+            workoutVolumeMap.set(date, (workoutVolumeMap.get(date) || 0) + totalVolume);
+          }
+        } catch (error) {
+          console.error('Error processing workout record:', error);
+        }
+      });
+    }
 
     // Convert workout volume map to array
     const performanceData = Array.from(workoutVolumeMap.entries()).map(([date, totalVolume]) => ({

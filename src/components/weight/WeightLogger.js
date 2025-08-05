@@ -77,16 +77,64 @@ const WeightLogger = () => {
       
       if (response.data.success) {
         setCorrelationData(response.data.data);
+      } else {
+        // Set empty correlation data to show appropriate message
+        setCorrelationData({
+          weightData: [],
+          performanceData: [],
+          correlation: { coefficient: 0, strength: 'no_data', dataPoints: 0 },
+          combinedData: [],
+          insights: [{
+            type: 'info',
+            title: 'No Data Available',
+            message: 'Start logging weight and workouts to see correlation analysis.',
+            priority: 'low'
+          }],
+          summary: {
+            weightDataPoints: 0,
+            performanceDataPoints: 0,
+            alignedDataPoints: 0
+          }
+        });
       }
     } catch (error) {
       console.error('Failed to fetch correlation data:', error);
+      
+      // Set error state with helpful message
+      setCorrelationData({
+        weightData: [],
+        performanceData: [],
+        correlation: { coefficient: 0, strength: 'error', dataPoints: 0 },
+        combinedData: [],
+        insights: [{
+          type: 'warning',
+          title: 'Unable to Load Correlation Data',
+          message: 'There was an error loading the correlation analysis. This feature requires both weight and workout data.',
+          priority: 'medium'
+        }],
+        summary: {
+          weightDataPoints: 0,
+          performanceDataPoints: 0,
+          alignedDataPoints: 0
+        }
+      });
     }
   };
 
   useEffect(() => {
     fetchWeightData();
-    fetchCorrelationData();
+    // Only fetch correlation data if we're not already loading
+    if (!isLoading) {
+      fetchCorrelationData();
+    }
   }, []);
+
+  // Fetch correlation data when weight data is loaded
+  useEffect(() => {
+    if (!isLoading && weightData.length > 0) {
+      fetchCorrelationData();
+    }
+  }, [isLoading, weightData.length]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -99,6 +147,10 @@ const WeightLogger = () => {
         setSubmitMessage({ type: 'success', text: 'Weight logged successfully!' });
         reset({ ...data, weight: '' });
         fetchWeightData(); // Refresh the chart
+        // Refresh correlation data if we're viewing it
+        if (showCorrelation) {
+          fetchCorrelationData();
+        }
       }
     } catch (error) {
       setSubmitMessage({ 
@@ -391,14 +443,24 @@ const WeightLogger = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
                   <p className="text-sm text-gray-600">Correlation Coefficient</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {correlationData.correlation?.coefficient?.toFixed(3) || '0.000'}
+                  <p className={`text-2xl font-bold ${
+                    correlationData.correlation?.strength === 'error' ? 'text-red-600' :
+                    correlationData.correlation?.strength === 'no_data' ? 'text-gray-400' : 'text-blue-600'
+                  }`}>
+                    {correlationData.correlation?.strength === 'error' ? 'Error' :
+                     correlationData.correlation?.strength === 'no_data' ? 'N/A' :
+                     correlationData.correlation?.coefficient?.toFixed(3) || '0.000'}
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-600">Relationship Strength</p>
-                  <p className="text-lg font-semibold text-green-600 capitalize">
-                    {correlationData.correlation?.strength || 'No data'}
+                  <p className={`text-lg font-semibold capitalize ${
+                    correlationData.correlation?.strength === 'error' ? 'text-red-600' :
+                    correlationData.correlation?.strength === 'no_data' ? 'text-gray-400' : 'text-green-600'
+                  }`}>
+                    {correlationData.correlation?.strength === 'error' ? 'Error' :
+                     correlationData.correlation?.strength === 'no_data' ? 'No Data' :
+                     correlationData.correlation?.strength || 'Unknown'}
                   </p>
                 </div>
                 <div className="text-center">
@@ -451,8 +513,19 @@ const WeightLogger = () => {
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex justify-center items-center h-64">
-                <p className="text-gray-500">No correlation data available. Need matching weight and workout data.</p>
+              <div className="flex justify-center items-center h-64 bg-gray-50 rounded-lg">
+                <div className="text-center p-8">
+                  <p className="text-gray-500 mb-2">
+                    {correlationData.correlation?.strength === 'error' 
+                      ? 'Unable to load correlation data'
+                      : 'No correlation data available'}
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    {correlationData.correlation?.strength === 'error'
+                      ? 'Please try again later or check your data'
+                      : 'Start logging both weight and workouts to see the correlation between body weight and training performance'}
+                  </p>
+                </div>
               </div>
             )}
 
