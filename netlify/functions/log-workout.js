@@ -53,10 +53,15 @@ exports.handler = async (event, context) => {
       apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
     }).base(process.env.AIRTABLE_BASE_ID);
 
-    // Create record in Airtable - using empty record for now since table has no fields
+    // Create record in Airtable with actual workout data
     console.log('Creating workout record with data:', data);
     const record = await base('Workouts').create({
-      // Empty record until fields are added to the table
+      Exercise: data.exercise,
+      Sets: parseInt(data.sets) || 0,
+      Reps: parseInt(data.reps) || 0,
+      Weight: parseFloat(data.weight) || 0,
+      Date: data.date || new Date().toISOString().split('T')[0],
+      Notes: data.notes || ''
     });
 
     return {
@@ -64,11 +69,10 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        message: 'Workout logged successfully (empty record created - add fields to Workouts table)',
+        message: 'Workout logged successfully',
         recordId: record.id,
         recordFields: record.fields,
-        receivedData: data,
-        note: 'Add Exercise, Sets, Reps, Weight, Date fields to your Airtable Workouts table to store actual data'
+        receivedData: data
       })
     };
 
