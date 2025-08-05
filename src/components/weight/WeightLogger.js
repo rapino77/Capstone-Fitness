@@ -73,6 +73,11 @@ const WeightLogger = () => {
         
         console.log('Filtered weight data:', validData);
         console.log('Received stats:', chartResponse.data.stats);
+        console.log('=== FRONTEND DEBUGGING ===');
+        console.log('Stats highest value:', chartResponse.data.stats?.highest);
+        console.log('Stats lowest value:', chartResponse.data.stats?.lowest);
+        console.log('All weights in frontend data:', validData.map(d => d.weight).sort((a, b) => b - a));
+        console.log('=== END FRONTEND DEBUGGING ===');
         setWeightData(validData);
         setStats(chartResponse.data.stats || {});
       }
