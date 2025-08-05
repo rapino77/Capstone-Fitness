@@ -19,7 +19,8 @@
       "Bash(node:*)",
       "Bash(del test-weight-trends.js)",
       "Bash(curl:*)",
-      "Bash(npx netlify dev:*)"
+      "Bash(npx netlify dev:*)",
+      "Bash(dir /A .env*)"
     ],
     "deny": []
   }

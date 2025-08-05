@@ -137,6 +137,12 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitMessage({ type: '', text: '' });
+    
+    console.log('=== GOAL CREATION DEBUG ===');
+    console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+    console.log('Full API URL:', `${process.env.REACT_APP_API_URL}/goals`);
+    console.log('Goal data:', data);
+    console.log('=== END DEBUG ===');
 
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/goals`, {
