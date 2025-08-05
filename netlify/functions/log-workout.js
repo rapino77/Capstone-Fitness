@@ -64,6 +64,24 @@ exports.handler = async (event, context) => {
       Notes: data.notes || ''
     });
 
+    // Auto-update related goals after logging workout
+    try {
+      console.log('Triggering goal progress auto-update after workout logging...');
+      await fetch(`${process.env.NETLIFY_URL || 'https://delicate-gaufre-27c80c.netlify.app'}/.netlify/functions/auto-update-goals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          trigger: 'workout_logged', 
+          recordId: record.id,
+          exercise: data.exercise,
+          weight: data.weight
+        })
+      });
+    } catch (goalUpdateError) {
+      console.error('Failed to auto-update goals:', goalUpdateError);
+      // Don't fail the workout logging if goal update fails
+    }
+
     return {
       statusCode: 200,
       headers,

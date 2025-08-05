@@ -10,6 +10,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [progressValue, setProgressValue] = useState('');
   const [progressNotes, setProgressNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -98,6 +99,24 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
     }
   };
 
+  const handleRefreshAllGoals = async () => {
+    try {
+      setIsRefreshingAll(true);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/calculate-goal-progress`);
+      
+      if (response.data.success) {
+        // Refresh the goals list to show updated progress
+        await fetchGoals();
+        console.log('Goal progress refreshed:', response.data);
+      }
+    } catch (error) {
+      console.error('Failed to refresh goal progress:', error);
+      alert('Failed to refresh goal progress. Please try again.');
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+
   const getProgressColor = (percentage) => {
     if (percentage >= 100) return 'bg-green-500';
     if (percentage >= 75) return 'bg-blue-500';
@@ -151,21 +170,32 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Goal Tracker</h2>
         
-        {/* Filter Tabs */}
-        <div className="flex space-x-1">
-          {['Active', 'Completed', 'Paused', 'all'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                filter === status
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {status === 'all' ? 'All' : status}
-            </button>
-          ))}
+        <div className="flex items-center space-x-4">
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefreshAllGoals}
+            disabled={isRefreshingAll}
+            className="px-3 py-2 bg-green-100 text-green-700 rounded-md text-sm font-medium hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+          >
+            <span>{isRefreshingAll ? 'Refreshing...' : 'Refresh Progress'}</span>
+          </button>
+
+          {/* Filter Tabs */}
+          <div className="flex space-x-1">
+            {['Active', 'Completed', 'Paused', 'all'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  filter === status
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {status === 'all' ? 'All' : status}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
