@@ -14,11 +14,13 @@ import {
   ComposedChart,
   Area
 } from 'recharts';
+import WeightEntriesTable from './WeightEntriesTable';
 
 const WeightLogger = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
   const [weightData, setWeightData] = useState([]);
+  const [allWeightEntries, setAllWeightEntries] = useState([]);
   const [correlationData, setCorrelationData] = useState(null);
   const [stats, setStats] = useState({
     current: 0,
@@ -29,7 +31,7 @@ const WeightLogger = () => {
     trends: null
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [showCorrelation, setShowCorrelation] = useState(false);
+  const [viewMode, setViewMode] = useState('chart'); // 'chart', 'table', 'correlation'
   
   const {
     register,
@@ -46,13 +48,18 @@ const WeightLogger = () => {
   const fetchWeightData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`, {
+      
+      // Fetch chart data
+      const chartResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`, {
         params: { chartData: 'true' }
       });
       
-      if (response.data.success) {
-        // Filter out invalid data entries
-        const validData = (response.data.data || []).filter(entry => {
+      // Fetch all weight entries for table view
+      const allResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`);
+      
+      if (chartResponse.data.success) {
+        // Filter out invalid data entries for chart
+        const validData = (chartResponse.data.data || []).filter(entry => {
           return entry && 
                  entry.weight && 
                  !isNaN(Number(entry.weight)) && 
@@ -62,7 +69,17 @@ const WeightLogger = () => {
         
         console.log('Filtered weight data:', validData);
         setWeightData(validData);
-        setStats(response.data.stats || {});
+        setStats(chartResponse.data.stats || {});
+      }
+
+      if (allResponse.data.success) {
+        // Set all weight entries for table view
+        const allEntries = (allResponse.data.data || []).filter(entry => {
+          return entry && entry.weight && entry.date;
+        });
+        
+        console.log('All weight entries:', allEntries);
+        setAllWeightEntries(allEntries);
       }
     } catch (error) {
       console.error('Failed to fetch weight data:', error);
@@ -128,10 +145,10 @@ const WeightLogger = () => {
 
   // Refetch correlation data when weight data changes (after logging new weight)
   useEffect(() => {
-    if (!isLoading && weightData.length > 0 && showCorrelation) {
+    if (!isLoading && weightData.length > 0 && viewMode === 'correlation') {
       fetchCorrelationData();
     }
-  }, [isLoading, weightData.length, showCorrelation, fetchCorrelationData]); // Include all dependencies
+  }, [isLoading, weightData.length, viewMode, fetchCorrelationData]); // Include all dependencies
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -143,9 +160,9 @@ const WeightLogger = () => {
       if (response.data.success) {
         setSubmitMessage({ type: 'success', text: 'Weight logged successfully!' });
         reset({ ...data, weight: '' });
-        fetchWeightData(); // Refresh the chart
+        fetchWeightData(); // Refresh all weight data
         // Refresh correlation data if we're viewing it
-        if (showCorrelation) {
+        if (viewMode === 'correlation') {
           fetchCorrelationData();
         }
       }
@@ -354,19 +371,29 @@ const WeightLogger = () => {
           <h3 className="text-xl font-bold">Weight Progress</h3>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowCorrelation(false)}
+              onClick={() => setViewMode('chart')}
               className={`px-3 py-1 rounded text-sm ${
-                !showCorrelation 
+                viewMode === 'chart'
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              Weight Trends
+              Chart View
             </button>
             <button
-              onClick={() => setShowCorrelation(true)}
+              onClick={() => setViewMode('table')}
               className={`px-3 py-1 rounded text-sm ${
-                showCorrelation 
+                viewMode === 'table'
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Table View
+            </button>
+            <button
+              onClick={() => setViewMode('correlation')}
+              className={`px-3 py-1 rounded text-sm ${
+                viewMode === 'correlation'
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
@@ -378,9 +405,9 @@ const WeightLogger = () => {
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <p className="text-gray-500">Loading chart...</p>
+            <p className="text-gray-500">Loading data...</p>
           </div>
-        ) : !showCorrelation && weightData.length > 0 ? (
+        ) : viewMode === 'chart' && weightData.length > 0 ? (
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={weightData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -433,7 +460,14 @@ const WeightLogger = () => {
               />
             </LineChart>
           </ResponsiveContainer>
-        ) : showCorrelation && correlationData ? (
+        ) : viewMode === 'table' ? (
+          <WeightEntriesTable
+            weightEntries={allWeightEntries}
+            onUpdate={fetchWeightData}
+            onDelete={fetchWeightData}
+            isLoading={isLoading}
+          />
+        ) : viewMode === 'correlation' && correlationData ? (
           <div className="space-y-4">
             {/* Correlation Statistics */}
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -548,13 +582,19 @@ const WeightLogger = () => {
             )}
           </div>
         ) : (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-gray-500">
-              {!showCorrelation 
-                ? "No weight data available. Start logging your weight!" 
-                : "Loading correlation data..."
-              }
-            </p>
+          <div className="flex justify-center items-center h-64 bg-gray-50 rounded-lg">
+            <div className="text-center p-8">
+              <p className="text-gray-500 mb-2">
+                {viewMode === 'chart' && "No weight data available for chart view"}
+                {viewMode === 'table' && "No weight entries available"}
+                {viewMode === 'correlation' && "Loading correlation data..."}
+              </p>
+              {viewMode !== 'correlation' && (
+                <p className="text-sm text-gray-400">
+                  Start logging your weight to see data here
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

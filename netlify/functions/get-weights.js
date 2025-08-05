@@ -223,7 +223,7 @@ exports.handler = async (event, context) => {
         })
       };
     } else {
-      // Standard format
+      // Standard format with all data
       responseData = records.map(record => ({
         id: record.id,
         weight: record.get('Weight'),
@@ -233,12 +233,23 @@ exports.handler = async (event, context) => {
         createdAt: record.get('CreatedAt')
       }));
 
+      // Calculate basic statistics for standard format too
+      const weights = responseData.map(d => d.weight).filter(w => w && !isNaN(w));
+      const stats = weights.length > 0 ? {
+        current: weights[weights.length - 1] || 0,
+        highest: Math.max(...weights),
+        lowest: Math.min(...weights),
+        average: weights.reduce((a, b) => a + b, 0) / weights.length,
+        change: weights.length > 1 ? weights[weights.length - 1] - weights[0] : 0
+      } : {};
+
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
           data: responseData,
+          stats,
           count: responseData.length
         })
       };
