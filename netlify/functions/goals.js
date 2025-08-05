@@ -64,7 +64,22 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ error: 'Goal ID required for updates' })
           };
         }
-        return await handleUpdateGoal(base, goalId, JSON.parse(event.body), headers);
+        let putParsedBody;
+        try {
+          putParsedBody = JSON.parse(event.body || '{}');
+          console.log('PUT body parsed successfully:', putParsedBody);
+        } catch (parseError) {
+          console.error('PUT JSON parse error:', parseError);
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ 
+              error: 'Invalid JSON in request body',
+              message: parseError.message 
+            })
+          };
+        }
+        return await handleUpdateGoal(base, goalId, putParsedBody, headers);
       
       case 'DELETE':
         if (!isSpecificGoal) {
@@ -274,12 +289,12 @@ async function handleCreateGoal(base, data, headers) {
 
 // PUT Update Goal
 async function handleUpdateGoal(base, goalId, data, headers) {
+  let updateFields = {};
+  
   try {
     console.log('=== PUT UPDATE GOAL DEBUG ===');
     console.log('Goal ID:', goalId);
     console.log('Update data:', data);
-    
-    const updateFields = {};
     
     if (data.targetValue) updateFields['Target Value'] = Number(data.targetValue);
     if (data.currentValue !== undefined) updateFields['Current Value'] = Number(data.currentValue);
@@ -289,12 +304,23 @@ async function handleUpdateGoal(base, goalId, data, headers) {
     
     console.log('Update fields:', updateFields);
 
-    // Set completion date if status changed to completed
-    if (data.status === 'Completed') {
-      updateFields['Created Date'] = new Date().toISOString().split('T')[0];
+    // Don't try to update Created Date - it's auto-managed by Airtable
+    // Only update the Status field when archiving
+    
+    console.log('Attempting to update goal with fields:', updateFields);
+    
+    // Validate that we have at least one field to update
+    if (Object.keys(updateFields).length === 0) {
+      throw new Error('No valid fields provided for update');
     }
-
+    
+    // Ensure goalId is valid
+    if (!goalId || typeof goalId !== 'string') {
+      throw new Error('Invalid goal ID provided');
+    }
+    
     const record = await base('Goals').update(goalId, updateFields);
+    console.log('Goal updated successfully:', record.id);
 
     return {
       statusCode: 200,
@@ -307,7 +333,45 @@ async function handleUpdateGoal(base, goalId, data, headers) {
     };
 
   } catch (error) {
-    throw new Error(`Failed to update goal: ${error.message}`);
+    console.error('Update goal error details:');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Goal ID:', goalId);
+    console.error('Update fields:', updateFields);
+    console.error('Request data:', data);
+    
+    // Handle Airtable-specific errors
+    let errorMessage = error.message;
+    let statusCode = 500;
+    
+    if (error.message?.includes('NOT_FOUND')) {
+      errorMessage = 'Goal not found';
+      statusCode = 404;
+    } else if (error.message?.includes('INVALID_FIELD')) {
+      errorMessage = 'Invalid field in update request';
+      statusCode = 400;
+    } else if (error.message?.includes('AUTHENTICATION_REQUIRED')) {
+      errorMessage = 'Airtable authentication failed';
+      statusCode = 401;
+    }
+    
+    return {
+      statusCode: statusCode,
+      headers,
+      body: JSON.stringify({
+        error: 'Failed to update goal',
+        message: errorMessage,
+        goalId: goalId,
+        originalError: error.message,
+        debug: {
+          updateFields: updateFields,
+          hasUpdateFields: Object.keys(updateFields).length > 0,
+          goalIdType: typeof goalId,
+          goalIdLength: goalId?.length
+        }
+      })
+    };
   }
 }
 
