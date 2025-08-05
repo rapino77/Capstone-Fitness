@@ -55,8 +55,14 @@ exports.handler = async (event, context) => {
 
     // Get the current goal
     const goalRecord = await base('Goals').find(data.goalId);
-    const targetValue = goalRecord.get('Target Value');
+    const targetValue = Number(goalRecord.get('Target Value'));
     const progressValue = Number(data.progressValue);
+    
+    console.log('=== VALUE TYPES DEBUG ===');
+    console.log('Raw Target Value:', goalRecord.get('Target Value'), 'Type:', typeof goalRecord.get('Target Value'));
+    console.log('Raw Progress Value:', data.progressValue, 'Type:', typeof data.progressValue);
+    console.log('Parsed Target Value:', targetValue, 'Type:', typeof targetValue);
+    console.log('Parsed Progress Value:', progressValue, 'Type:', typeof progressValue);
 
     // Calculate progress percentage
     const progressPercentage = targetValue > 0 ? (progressValue / targetValue) * 100 : 0;
@@ -79,18 +85,33 @@ exports.handler = async (event, context) => {
       
       // Check if goal is completed and archive it
       let finalStatus = updatedRecord.get('Status');
-      if (progressValue >= targetValue && finalStatus !== 'Archived') {
-        console.log('Goal completed! Archiving...');
+      console.log('=== AUTO-ARCHIVE DEBUG ===');
+      console.log('Progress Value:', progressValue);
+      console.log('Target Value:', targetValue);
+      console.log('Is Complete?:', progressValue >= targetValue);
+      console.log('Current Status:', finalStatus);
+      console.log('Should Archive?:', progressValue >= targetValue && finalStatus !== 'Archived');
+      
+      if (progressValue >= targetValue && finalStatus !== 'Completed' && finalStatus !== 'Archived') {
+        console.log('Goal completed! Attempting to mark as completed...');
         try {
-          const archivedRecord = await base('Goals').update(data.goalId, {
-            'Status': 'Archived'
+          const completedRecord = await base('Goals').update(data.goalId, {
+            'Status': 'Completed'
           });
-          finalStatus = 'Archived';
-          console.log('Goal successfully archived');
-        } catch (archiveError) {
-          console.error('Failed to archive goal:', archiveError);
-          // Continue even if archiving fails
+          finalStatus = 'Completed';
+          console.log('Goal successfully marked as completed! New status:', completedRecord.get('Status'));
+        } catch (completionError) {
+          console.error('Failed to mark goal as completed:', completionError);
+          console.error('Completion error details:', completionError.message);
+          // Continue even if status update fails
         }
+      } else {
+        console.log('Not archiving because:', {
+          isComplete: progressValue >= targetValue,
+          currentStatus: finalStatus,
+          progressValue,
+          targetValue
+        });
       }
       
       // Return success with what we could update
@@ -99,7 +120,7 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           success: true,
-          message: progressValue >= targetValue ? 'Goal completed and archived!' : 'Goal progress updated successfully',
+          message: progressValue >= targetValue ? 'Goal completed!' : 'Goal progress updated successfully',
           data: {
             id: updatedRecord.id,
             currentValue: updatedRecord.get('Current Value'),

@@ -57,7 +57,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         const updatedGoal = goals.find(g => g.id === goalId);
         const oldProgressPercentage = updatedGoal?.progressPercentage || 0;
         const newProgressPercentage = response.data.data.goalProgress || 0;
-        const isArchived = response.data.data.status === 'Archived';
+        const isCompleted = response.data.data.status === 'Completed';
         
         // Update the goal with new values
         setGoals(prevGoals => 
@@ -82,7 +82,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         );
         
         if (passedMilestone) {
-          if (passedMilestone === 100 || isArchived) {
+          if (passedMilestone === 100 || isCompleted) {
             // Goal completed celebration
             const celebrationData = celebrateGoalCompletion(
               updatedGoal.goalTitle, 
@@ -128,6 +128,22 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
       }
     } catch (error) {
       console.error('Failed to update goal status:', error);
+    }
+  };
+
+  const handleArchiveGoal = async (goalId) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/archive-completed-goals`, {
+        goalId
+      });
+      
+      if (response.data.success) {
+        fetchGoals(); // Refresh the list
+        alert('Goal archived successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to archive goal:', error);
+      alert(error.response?.data?.error || 'Failed to archive goal');
     }
   };
 
@@ -344,6 +360,19 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
                       className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-sm hover:bg-green-200"
                     >
                       Resume
+                    </button>
+                  )}
+                  
+                  {!showArchived && goal.status === 'Completed' && (
+                    <button
+                      onClick={() => handleArchiveGoal(goal.id)}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 flex items-center space-x-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                          d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                      </svg>
+                      <span>Archive</span>
                     </button>
                   )}
                   
