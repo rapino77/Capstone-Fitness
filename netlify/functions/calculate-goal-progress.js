@@ -37,6 +37,8 @@ exports.handler = async (event, context) => {
     // Process each goal based on its type
     for (const goal of goals) {
       try {
+        console.log(`Processing goal: ${goal.goalType} - Current: ${goal.currentValue}, Target: ${goal.targetValue}`);
+        
         const progress = await calculateProgressForGoal(base, goal);
         if (progress !== null) {
           progressUpdates.push({
@@ -52,8 +54,12 @@ exports.handler = async (event, context) => {
           // Update the goal if progress changed
           if (progress.currentValue !== goal.currentValue) {
             await updateGoalProgress(base, goal.id, progress);
-            console.log(`Updated ${goal.goalType} goal: ${goal.oldProgress} → ${progress.currentValue}`);
+            console.log(`Updated ${goal.goalType} goal: ${goal.currentValue} → ${progress.currentValue}`);
+          } else {
+            console.log(`No change for ${goal.goalType} goal: ${goal.currentValue}`);
           }
+        } else {
+          console.log(`Could not calculate progress for ${goal.goalType} goal`);
         }
       } catch (goalError) {
         console.error(`Error processing goal ${goal.id}:`, goalError);
@@ -93,15 +99,17 @@ exports.handler = async (event, context) => {
   }
 };
 
-// Fetch all active goals
+// Fetch all active goals using simpler approach
 async function fetchAllGoals(base) {
-  const goals = [];
-  await base('Goals')
-    .select({
+  try {
+    const goals = [];
+    
+    const records = await base('Goals').select({
       filterByFormula: `{Status} = 'Active'`
-    })
-    .eachPage((records, fetchNextPage) => {
-      goals.push(...records.map(record => ({
+    }).all();
+
+    for (const record of records) {
+      goals.push({
         id: record.id,
         goalType: record.get('Goal Type'),
         targetValue: record.get('Target Value'),
@@ -109,10 +117,14 @@ async function fetchAllGoals(base) {
         targetDate: record.get('Target Date'),
         exerciseName: record.get('Exercise Name'),
         userId: record.get('User ID')
-      })));
-      fetchNextPage();
-    });
-  return goals;
+      });
+    }
+
+    return goals;
+  } catch (error) {
+    console.error('Error fetching goals:', error);
+    throw error;
+  }
 }
 
 // Calculate progress for a specific goal based on its type
@@ -143,16 +155,11 @@ async function calculateBodyWeightProgress(base, goal) {
   console.log('Calculating body weight progress...');
   
   try {
-    // Get latest weight entry
-    const weightRecords = [];
-    await base('BodyWeight')
-      .select({
-        sort: [{ field: 'Date', direction: 'desc' }],
-        maxRecords: 1
-      })
-      .eachPage((records) => {
-        weightRecords.push(...records);
-      });
+    // Get latest weight entry using .all() method
+    const weightRecords = await base('BodyWeight').select({
+      sort: [{ field: 'Date', direction: 'desc' }],
+      maxRecords: 1
+    }).all();
 
     if (weightRecords.length === 0) {
       console.log('No weight data found');
@@ -190,16 +197,11 @@ async function calculateExercisePRProgress(base, goal) {
 
   try {
     // Get all workouts for this exercise, sorted by weight descending
-    const workoutRecords = [];
-    await base('Workouts')
-      .select({
-        filterByFormula: `{Exercise Name} = '${goal.exerciseName}'`,
-        sort: [{ field: 'Weight', direction: 'desc' }],
-        maxRecords: 1
-      })
-      .eachPage((records) => {
-        workoutRecords.push(...records);
-      });
+    const workoutRecords = await base('Workouts').select({
+      filterByFormula: `{Exercise} = '${goal.exerciseName}'`,
+      sort: [{ field: 'Weight', direction: 'desc' }],
+      maxRecords: 1
+    }).all();
 
     if (workoutRecords.length === 0) {
       console.log(`No workout data found for exercise: ${goal.exerciseName}`);
@@ -236,14 +238,9 @@ async function calculateFrequencyProgress(base, goal) {
     const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
     const weekStartStr = weekStart.toISOString().split('T')[0];
 
-    const workoutRecords = [];
-    await base('Workouts')
-      .select({
-        filterByFormula: `IS_AFTER({Date}, '${weekStartStr}')`
-      })
-      .eachPage((records) => {
-        workoutRecords.push(...records);
-      });
+    const workoutRecords = await base('Workouts').select({
+      filterByFormula: `IS_AFTER({Date}, '${weekStartStr}')`
+    }).all();
 
     const currentValue = workoutRecords.length;
     console.log(`Workouts this week: ${currentValue}, Target: ${goal.targetValue}`);
@@ -274,14 +271,9 @@ async function calculateVolumeProgress(base, goal) {
     const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
     const weekStartStr = weekStart.toISOString().split('T')[0];
 
-    const workoutRecords = [];
-    await base('Workouts')
-      .select({
-        filterByFormula: `IS_AFTER({Date}, '${weekStartStr}')`
-      })
-      .eachPage((records) => {
-        workoutRecords.push(...records);
-      });
+    const workoutRecords = await base('Workouts').select({
+      filterByFormula: `IS_AFTER({Date}, '${weekStartStr}')`
+    }).all();
 
     let totalVolume = 0;
     workoutRecords.forEach(record => {

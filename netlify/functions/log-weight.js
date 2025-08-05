@@ -100,14 +100,17 @@ exports.handler = async (event, context) => {
     console.log('Creating record with data:', recordData);
     const record = await base('BodyWeight').create(recordData);
 
-    // Auto-update related goals after logging weight
+    // Auto-update body weight goals after logging weight
     try {
-      console.log('Triggering goal progress auto-update after weight logging...');
-      await fetch(`${process.env.NETLIFY_URL || 'https://delicate-gaufre-27c80c.netlify.app'}/.netlify/functions/auto-update-goals`, {
+      console.log('Triggering body weight goal auto-update after weight logging...');
+      const updateResponse = await fetch(`${process.env.NETLIFY_URL || 'https://delicate-gaufre-27c80c.netlify.app'}/.netlify/functions/update-body-weight-goals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ trigger: 'weight_logged', recordId: record.id })
       });
+      
+      const updateResult = await updateResponse.json();
+      console.log('Goal update result:', updateResult);
     } catch (goalUpdateError) {
       console.error('Failed to auto-update goals:', goalUpdateError);
       // Don't fail the weight logging if goal update fails
