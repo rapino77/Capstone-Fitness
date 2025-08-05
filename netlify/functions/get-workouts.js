@@ -87,7 +87,7 @@ exports.handler = async (event, context) => {
         .eachPage(
           (pageRecords, fetchNextPage) => {
             records.push(...pageRecords);
-            if (records.length < parseInt(limit)) {
+            if (records.length < parseInt(limit) && pageRecords.length > 0) {
               fetchNextPage();
             } else {
               resolve();
