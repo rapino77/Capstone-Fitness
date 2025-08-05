@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { format, subDays } from 'date-fns';
 import axios from 'axios';
 
@@ -19,8 +19,13 @@ const WorkoutHistory = () => {
     hasMore: false
   });
 
+  const isFetching = useRef(false);
+
   const fetchWorkouts = useCallback(async (resetOffset = false) => {
+    if (isFetching.current) return; // Prevent multiple simultaneous fetches
+    
     try {
+      isFetching.current = true;
       setIsLoading(true);
       const offset = resetOffset ? 0 : pagination.offset;
       
@@ -44,8 +49,9 @@ const WorkoutHistory = () => {
       console.error('Failed to fetch workouts:', error);
     } finally {
       setIsLoading(false);
+      isFetching.current = false;
     }
-  }, [filters, pagination]);
+  }, [filters, pagination.limit]); // Only depend on limit, not entire pagination object
 
   useEffect(() => {
     fetchWorkouts(true);
