@@ -102,17 +102,47 @@ exports.handler = async (event, context) => {
 
     // Auto-update body weight goals after logging weight
     try {
-      console.log('Triggering body weight goal auto-update after weight logging...');
-      const updateResponse = await fetch(`${process.env.NETLIFY_URL || 'https://delicate-gaufre-27c80c.netlify.app'}/.netlify/functions/update-body-weight-goals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trigger: 'weight_logged', recordId: record.id })
-      });
+      console.log('Auto-updating body weight goals after weight logging...');
       
-      const updateResult = await updateResponse.json();
-      console.log('Goal update result:', updateResult);
+      // Get all active Body Weight goals and update them with the new weight
+      const goalRecords = await base('Goals').select({
+        filterByFormula: `AND({Status} = 'Active', {Goal Type} = 'Body Weight')`,
+      }).all();
+      
+      console.log(`Found ${goalRecords.length} active body weight goals to update`);
+      
+      let goalsUpdated = 0;
+      for (const goalRecord of goalRecords) {
+        try {
+          const goalId = goalRecord.id;
+          const currentValue = goalRecord.get('Current Value') || 0;
+          
+          // Update the goal's current value with the new weight
+          if (weight !== currentValue) {
+            await base('Goals').update(goalId, {
+              'Current Value': weight
+            });
+            
+            console.log(`Updated goal ${goalId}: ${currentValue} → ${weight} lbs`);
+            
+            // Calculate progress percentage for potential milestone celebrations
+            const targetValue = Number(goalRecord.get('Target Value'));
+            const oldProgressPercentage = targetValue > 0 ? (currentValue / targetValue) * 100 : 0;
+            const newProgressPercentage = targetValue > 0 ? (weight / targetValue) * 100 : 0;
+            
+            console.log(`Goal progress: ${oldProgressPercentage.toFixed(1)}% → ${newProgressPercentage.toFixed(1)}%`);
+            
+            goalsUpdated++;
+          }
+        } catch (goalError) {
+          console.error(`Failed to update goal ${goalRecord.id}:`, goalError);
+        }
+      }
+      
+      console.log(`Successfully updated ${goalsUpdated} body weight goals`);
+      
     } catch (goalUpdateError) {
-      console.error('Failed to auto-update goals:', goalUpdateError);
+      console.error('Failed to auto-update body weight goals:', goalUpdateError);
       // Don't fail the weight logging if goal update fails
     }
 

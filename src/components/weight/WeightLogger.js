@@ -169,13 +169,17 @@ const WeightLogger = () => {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-weight`, data);
       
       if (response.data.success) {
-        setSubmitMessage({ type: 'success', text: 'Weight logged successfully!' });
+        setSubmitMessage({ type: 'success', text: 'Weight logged successfully! Body weight goals updated automatically.' });
         reset({ ...data, weight: '' });
         fetchWeightData(); // Refresh all weight data
+        
         // Refresh correlation data if we're viewing it
         if (viewMode === 'correlation') {
           fetchCorrelationData();
         }
+        
+        // Note: Body weight goals are automatically updated by the log-weight function
+        console.log('Weight logged successfully. Body weight goals should be updated automatically.');
       }
     } catch (error) {
       setSubmitMessage({ 
