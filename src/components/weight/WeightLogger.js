@@ -15,10 +15,12 @@ import {
   Area
 } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
+import { useCelebration } from '../../context/CelebrationContext';
 import WeightEntriesTable from './WeightEntriesTable';
 
 const WeightLogger = () => {
   const { theme } = useTheme();
+  const { celebrateMilestone, celebrateGoalCompletion } = useCelebration();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
   const [weightData, setWeightData] = useState([]);
@@ -161,6 +163,59 @@ const WeightLogger = () => {
     }
   }, [isLoading, weightData.length, viewMode, fetchCorrelationData]); // Include all dependencies
 
+  // Function to check for milestone celebrations after weight is logged
+  const checkForMilestoneCelebrations = async (newWeight) => {
+    try {
+      // Get all active body weight goals to check for milestone achievements
+      const goalsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
+        params: {
+          status: 'Active',
+          goalType: 'Body Weight'
+        }
+      });
+      
+      if (goalsResponse.data.success && goalsResponse.data.data.length > 0) {
+        for (const goal of goalsResponse.data.data) {
+          const targetValue = goal.targetValue;
+          const oldValue = goal.currentValue;
+          const newValue = newWeight;
+          
+          // Calculate progress percentages
+          const oldProgressPercentage = targetValue > 0 ? (oldValue / targetValue) * 100 : 0;
+          const newProgressPercentage = targetValue > 0 ? (newValue / targetValue) * 100 : 0;
+          
+          console.log(`Goal "${goal.goalTitle}": ${oldProgressPercentage.toFixed(1)}% → ${newProgressPercentage.toFixed(1)}%`);
+          
+          // Check for milestone achievements
+          const milestones = [25, 50, 75, 100];
+          const passedMilestone = milestones.find(milestone => 
+            oldProgressPercentage < milestone && newProgressPercentage >= milestone
+          );
+          
+          if (passedMilestone) {
+            console.log('🎉 Weight milestone achieved:', passedMilestone, '%');
+            
+            setTimeout(() => {
+              if (passedMilestone === 100) {
+                // Goal completed celebration
+                celebrateGoalCompletion(
+                  goal.goalTitle, 
+                  Math.abs(new Date(goal.targetDate) - new Date()) / (1000 * 60 * 60 * 24)
+                );
+              } else {
+                // Milestone celebration
+                celebrateMilestone(goal.goalTitle, passedMilestone, newProgressPercentage);
+              }
+            }, 1000); // Small delay to ensure UI is ready
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check for milestone celebrations:', error);
+      // Don't fail the weight logging if celebration check fails
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitMessage({ type: '', text: '' });
@@ -173,13 +228,15 @@ const WeightLogger = () => {
         reset({ ...data, weight: '' });
         fetchWeightData(); // Refresh all weight data
         
+        // Check for milestone celebrations
+        await checkForMilestoneCelebrations(Number(data.weight));
+        
         // Refresh correlation data if we're viewing it
         if (viewMode === 'correlation') {
           fetchCorrelationData();
         }
         
-        // Note: Body weight goals are automatically updated by the log-weight function
-        console.log('Weight logged successfully. Body weight goals should be updated automatically.');
+        console.log('Weight logged successfully. Checking for milestone celebrations...');
       }
     } catch (error) {
       setSubmitMessage({ 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { CelebrationProvider } from './context/CelebrationContext';
 import WorkoutForm from './components/workouts/WorkoutForm';
 import WorkoutHistory from './components/workouts/WorkoutHistory';
 import WeightLogger from './components/weight/WeightLogger';
@@ -190,7 +191,9 @@ const AppContent = () => {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <CelebrationProvider>
+        <AppContent />
+      </CelebrationProvider>
     </ThemeProvider>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import axios from 'axios';
-import CelebrationSystem, { useCelebration, celebrateMilestone, celebrateGoalCompletion } from '../common/CelebrationSystem';
+import { useCelebration } from '../../context/CelebrationContext';
 
 const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [goals, setGoals] = useState([]);
@@ -13,7 +13,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const { celebration, celebrate, closeCelebration } = useCelebration();
+  const { celebrateMilestone, celebrateGoalCompletion } = useCelebration();
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -94,19 +94,13 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
           
           if (passedMilestone === 100 || isCompleted) {
             // Goal completed celebration
-            const celebrationData = celebrateGoalCompletion(
+            celebrateGoalCompletion(
               updatedGoal.goalTitle, 
               Math.abs(new Date(updatedGoal.targetDate) - new Date(updatedGoal.createdDate)) / (1000 * 60 * 60 * 24)
             );
-            celebrate(celebrationData.type, celebrationData.data);
           } else {
             // Milestone celebration
-            const celebrationData = celebrateMilestone(
-              updatedGoal.goalTitle,
-              passedMilestone,
-              newProgressPercentage
-            );
-            celebrate(celebrationData.type, celebrationData.data);
+            celebrateMilestone(updatedGoal.goalTitle, passedMilestone, newProgressPercentage);
           }
         }
         
@@ -553,16 +547,6 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         </div>
       )}
 
-      {/* Celebration System */}
-      {celebration && (
-        <CelebrationSystem
-          show={celebration.show}
-          type={celebration.type}
-          data={celebration.data}
-          onClose={closeCelebration}
-          duration={celebration.duration}
-        />
-      )}
     </div>
   );
 };
