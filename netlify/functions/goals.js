@@ -246,7 +246,11 @@ async function handleCreateGoal(base, data, headers) {
       'Current Value': Number(data.currentValue) || 0,
       'Target Date': data.targetDate,
       'Exercise Name': data.exerciseName || '',
-      'Status': 'Active'
+      'Status': 'Active',
+      'Priority': data.priority || 'Medium',
+      'Notes': data.notes || '',
+      'Goal Title': data.goalTitle || data.goalType,
+      'Created Date': new Date().toISOString().split('T')[0]
     });
 
     return {
@@ -318,17 +322,48 @@ async function handleDeleteGoal(base, goalId, headers) {
 
 // Helper function to format goal records
 function formatGoalRecord(record) {
+  const currentValue = record.get('Current Value') || 0;
+  const targetValue = record.get('Target Value') || 1;
+  const progressPercentage = Math.min((currentValue / targetValue) * 100, 100);
+  
+  // Calculate days remaining
+  const targetDate = new Date(record.get('Target Date'));
+  const today = new Date();
+  const daysRemaining = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+  
   return {
     id: record.id,
     userId: record.get('User ID'),
     goalType: record.get('Goal Type'),
-    goalTitle: record.get('Goal Type'), // Using goal type as title since no title field exists
+    goalTitle: record.get('Goal Title') || record.get('Goal Type'),
     targetValue: record.get('Target Value'),
-    currentValue: record.get('Current Value') || 0,
+    currentValue: currentValue,
     targetDate: record.get('Target Date'),
     exerciseName: record.get('Exercise Name'),
     status: record.get('Status'),
-    progressPercentage: record.get('Goal Progress') || 0,
-    createdDate: record.get('Created Date')
+    priority: record.get('Priority') || 'Medium',
+    notes: record.get('Notes') || '',
+    progressPercentage: Math.round(progressPercentage * 100) / 100,
+    createdDate: record.get('Created Date'),
+    daysRemaining: daysRemaining,
+    milestoneStatus: calculateMilestoneStatus(progressPercentage),
+    isOverdue: daysRemaining < 0 && record.get('Status') === 'Active',
+    urgencyLevel: calculateUrgencyLevel(daysRemaining, progressPercentage)
   };
+}
+
+function calculateMilestoneStatus(progressPercentage) {
+  if (progressPercentage >= 100) return 'completed';
+  if (progressPercentage >= 75) return 'milestone_75';
+  if (progressPercentage >= 50) return 'milestone_50';
+  if (progressPercentage >= 25) return 'milestone_25';
+  return 'started';
+}
+
+function calculateUrgencyLevel(daysRemaining, progressPercentage) {
+  if (daysRemaining < 0) return 'overdue';
+  if (daysRemaining <= 7 && progressPercentage < 80) return 'critical';
+  if (daysRemaining <= 14 && progressPercentage < 60) return 'urgent';
+  if (daysRemaining <= 30 && progressPercentage < 40) return 'moderate';
+  return 'low';
 }

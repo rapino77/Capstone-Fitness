@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import axios from 'axios';
+import CelebrationSystem, { useCelebration, celebrateMilestone, celebrateGoalCompletion } from '../common/CelebrationSystem';
 
 const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [goals, setGoals] = useState([]);
@@ -11,6 +12,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   const [progressNotes, setProgressNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+  const { celebration, celebrate, closeCelebration } = useCelebration();
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -51,12 +53,16 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
       
       if (response.data.success) {
         // Update local state with new goal data
+        const updatedGoal = goals.find(g => g.id === goalId);
+        const oldProgressPercentage = updatedGoal?.progressPercentage || 0;
+        const newProgressPercentage = response.data.data.goalProgress || 0;
+        
         setGoals(prevGoals => 
           prevGoals.map(goal => 
             goal.id === goalId ? {
               ...goal,
               currentValue: response.data.data.currentValue,
-              progressPercentage: response.data.data.goalProgress,
+              progressPercentage: newProgressPercentage,
               status: response.data.data.status
             } : goal
           )
@@ -66,9 +72,29 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         setProgressValue('');
         setProgressNotes('');
         
-        if (response.data.data.completed) {
-          // Show completion celebration
-          alert(`🏆 Congratulations! Goal completed successfully!`);
+        // Check for milestone achievements
+        const milestones = [25, 50, 75, 100];
+        const passedMilestone = milestones.find(milestone => 
+          oldProgressPercentage < milestone && newProgressPercentage >= milestone
+        );
+        
+        if (passedMilestone) {
+          if (passedMilestone === 100) {
+            // Goal completed celebration
+            const celebrationData = celebrateGoalCompletion(
+              updatedGoal.goalTitle, 
+              Math.abs(new Date(updatedGoal.targetDate) - new Date(updatedGoal.createdDate)) / (1000 * 60 * 60 * 24)
+            );
+            celebrate(celebrationData.type, celebrationData.data);
+          } else {
+            // Milestone celebration
+            const celebrationData = celebrateMilestone(
+              updatedGoal.goalTitle,
+              passedMilestone,
+              newProgressPercentage
+            );
+            celebrate(celebrationData.type, celebrationData.data);
+          }
         }
 
         if (onUpdateGoal) onUpdateGoal();
@@ -259,17 +285,58 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
                   )}
                 </div>
 
-                {/* Progress Bar */}
+                {/* Progress Bar with Milestone Indicators */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
                     <span>Progress: {goal.currentValue} / {goal.targetValue}</span>
                     <span>{progressPercentage.toFixed(1)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  
+                  {/* Progress Bar with Milestone Markers */}
+                  <div className="relative w-full bg-gray-200 rounded-full h-3">
+                    {/* Milestone Markers */}
+                    {[25, 50, 75].map(milestone => (
+                      <div
+                        key={milestone}
+                        className={`absolute top-0 w-0.5 h-3 ${
+                          progressPercentage >= milestone ? 'bg-white' : 'bg-gray-400'
+                        }`}
+                        style={{ left: `${milestone}%` }}
+                        title={`${milestone}% milestone`}
+                      />
+                    ))}
+                    
+                    {/* Progress Fill */}
                     <div
-                      className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(progressPercentage)}`}
+                      className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(progressPercentage)} relative overflow-hidden`}
                       style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                    />
+                    >
+                      {/* Milestone Achievement Glow */}
+                      {[25, 50, 75, 100].map(milestone => 
+                        progressPercentage >= milestone && (
+                          <div
+                            key={milestone}
+                            className="absolute inset-0 bg-white opacity-20 animate-pulse"
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Milestone Status */}
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    {[25, 50, 75, 100].map(milestone => (
+                      <span 
+                        key={milestone}
+                        className={`${
+                          progressPercentage >= milestone 
+                            ? 'text-green-600 font-medium' 
+                            : 'text-gray-400'
+                        }`}
+                      >
+                        {progressPercentage >= milestone ? '✓' : ''} {milestone}%
+                      </span>
+                    ))}
                   </div>
                 </div>
 
@@ -336,6 +403,17 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
             );
           })}
         </div>
+      )}
+
+      {/* Celebration System */}
+      {celebration && (
+        <CelebrationSystem
+          show={celebration.show}
+          type={celebration.type}
+          data={celebration.data}
+          onClose={closeCelebration}
+          duration={celebration.duration}
+        />
       )}
     </div>
   );
