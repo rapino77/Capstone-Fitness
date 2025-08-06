@@ -118,6 +118,9 @@ exports.handler = async (event, context) => {
     console.log('Creating record with data:', recordData);
     const record = await base('BodyWeight').create(recordData);
 
+    // Initialize milestoneAchievements array outside try block
+    let milestoneAchievements = [];
+    
     // Auto-update body weight goals after logging weight
     try {
       console.log('Auto-updating body weight goals after weight logging...');
@@ -130,7 +133,6 @@ exports.handler = async (event, context) => {
       console.log(`Found ${goalRecords.length} active body weight goals to update`);
       
       let goalsUpdated = 0;
-      const milestoneAchievements = [];
       
       for (const goalRecord of goalRecords) {
         try {
@@ -208,7 +210,7 @@ exports.handler = async (event, context) => {
         message: 'Weight logged successfully',
         id: record.id,
         data: record.fields,
-        milestoneAchievements: milestoneAchievements || []
+        milestoneAchievements: milestoneAchievements
       })
     };
 
