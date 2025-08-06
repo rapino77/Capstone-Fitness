@@ -211,7 +211,30 @@ const WorkoutForm = ({ onSuccess }) => {
                 </div>
               </div>
             ) : progressionSuggestion?.isFirstWorkout ? (
-              <p className="text-sm text-blue-700">First time logging this exercise - no progression suggestion available yet.</p>
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-sm font-semibold text-green-900">🌟 First Time Exercise - Starter Suggestion:</h3>
+                  <button
+                    type="button"
+                    onClick={applyProgressionSuggestion}
+                    className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                  >
+                    Use Suggestion
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-green-800">
+                    <span className="font-medium">Recommended Start:</span> 
+                    {progressionSuggestion.suggestion?.sets} sets × 
+                    {progressionSuggestion.suggestion?.reps} reps @ 
+                    {progressionSuggestion.suggestion?.weight} lbs
+                  </p>
+                  <p className="text-xs text-green-700">{progressionSuggestion.reason}</p>
+                  <div className="mt-2 p-2 bg-green-100 rounded text-xs text-green-800">
+                    💡 <strong>Beginner Tip:</strong> Start conservative and focus on proper form. You can always increase the weight next session!
+                  </div>
+                </div>
+              </div>
             ) : null}
           </div>
         )}
