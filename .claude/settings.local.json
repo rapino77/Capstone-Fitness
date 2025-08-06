@@ -22,7 +22,9 @@
       "Bash(npx netlify dev:*)",
       "Bash(dir /A .env*)",
       "Bash(netlify dev:*)",
-      "Bash(npx netlify-lambda serve:*)"
+      "Bash(npx netlify-lambda serve:*)",
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

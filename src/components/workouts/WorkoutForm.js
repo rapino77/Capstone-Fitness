@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import axios from 'axios';
+import { calculateNextWorkout, getProgressionParams } from '../../utils/progressiveOverload';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
+  const [progressionSuggestion, setProgressionSuggestion] = useState(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+  const [progressiveOverloadEnabled, setProgressiveOverloadEnabled] = useState(true);
+  const [recentWorkouts, setRecentWorkouts] = useState([]);
   
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors }
   } = useForm({
     defaultValues: {
@@ -20,6 +27,8 @@ const WorkoutForm = ({ onSuccess }) => {
       weight: 0
     }
   });
+
+  const selectedExercise = watch('exercise');
 
   const commonExercises = [
     'Bench Press',
@@ -37,16 +46,72 @@ const WorkoutForm = ({ onSuccess }) => {
     'Other'
   ];
 
+  const fetchProgressionSuggestion = useCallback(async (exercise) => {
+    setLoadingSuggestion(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-progression-suggestion`, {
+        params: { exercise }
+      });
+      
+      if (response.data.success && response.data.progression) {
+        setProgressionSuggestion(response.data.progression);
+        setRecentWorkouts(response.data.workoutHistory || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch progression suggestion:', error);
+      // If API fails, try to calculate locally if we have recent workouts
+      if (recentWorkouts.length > 0) {
+        const params = getProgressionParams(exercise);
+        const suggestion = calculateNextWorkout(recentWorkouts, exercise, params);
+        setProgressionSuggestion(suggestion);
+      }
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  }, [recentWorkouts]);
+
+  // Fetch progression suggestion when exercise changes
+  useEffect(() => {
+    if (selectedExercise && selectedExercise !== 'Other' && progressiveOverloadEnabled) {
+      fetchProgressionSuggestion(selectedExercise);
+    } else {
+      setProgressionSuggestion(null);
+    }
+  }, [selectedExercise, progressiveOverloadEnabled, fetchProgressionSuggestion]);
+
+  const applyProgressionSuggestion = () => {
+    if (progressionSuggestion?.suggestion) {
+      setValue('sets', progressionSuggestion.suggestion.sets);
+      setValue('reps', progressionSuggestion.suggestion.reps);
+      setValue('weight', progressionSuggestion.suggestion.weight);
+      
+      // Add note about applying progression
+      const currentNotes = watch('notes') || '';
+      const progressionNote = `Applied progressive overload: ${progressionSuggestion.reason}`;
+      setValue('notes', currentNotes ? `${currentNotes}\n${progressionNote}` : progressionNote);
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, data);
+      // Include progression tracking info
+      const submissionData = {
+        ...data,
+        progressionApplied: progressionSuggestion?.suggestion && 
+          data.sets === progressionSuggestion.suggestion.sets &&
+          data.reps === progressionSuggestion.suggestion.reps &&
+          data.weight === progressionSuggestion.suggestion.weight
+      };
+
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, submissionData);
       
       if (response.data.success) {
         setSubmitMessage({ type: 'success', text: 'Workout logged successfully!' });
         reset();
+        setProgressionSuggestion(null);
         if (onSuccess) onSuccess(response.data);
       }
     } catch (error) {
@@ -61,7 +126,19 @@ const WorkoutForm = ({ onSuccess }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6">Log Workout</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Log Workout</h2>
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={progressiveOverloadEnabled}
+            onChange={(e) => setProgressiveOverloadEnabled(e.target.checked)}
+            className="mr-2"
+          />
+          <span className="text-sm text-gray-600">Progressive Overload</span>
+          <span className="ml-1 text-xs text-blue-600 font-medium">(ON by default)</span>
+        </label>
+      </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
@@ -81,6 +158,63 @@ const WorkoutForm = ({ onSuccess }) => {
             <p className="mt-1 text-sm text-red-600">{errors.exercise.message}</p>
           )}
         </div>
+
+        {/* Progressive Overload Suggestion */}
+        {progressiveOverloadEnabled && selectedExercise && selectedExercise !== 'Other' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            {loadingSuggestion ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                <span className="text-sm text-blue-700">Loading progression suggestion...</span>
+              </div>
+            ) : progressionSuggestion?.suggestion ? (
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-sm font-semibold text-blue-900">Progressive Overload Suggestion:</h3>
+                  <button
+                    type="button"
+                    onClick={applyProgressionSuggestion}
+                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Target:</span> 
+                    {progressionSuggestion.suggestion.sets} sets × 
+                    {progressionSuggestion.suggestion.reps} reps @ 
+                    {progressionSuggestion.suggestion.weight} lbs
+                  </p>
+                  <p className="text-xs text-blue-700">{progressionSuggestion.reason}</p>
+                  {progressionSuggestion.lastWorkout && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      Last workout: {progressionSuggestion.lastWorkout.sets}×{progressionSuggestion.lastWorkout.reps} @ {progressionSuggestion.lastWorkout.weight}lbs
+                    </p>
+                  )}
+                  <div className="flex items-center mt-2">
+                    <span className="text-xs text-blue-700 mr-2">Confidence:</span>
+                    <div className="flex space-x-1">
+                      {['high', 'medium', 'low'].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-2 w-8 rounded ${
+                            progressionSuggestion.confidence === 'high' && level !== 'low' ? 'bg-blue-600' :
+                            progressionSuggestion.confidence === 'medium' && level === 'high' ? 'bg-blue-600' :
+                            progressionSuggestion.confidence === 'medium' && level === 'medium' ? 'bg-blue-400' :
+                            'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : progressionSuggestion?.isFirstWorkout ? (
+              <p className="text-sm text-blue-700">First time logging this exercise - no progression suggestion available yet.</p>
+            ) : null}
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-4">
           <div>

@@ -15,8 +15,7 @@ import {
   ComposedChart,
   ScatterChart,
   Scatter,
-  ReferenceLine,
-  ReferenceArea
+  ReferenceLine
 } from 'recharts';
 import { format } from 'date-fns';
 
