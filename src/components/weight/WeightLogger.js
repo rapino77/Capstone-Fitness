@@ -163,57 +163,28 @@ const WeightLogger = () => {
     }
   }, [isLoading, weightData.length, viewMode, fetchCorrelationData]); // Include all dependencies
 
-  // Function to check for milestone celebrations after weight is logged
-  const checkForMilestoneCelebrations = async (newWeight) => {
-    try {
-      // Get all active body weight goals to check for milestone achievements
-      const goalsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
-        params: {
-          status: 'Active',
-          goalType: 'Body Weight'
-        }
-      });
-      
-      if (goalsResponse.data.success && goalsResponse.data.data.length > 0) {
-        for (const goal of goalsResponse.data.data) {
-          const targetValue = goal.targetValue;
-          const oldValue = goal.currentValue;
-          const newValue = newWeight;
-          
-          // Calculate progress percentages
-          const oldProgressPercentage = targetValue > 0 ? (oldValue / targetValue) * 100 : 0;
-          const newProgressPercentage = targetValue > 0 ? (newValue / targetValue) * 100 : 0;
-          
-          console.log(`Goal "${goal.goalTitle}": ${oldProgressPercentage.toFixed(1)}% → ${newProgressPercentage.toFixed(1)}%`);
-          
-          // Check for milestone achievements
-          const milestones = [25, 50, 75, 100];
-          const passedMilestone = milestones.find(milestone => 
-            oldProgressPercentage < milestone && newProgressPercentage >= milestone
-          );
-          
-          if (passedMilestone) {
-            console.log('🎉 Weight milestone achieved:', passedMilestone, '%');
-            
-            setTimeout(() => {
-              if (passedMilestone === 100) {
-                // Goal completed celebration
-                celebrateGoalCompletion(
-                  goal.goalTitle, 
-                  Math.abs(new Date(goal.targetDate) - new Date()) / (1000 * 60 * 60 * 24)
-                );
-              } else {
-                // Milestone celebration
-                celebrateMilestone(goal.goalTitle, passedMilestone, newProgressPercentage);
-              }
-            }, 1000); // Small delay to ensure UI is ready
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to check for milestone celebrations:', error);
-      // Don't fail the weight logging if celebration check fails
+  // Function to trigger celebrations based on milestone achievements from backend
+  const triggerMilestoneCelebrations = (milestoneAchievements) => {
+    if (!milestoneAchievements || milestoneAchievements.length === 0) {
+      console.log('📊 No milestone achievements to celebrate');
+      return;
     }
+    
+    console.log('🎉 Processing milestone achievements:', milestoneAchievements);
+    
+    milestoneAchievements.forEach((achievement, index) => {
+      setTimeout(() => {
+        console.log(`🎊 Triggering celebration for ${achievement.milestone}% milestone on goal: ${achievement.goalTitle}`);
+        
+        if (achievement.isCompleted || achievement.milestone === 100) {
+          // Goal completed celebration
+          celebrateGoalCompletion(achievement.goalTitle, 30); // Default to 30 days
+        } else {
+          // Milestone celebration
+          celebrateMilestone(achievement.goalTitle, achievement.milestone, achievement.newProgress);
+        }
+      }, index * 1500); // Stagger multiple celebrations by 1.5 seconds each
+    });
   };
 
   const onSubmit = async (data) => {
@@ -224,19 +195,32 @@ const WeightLogger = () => {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-weight`, data);
       
       if (response.data.success) {
-        setSubmitMessage({ type: 'success', text: 'Weight logged successfully! Body weight goals updated automatically.' });
+        const milestoneAchievements = response.data.milestoneAchievements || [];
+        
+        let successMessage = 'Weight logged successfully!';
+        if (milestoneAchievements.length > 0) {
+          successMessage += ` 🎉 ${milestoneAchievements.length} milestone${milestoneAchievements.length > 1 ? 's' : ''} achieved!`;
+        } else {
+          successMessage += ' Body weight goals updated automatically.';
+        }
+        
+        setSubmitMessage({ type: 'success', text: successMessage });
         reset({ ...data, weight: '' });
         fetchWeightData(); // Refresh all weight data
         
-        // Check for milestone celebrations
-        await checkForMilestoneCelebrations(Number(data.weight));
+        // Trigger milestone celebrations based on backend response
+        if (milestoneAchievements.length > 0) {
+          setTimeout(() => {
+            triggerMilestoneCelebrations(milestoneAchievements);
+          }, 500); // Small delay to let the success message show first
+        }
         
         // Refresh correlation data if we're viewing it
         if (viewMode === 'correlation') {
           fetchCorrelationData();
         }
         
-        console.log('Weight logged successfully. Checking for milestone celebrations...');
+        console.log('Weight logged successfully. Milestone achievements:', milestoneAchievements);
       }
     } catch (error) {
       setSubmitMessage({ 

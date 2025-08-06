@@ -112,6 +112,8 @@ exports.handler = async (event, context) => {
       console.log(`Found ${goalRecords.length} active body weight goals to update`);
       
       let goalsUpdated = 0;
+      const milestoneAchievements = [];
+      
       for (const goalRecord of goalRecords) {
         try {
           const goalId = goalRecord.id;
@@ -132,6 +134,39 @@ exports.handler = async (event, context) => {
             
             console.log(`Goal progress: ${oldProgressPercentage.toFixed(1)}% → ${newProgressPercentage.toFixed(1)}%`);
             
+            // Check for milestone achievements
+            const milestones = [25, 50, 75, 100];
+            const passedMilestone = milestones.find(milestone => 
+              oldProgressPercentage < milestone && newProgressPercentage >= milestone
+            );
+            
+            if (passedMilestone) {
+              console.log(`🎉 Milestone achieved: ${passedMilestone}% for goal ${goalId}`);
+              
+              // Build goal title from available data
+              const goalType = goalRecord.get('Goal Type');
+              const exerciseName = goalRecord.get('Exercise Name');
+              let goalTitle = goalType;
+              
+              if (exerciseName) {
+                if (goalType === 'Exercise PR') {
+                  goalTitle = `${exerciseName} PR Goal`;
+                } else if (goalType === 'Frequency') {
+                  goalTitle = `${exerciseName} Frequency Goal`;
+                }
+              }
+              
+              milestoneAchievements.push({
+                goalId,
+                goalTitle,
+                milestone: passedMilestone,
+                oldProgress: oldProgressPercentage,
+                newProgress: newProgressPercentage,
+                targetValue,
+                isCompleted: newProgressPercentage >= 100
+              });
+            }
+            
             goalsUpdated++;
           }
         } catch (goalError) {
@@ -140,6 +175,7 @@ exports.handler = async (event, context) => {
       }
       
       console.log(`Successfully updated ${goalsUpdated} body weight goals`);
+      console.log(`Milestone achievements:`, milestoneAchievements);
       
     } catch (goalUpdateError) {
       console.error('Failed to auto-update body weight goals:', goalUpdateError);
@@ -153,7 +189,8 @@ exports.handler = async (event, context) => {
         success: true,
         message: 'Weight logged successfully',
         id: record.id,
-        data: record.fields
+        data: record.fields,
+        milestoneAchievements: milestoneAchievements || []
       })
     };
 
