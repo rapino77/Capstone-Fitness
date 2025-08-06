@@ -60,11 +60,10 @@ const WorkoutForm = ({ onSuccess }) => {
     } catch (error) {
       console.error('Failed to fetch progression suggestion:', error);
       // If API fails, try to calculate locally if we have recent workouts
-      if (recentWorkouts.length > 0) {
-        const params = getProgressionParams(exercise);
-        const suggestion = calculateNextWorkout(recentWorkouts, exercise, params);
-        setProgressionSuggestion(suggestion);
-      }
+      // Otherwise, use local starter suggestions for first-time exercises
+      const params = getProgressionParams(exercise);
+      const suggestion = calculateNextWorkout(recentWorkouts, exercise, params);
+      setProgressionSuggestion(suggestion);
     } finally {
       setLoadingSuggestion(false);
     }

@@ -205,9 +205,20 @@ export function formatProgressionSuggestion(progressionData) {
     return null;
   }
 
-  const { suggestion, reason, confidence, lastWorkout } = progressionData;
+  const { suggestion, reason, confidence, lastWorkout, isFirstWorkout } = progressionData;
   const changes = [];
 
+  // For first workouts, don't show changes since there's no previous workout to compare
+  if (isFirstWorkout || !lastWorkout) {
+    return {
+      changes: [`Starting recommendation: ${suggestion.sets} sets × ${suggestion.reps} reps @ ${suggestion.weight}lbs`],
+      reason,
+      confidence,
+      summary: `Starting with ${suggestion.sets} sets × ${suggestion.reps} reps @ ${suggestion.weight}lbs`
+    };
+  }
+
+  // For existing workouts, show changes
   if (suggestion.weight !== lastWorkout.weight) {
     const diff = suggestion.weight - lastWorkout.weight;
     changes.push(`Weight: ${lastWorkout.weight} → ${suggestion.weight}lbs (${diff > 0 ? '+' : ''}${diff})`);

@@ -39,39 +39,44 @@ exports.handler = async (event, context) => {
       };
     }
 
-    if (!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) {
-      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN environment variable is not set');
-    }
-    if (!process.env.AIRTABLE_BASE_ID) {
-      throw new Error('AIRTABLE_BASE_ID environment variable is not set');
-    }
+    let workouts = [];
+    
+    // Try to fetch from Airtable, but don't fail if it's not available
+    if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
+      try {
+        const base = new Airtable({
+          apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
+        }).base(process.env.AIRTABLE_BASE_ID);
 
-    const base = new Airtable({
-      apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
-    }).base(process.env.AIRTABLE_BASE_ID);
-
-    // Fetch recent workouts for the exercise
-    const workouts = [];
-    await base('Workouts')
-      .select({
-        filterByFormula: `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`,
-        sort: [{ field: 'Date', direction: 'desc' }],
-        maxRecords: parseInt(workoutsToAnalyze)
-      })
-      .eachPage((records, fetchNextPage) => {
-        records.forEach(record => {
-          workouts.push({
-            id: record.id,
-            date: record.get('Date'),
-            exercise: record.get('Exercise'),
-            sets: record.get('Sets') || 3,
-            reps: record.get('Reps') || 10,
-            weight: record.get('Weight') || 0,
-            notes: record.get('Notes') || ''
+        // Fetch recent workouts for the exercise
+        await base('Workouts')
+          .select({
+            filterByFormula: `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`,
+            sort: [{ field: 'Date', direction: 'desc' }],
+            maxRecords: parseInt(workoutsToAnalyze)
+          })
+          .eachPage((records, fetchNextPage) => {
+            records.forEach(record => {
+              workouts.push({
+                id: record.id,
+                date: record.get('Date'),
+                exercise: record.get('Exercise'),
+                sets: record.get('Sets') || 3,
+                reps: record.get('Reps') || 10,
+                weight: record.get('Weight') || 0,
+                notes: record.get('Notes') || ''
+              });
+            });
+            fetchNextPage();
           });
-        });
-        fetchNextPage();
-      });
+      } catch (airtableError) {
+        console.log('Airtable fetch failed, proceeding with empty workout history:', airtableError.message);
+        // Continue with empty workouts array - this will trigger first-workout logic
+      }
+    } else {
+      console.log('Airtable credentials not available, proceeding with empty workout history');
+      // Continue with empty workouts array - this will trigger first-workout logic
+    }
 
     // Import the progression calculation logic
     const progressionLogic = getProgressionLogic();
@@ -132,14 +137,108 @@ function getProgressionLogic() {
     const params = { ...PROGRESSION_PARAMS, ...customParams };
     
     if (!recentWorkouts || recentWorkouts.length === 0) {
-      // Provide beginner-friendly starting suggestions
-      const starterSuggestion = getStarterSuggestion(exerciseName);
+      // Provide beginner-friendly starting suggestions - inline function for scoping
+      const starterSuggestion = getStarterSuggestionInline(exerciseName);
       return {
         suggestion: starterSuggestion.suggestion,
         reason: starterSuggestion.reason,
         confidence: 'medium',
         isFirstWorkout: true,
         exerciseType: starterSuggestion.exerciseType
+      };
+    }
+
+    function getStarterSuggestionInline(exerciseName) {
+      const exerciseLower = exerciseName.toLowerCase();
+      
+      // Compound movements
+      if (exerciseLower.includes('bench press')) {
+        return {
+          suggestion: { sets: 3, reps: 8, weight: 45 },
+          reason: 'Starting with Olympic barbell (45lbs) - focus on form first',
+          exerciseType: 'compound'
+        };
+      }
+      
+      if (exerciseLower.includes('squat')) {
+        return {
+          suggestion: { sets: 3, reps: 8, weight: 45 },
+          reason: 'Starting with Olympic barbell (45lbs) - master the movement pattern',
+          exerciseType: 'compound'
+        };
+      }
+      
+      if (exerciseLower.includes('deadlift')) {
+        return {
+          suggestion: { sets: 3, reps: 5, weight: 95 },
+          reason: 'Starting with 95lbs (bar + 25lb plates) for proper bar height',
+          exerciseType: 'compound'
+        };
+      }
+      
+      if (exerciseLower.includes('overhead press') || exerciseLower.includes('shoulder press')) {
+        return {
+          suggestion: { sets: 3, reps: 8, weight: 25 },
+          reason: 'Starting with light weight to develop shoulder stability',
+          exerciseType: 'compound'
+        };
+      }
+      
+      if (exerciseLower.includes('bent over row') || exerciseLower.includes('barbell row')) {
+        return {
+          suggestion: { sets: 3, reps: 8, weight: 65 },
+          reason: 'Starting with moderate weight to learn proper rowing form',
+          exerciseType: 'compound'
+        };
+      }
+      
+      // Bodyweight exercises
+      if (exerciseLower.includes('pull-up') || exerciseLower.includes('chin-up')) {
+        return {
+          suggestion: { sets: 3, reps: 5, weight: 0 },
+          reason: 'Start with bodyweight - use assistance if needed',
+          exerciseType: 'bodyweight'
+        };
+      }
+      
+      if (exerciseLower.includes('push-up')) {
+        return {
+          suggestion: { sets: 3, reps: 10, weight: 0 },
+          reason: 'Bodyweight push-ups - modify on knees if needed',
+          exerciseType: 'bodyweight'
+        };
+      }
+      
+      if (exerciseLower.includes('dip')) {
+        return {
+          suggestion: { sets: 3, reps: 6, weight: 0 },
+          reason: 'Bodyweight dips - use assistance machine if needed',
+          exerciseType: 'bodyweight'
+        };
+      }
+      
+      // Isolation exercises
+      if (exerciseLower.includes('curl')) {
+        return {
+          suggestion: { sets: 3, reps: 12, weight: 15 },
+          reason: 'Light weight to focus on bicep muscle connection',
+          exerciseType: 'isolation'
+        };
+      }
+      
+      if (exerciseLower.includes('extension')) {
+        return {
+          suggestion: { sets: 3, reps: 12, weight: 15 },
+          reason: 'Conservative weight for controlled tricep movement',
+          exerciseType: 'isolation'
+        };
+      }
+      
+      // Default suggestion
+      return {
+        suggestion: { sets: 3, reps: 10, weight: 10 },
+        reason: 'Conservative starting point - adjust based on your strength level',
+        exerciseType: 'general'
       };
     }
 
@@ -282,9 +381,20 @@ function getProgressionLogic() {
       return null;
     }
 
-    const { suggestion, reason, confidence, lastWorkout } = progressionData;
+    const { suggestion, reason, confidence, lastWorkout, isFirstWorkout } = progressionData;
     const changes = [];
 
+    // For first workouts, don't show changes since there's no previous workout to compare
+    if (isFirstWorkout || !lastWorkout) {
+      return {
+        changes: [`Starting recommendation: ${suggestion.sets} sets × ${suggestion.reps} reps @ ${suggestion.weight}lbs`],
+        reason,
+        confidence,
+        summary: `Starting with ${suggestion.sets} sets × ${suggestion.reps} reps @ ${suggestion.weight}lbs`
+      };
+    }
+
+    // For existing workouts, show changes
     if (suggestion.weight !== lastWorkout.weight) {
       const diff = suggestion.weight - lastWorkout.weight;
       changes.push(`Weight: ${lastWorkout.weight} → ${suggestion.weight}lbs (${diff > 0 ? '+' : ''}${diff})`);
@@ -308,131 +418,6 @@ function getProgressionLogic() {
     };
   }
 
-  function getStarterSuggestion(exerciseName) {
-    const exerciseLower = exerciseName.toLowerCase();
-    
-    // Compound movements - conservative starting weights
-    if (exerciseLower.includes('bench press')) {
-      return {
-        suggestion: { sets: 3, reps: 8, weight: 45 },
-        reason: 'Starting with Olympic barbell (45lbs) - focus on form first',
-        exerciseType: 'compound'
-      };
-    }
-    
-    if (exerciseLower.includes('squat')) {
-      return {
-        suggestion: { sets: 3, reps: 8, weight: 45 },
-        reason: 'Starting with Olympic barbell (45lbs) - master the movement pattern',
-        exerciseType: 'compound'
-      };
-    }
-    
-    if (exerciseLower.includes('deadlift')) {
-      return {
-        suggestion: { sets: 3, reps: 5, weight: 95 },
-        reason: 'Starting with 95lbs (bar + 25lb plates) for proper bar height',
-        exerciseType: 'compound'
-      };
-    }
-    
-    if (exerciseLower.includes('overhead press') || exerciseLower.includes('shoulder press')) {
-      return {
-        suggestion: { sets: 3, reps: 8, weight: 25 },
-        reason: 'Starting with light weight to develop shoulder stability',
-        exerciseType: 'compound'
-      };
-    }
-    
-    if (exerciseLower.includes('bent over row') || exerciseLower.includes('barbell row')) {
-      return {
-        suggestion: { sets: 3, reps: 8, weight: 65 },
-        reason: 'Starting with moderate weight to learn proper rowing form',
-        exerciseType: 'compound'
-      };
-    }
-    
-    // Bodyweight exercises
-    if (exerciseLower.includes('pull-up') || exerciseLower.includes('chin-up')) {
-      return {
-        suggestion: { sets: 3, reps: 5, weight: 0 },
-        reason: 'Start with bodyweight - use assistance if needed',
-        exerciseType: 'bodyweight'
-      };
-    }
-    
-    if (exerciseLower.includes('push-up')) {
-      return {
-        suggestion: { sets: 3, reps: 10, weight: 0 },
-        reason: 'Bodyweight push-ups - modify on knees if needed',
-        exerciseType: 'bodyweight'
-      };
-    }
-    
-    if (exerciseLower.includes('dip')) {
-      return {
-        suggestion: { sets: 3, reps: 6, weight: 0 },
-        reason: 'Bodyweight dips - use assistance machine if needed',
-        exerciseType: 'bodyweight'
-      };
-    }
-    
-    // Isolation exercises
-    if (exerciseLower.includes('curl')) {
-      return {
-        suggestion: { sets: 3, reps: 12, weight: 15 },
-        reason: 'Light weight to focus on bicep muscle connection',
-        exerciseType: 'isolation'
-      };
-    }
-    
-    if (exerciseLower.includes('extension')) {
-      return {
-        suggestion: { sets: 3, reps: 12, weight: 15 },
-        reason: 'Conservative weight for controlled tricep movement',
-        exerciseType: 'isolation'
-      };
-    }
-    
-    if (exerciseLower.includes('fly')) {
-      return {
-        suggestion: { sets: 3, reps: 12, weight: 10 },
-        reason: 'Very light weight for chest flies - focus on the stretch',
-        exerciseType: 'isolation'
-      };
-    }
-    
-    if (exerciseLower.includes('raise')) {
-      return {
-        suggestion: { sets: 3, reps: 12, weight: 8 },
-        reason: 'Light weight for shoulder raises - quality over quantity',
-        exerciseType: 'isolation'
-      };
-    }
-    
-    if (exerciseLower.includes('leg press')) {
-      return {
-        suggestion: { sets: 3, reps: 12, weight: 90 },
-        reason: 'Starting weight for leg press - machine weight varies by gym',
-        exerciseType: 'machine'
-      };
-    }
-    
-    if (exerciseLower.includes('lunge')) {
-      return {
-        suggestion: { sets: 3, reps: 10, weight: 0 },
-        reason: 'Start with bodyweight lunges to master balance and form',
-        exerciseType: 'bodyweight'
-      };
-    }
-    
-    // Default suggestion
-    return {
-      suggestion: { sets: 3, reps: 10, weight: 10 },
-      reason: 'Conservative starting point - adjust based on your strength level',
-      exerciseType: 'general'
-    };
-  }
 
   return {
     calculateNextWorkout,
