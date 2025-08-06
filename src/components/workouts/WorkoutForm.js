@@ -49,9 +49,16 @@ const WorkoutForm = ({ onSuccess }) => {
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
     setLoadingSuggestion(true);
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-progression-suggestion`, {
-        params: { exercise }
+        params: { exercise },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
       
       if (response.data.success && response.data.progression) {
         setProgressionSuggestion(response.data.progression);

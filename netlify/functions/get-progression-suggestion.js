@@ -41,42 +41,14 @@ exports.handler = async (event, context) => {
 
     let workouts = [];
     
-    // Try to fetch from Airtable, but don't fail if it's not available
-    if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
-      try {
-        const base = new Airtable({
-          apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
-        }).base(process.env.AIRTABLE_BASE_ID);
-
-        // Fetch recent workouts for the exercise
-        await base('Workouts')
-          .select({
-            filterByFormula: `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`,
-            sort: [{ field: 'Date', direction: 'desc' }],
-            maxRecords: parseInt(workoutsToAnalyze)
-          })
-          .eachPage((records, fetchNextPage) => {
-            records.forEach(record => {
-              workouts.push({
-                id: record.id,
-                date: record.get('Date'),
-                exercise: record.get('Exercise'),
-                sets: record.get('Sets') || 3,
-                reps: record.get('Reps') || 10,
-                weight: record.get('Weight') || 0,
-                notes: record.get('Notes') || ''
-              });
-            });
-            fetchNextPage();
-          });
-      } catch (airtableError) {
-        console.log('Airtable fetch failed, proceeding with empty workout history:', airtableError.message);
-        // Continue with empty workouts array - this will trigger first-workout logic
-      }
-    } else {
-      console.log('Airtable credentials not available, proceeding with empty workout history');
-      // Continue with empty workouts array - this will trigger first-workout logic
-    }
+    // For now, skip Airtable and proceed with empty workouts to test first-workout logic
+    // This ensures fast response times during development/testing
+    console.log('Skipping Airtable fetch, proceeding with empty workout history for testing');
+    
+    // TODO: Re-enable Airtable integration once proper credentials are configured
+    // if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
+    //   // Airtable integration code here
+    // }
 
     // Import the progression calculation logic
     const progressionLogic = getProgressionLogic();
