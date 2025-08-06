@@ -24,15 +24,33 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Check environment variables
-    if (!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) {
-      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN environment variable is not set');
+    // Check environment variables - support both naming conventions
+    const apiKey = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN || process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    
+    if (!apiKey) {
+      console.error('Missing Airtable API key environment variable');
+      throw new Error('AIRTABLE_PERSONAL_ACCESS_TOKEN or AIRTABLE_API_KEY environment variable is not set');
     }
-    if (!process.env.AIRTABLE_BASE_ID) {
+    if (!baseId) {
+      console.error('Missing Airtable base ID environment variable');
       throw new Error('AIRTABLE_BASE_ID environment variable is not set');
     }
 
-    const data = JSON.parse(event.body);
+    let data;
+    try {
+      data = JSON.parse(event.body || '{}');
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Invalid JSON in request body',
+          message: parseError.message 
+        })
+      };
+    }
     
     // Validate required fields
     if (!data.weight) {
@@ -78,8 +96,8 @@ exports.handler = async (event, context) => {
 
     // Configure Airtable
     const base = new Airtable({
-      apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
-    }).base(process.env.AIRTABLE_BASE_ID);
+      apiKey: apiKey
+    }).base(baseId);
 
     // Create record in Airtable - start with minimal fields that work
     const recordData = {
@@ -195,14 +213,33 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('Error logging weight:', error);
+    console.error('Error logging weight - Full details:', error);
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // More detailed error response
+    let statusCode = 500;
+    let errorMessage = 'Failed to log weight';
+    
+    if (error.message?.includes('environment variable')) {
+      statusCode = 500;
+      errorMessage = 'Server configuration error - Missing environment variables';
+    } else if (error.message?.includes('AUTHENTICATION_REQUIRED')) {
+      statusCode = 401;
+      errorMessage = 'Airtable authentication failed - Check API credentials';
+    } else if (error.message?.includes('NOT_FOUND')) {
+      statusCode = 404;
+      errorMessage = 'Airtable table not found - Check base configuration';
+    }
     
     return {
-      statusCode: 500,
+      statusCode: statusCode,
       headers,
       body: JSON.stringify({
-        error: 'Failed to log weight',
-        message: error.message
+        error: errorMessage,
+        message: error.message,
+        type: error.constructor.name
       })
     };
   }
