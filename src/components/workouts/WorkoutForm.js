@@ -208,7 +208,7 @@ const WorkoutForm = ({ onSuccess }) => {
           </label>
           <select
             {...register('exercise', { required: 'Exercise is required' })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
             <option value="">Select an exercise</option>
             {commonExercises.map((exercise) => (
@@ -343,7 +343,7 @@ const WorkoutForm = ({ onSuccess }) => {
                 min: { value: 1, message: 'Minimum 1 set' },
                 max: { value: 100, message: 'Maximum 100 sets' }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             {errors.sets && (
               <p className="mt-1 text-sm text-red-600">{errors.sets.message}</p>
@@ -361,7 +361,7 @@ const WorkoutForm = ({ onSuccess }) => {
                 min: { value: 1, message: 'Minimum 1 rep' },
                 max: { value: 1000, message: 'Maximum 1000 reps' }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             {errors.reps && (
               <p className="mt-1 text-sm text-red-600">{errors.reps.message}</p>
@@ -380,7 +380,7 @@ const WorkoutForm = ({ onSuccess }) => {
                 min: { value: 0, message: 'Weight cannot be negative' },
                 max: { value: 2000, message: 'Maximum 2000 lbs' }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             {errors.weight && (
               <p className="mt-1 text-sm text-red-600">{errors.weight.message}</p>
@@ -398,7 +398,7 @@ const WorkoutForm = ({ onSuccess }) => {
               required: 'Date is required',
               validate: value => new Date(value) <= new Date() || 'Date cannot be in the future'
             })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           />
           {errors.date && (
             <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
@@ -412,7 +412,7 @@ const WorkoutForm = ({ onSuccess }) => {
           <textarea
             {...register('notes')}
             rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             placeholder="Any additional notes about your workout..."
           />
         </div>
