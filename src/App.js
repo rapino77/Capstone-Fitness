@@ -101,15 +101,15 @@ const AppContent = () => {
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="text-4xl">🏋️‍♂️</div>
+          <div className="flex items-center justify-start">
+            <div className="flex items-center space-x-3 mr-8">
+              <div className="text-4xl">⚡</div>
               <h1 className="text-4xl fitness-title">
                 Fitness Command Center
               </h1>
             </div>
             
-            <div className="flex items-center space-x-6">
+            <div className="flex-1 flex items-center justify-end space-x-6">
               <SearchBar onNavigate={handleSearchNavigation} />
               <div 
                 className="text-sm transition-colors duration-200 hidden sm:block"

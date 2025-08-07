@@ -105,11 +105,11 @@ const SearchBar = ({ onNavigate }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search sections, features..."
-          className="w-64 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          className="w-64 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors placeholder-gray-300"
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
-            color: theme.colors.text
+            color: '#ffffff'
           }}
           onFocus={() => {
             if (filteredResults.length > 0) setIsOpen(true);
