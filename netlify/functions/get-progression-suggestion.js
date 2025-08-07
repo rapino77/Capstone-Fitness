@@ -291,138 +291,28 @@ function getProgressionLogic() {
     const lastReps = lastWorkout.reps || lastWorkout.Reps || 10;
     const lastWeight = lastWorkout.weight || lastWorkout.Weight || 0;
     
-    console.log('Last workout:', {
-      sets: lastSets,
-      reps: lastReps, 
-      weight: lastWeight,
-      date: lastWorkout.date
-    });
+    console.log('=== SIMPLE PROGRESSION ===');
+    console.log('Last workout weight lifted:', lastWeight);
+    console.log('Next suggestion will be:', lastWeight + 5);
 
-    // Simple weekly progression logic:
-    // 1. If only 1 workout, add 5 lbs
-    if (sortedWorkouts.length === 1) {
-      const nextWeight = lastWeight + 5;
-      return {
-        suggestion: {
-          sets: lastSets,
-          reps: lastReps,
-          weight: nextWeight
-        },
-        reason: `Weekly progression: Add 5 lbs (${lastWeight} → ${nextWeight} lbs)`,
-        confidence: 'high',
-        status: 'progressing',
-        lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
-        formatted: {
-          summary: `Add 5 lbs for weekly progression`,
-          changes: [`Weight: ${lastWeight} → ${nextWeight} lbs (+5)`],
-          reason: 'Weekly progressive overload'
-        }
-      };
-    }
-
-    // 2. Check if we made the previous weight target
-    const secondLastWorkout = sortedWorkouts[1];
-    const previousWeight = secondLastWorkout.weight || secondLastWorkout.Weight || 0;
+    // SIMPLE RULE: Always add 5 lbs to whatever weight was last lifted
+    const nextWeight = lastWeight + 5;
     
-    console.log('Comparing weights:', {
-      lastWeight,
-      previousWeight,
-      madeTarget: lastWeight >= previousWeight
-    });
-
-    // 3. If we made the weight, add 5 lbs
-    if (lastWeight >= previousWeight) {
-      const nextWeight = lastWeight + 5;
-      return {
-        suggestion: {
-          sets: lastSets,
-          reps: lastReps,
-          weight: nextWeight
-        },
-        reason: `You hit ${lastWeight} lbs! Time to progress to ${nextWeight} lbs`,
-        confidence: 'high',
-        status: 'progressing',
-        lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
-        formatted: {
-          summary: `Successful progression: add 5 lbs`,
-          changes: [`Weight: ${lastWeight} → ${nextWeight} lbs (+5)`],
-          reason: 'You successfully completed the target weight'
-        }
-      };
-    }
-
-    // 4. If we missed the weight, check for consecutive misses
-    if (lastWeight < previousWeight) {
-      // Count consecutive misses
-      let consecutiveMisses = 1; // Current miss
-      
-      for (let i = 2; i < sortedWorkouts.length; i++) {
-        const currentWorkout = sortedWorkouts[i-1];
-        const prevWorkout = sortedWorkouts[i];
-        
-        const currentWeight = currentWorkout.weight || currentWorkout.Weight || 0;
-        const prevWeight = prevWorkout.weight || prevWorkout.Weight || 0;
-        
-        if (currentWeight < prevWeight) {
-          consecutiveMisses++;
-        } else {
-          break;
-        }
-      }
-
-      console.log('Consecutive misses:', consecutiveMisses);
-
-      // 5. If 2+ consecutive misses, deload by 25%
-      if (consecutiveMisses >= 2) {
-        const deloadWeight = Math.round(lastWeight * 0.75);
-        return {
-          suggestion: {
-            sets: lastSets,
-            reps: lastReps,
-            weight: deloadWeight
-          },
-          reason: `Deload time! You've missed the target weight ${consecutiveMisses} times in a row. Reset to ${deloadWeight} lbs (-25%)`,
-          confidence: 'high',
-          status: 'deloading',
-          lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
-          formatted: {
-            summary: `Deload after ${consecutiveMisses} consecutive misses`,
-            changes: [`Weight: ${lastWeight} → ${deloadWeight} lbs (-25%)`],
-            reason: 'Deload to build back up with better form'
-          }
-        };
-      }
-
-      // 6. If 1 miss, keep the same weight
-      return {
-        suggestion: {
-          sets: lastSets,
-          reps: lastReps,
-          weight: previousWeight // Go back to the target we missed
-        },
-        reason: `You missed ${previousWeight} lbs last time. Let's try it again!`,
-        confidence: 'medium',
-        status: 'retry',
-        lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
-        formatted: {
-          summary: `Retry the missed weight`,
-          changes: [`Weight: ${lastWeight} → ${previousWeight} lbs (retry)`],
-          reason: 'Give the missed weight another attempt'
-        }
-      };
-    }
-
-    // Fallback (shouldn't reach here)
     return {
       suggestion: {
         sets: lastSets,
         reps: lastReps,
-        weight: lastWeight + 5
+        weight: nextWeight
       },
-      reason: 'Continue progressive overload',
-      confidence: 'medium',
+      reason: `Add 5 lbs to your last workout (${lastWeight} → ${nextWeight} lbs)`,
+      confidence: 'high',
       status: 'progressing',
-      lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight }
+      lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
+      formatted: {
+        summary: `Progressive overload: add 5 lbs`,
+        changes: [`Weight: ${lastWeight} → ${nextWeight} lbs (+5)`],
+        reason: `Based on your last ${lastWeight} lbs workout`
+      }
     };
   }
 
