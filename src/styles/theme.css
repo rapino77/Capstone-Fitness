@@ -789,6 +789,14 @@ form select option {
   color: #ea580c !important;
 }
 
+/* Fix Weekly Summary card labels to black */
+.bg-blue-secondary .bg-blue-50 .text-sm.text-gray-600,
+.bg-blue-secondary .bg-green-50 .text-sm.text-gray-600,
+.bg-blue-secondary .bg-purple-50 .text-sm.text-gray-600,
+.bg-blue-secondary .bg-orange-50 .text-sm.text-gray-600 {
+  color: #111827 !important; /* Black text for labels */
+}
+
 /* Animation classes */
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
