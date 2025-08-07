@@ -272,14 +272,48 @@ function getProgressionLogic() {
       };
     }
 
-    // Sort workouts by date (most recent first)
-    const sortedWorkouts = [...recentWorkouts].sort((a, b) => 
-      new Date(b.date) - new Date(a.date)
-    );
+    // Sort workouts by date (most recent first), with same logic as frontend
+    const sortedWorkouts = [...recentWorkouts].sort((a, b) => {
+      const dateA = new Date(a.date || '1900-01-01');
+      const dateB = new Date(b.date || '1900-01-01');
+      
+      // If dates are equal, use weight as tie-breaker (higher weight = more recent)
+      if (dateA.getTime() === dateB.getTime()) {
+        const weightA = parseFloat(a.weight || 0);
+        const weightB = parseFloat(b.weight || 0);
+        
+        if (weightA !== weightB) {
+          return weightB - weightA; // Higher weight first (progressive overload)
+        }
+        
+        // Fallback to record ID comparison
+        const idA = a.id || '';
+        const idB = b.id || '';
+        return idB.localeCompare(idA);
+      }
+      
+      return dateB - dateA;
+    });
 
     console.log('=== SIMPLE WEEKLY PROGRESSION ===');
     console.log('Exercise:', exerciseName);
     console.log('Total workouts found:', sortedWorkouts.length);
+    
+    // Debug: Show the sorting results
+    console.log('Workouts after sorting:', sortedWorkouts.map(w => ({
+      id: w.id,
+      date: w.date,
+      weight: w.weight,
+      isFirst: sortedWorkouts.indexOf(w) === 0
+    })));
+    
+    if (sortedWorkouts.length > 0) {
+      console.log('BACKEND SELECTED WORKOUT:', {
+        id: sortedWorkouts[0].id,
+        date: sortedWorkouts[0].date,
+        weight: sortedWorkouts[0].weight
+      });
+    }
     
     // Apply simple weekly progression logic
     return calculateWeeklyProgression(sortedWorkouts, exerciseName);
@@ -291,7 +325,13 @@ function getProgressionLogic() {
     const lastReps = lastWorkout.reps || lastWorkout.Reps || 10;
     const lastWeight = lastWorkout.weight || lastWorkout.Weight || 0;
     
-    console.log('=== SIMPLE PROGRESSION ===');
+    console.log('=== SIMPLE PROGRESSION CALCULATION ===');
+    console.log('Raw last workout object:', lastWorkout);
+    console.log('Extracted weight from workout:', {
+      'lastWorkout.weight': lastWorkout.weight,
+      'lastWorkout.Weight': lastWorkout.Weight,
+      'finalWeight': lastWeight
+    });
     console.log('Last workout weight lifted:', lastWeight);
     console.log('Next suggestion will be:', lastWeight + 5);
 
