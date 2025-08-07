@@ -270,10 +270,10 @@ body {
   color: white !important;
 }
 
-.bg-blue-primary *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white),
-.bg-blue-secondary *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white),
-.bg-blue-accent *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white),
-.bg-blue-gradient *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white) {
+.bg-blue-primary *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white):not(.bg-blue-50):not(.bg-green-50):not(.bg-purple-50):not(.bg-orange-50),
+.bg-blue-secondary *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white):not(.bg-blue-50):not(.bg-green-50):not(.bg-purple-50):not(.bg-orange-50),
+.bg-blue-accent *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white):not(.bg-blue-50):not(.bg-green-50):not(.bg-purple-50):not(.bg-orange-50),
+.bg-blue-gradient *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white):not(.bg-blue-50):not(.bg-green-50):not(.bg-purple-50):not(.bg-orange-50) {
   color: inherit !important;
 }
 
@@ -874,13 +874,22 @@ form select option {
   color: #000000 !important;
 }
 
-/* Force black text for Week Summary cards */
+/* Force black text for Week Summary cards with maximum specificity */
 .bg-blue-secondary .bg-blue-50 p.text-sm,
 .bg-blue-secondary .bg-green-50 p.text-sm,
 .bg-blue-secondary .bg-purple-50 p.text-sm,
 .bg-blue-secondary .bg-orange-50 p.text-sm,
-.bg-blue-secondary .bg-gray-50 p {
+.bg-blue-secondary .bg-gray-50 p,
+.bg-blue-secondary .bg-blue-50 p.text-black,
+.bg-blue-secondary .bg-green-50 p.text-black,
+.bg-blue-secondary .bg-purple-50 p.text-black,
+.bg-blue-secondary .bg-orange-50 p.text-black,
+.bg-blue-secondary .bg-blue-50 p,
+.bg-blue-secondary .bg-green-50 p,
+.bg-blue-secondary .bg-purple-50 p,
+.bg-blue-secondary .bg-orange-50 p {
   color: black !important;
+  -webkit-text-fill-color: black !important;
 }
 
 /* Keep the numbers in their original colors */
@@ -898,4 +907,24 @@ form select option {
 
 .bg-orange-50 .text-2xl.text-orange-600 {
   color: #ea580c !important;
+}
+
+/* ULTIMATE OVERRIDE - Force black text on all Week Summary cards */
+div.bg-blue-secondary div.bg-blue-50 p,
+div.bg-blue-secondary div.bg-green-50 p,
+div.bg-blue-secondary div.bg-purple-50 p,
+div.bg-blue-secondary div.bg-orange-50 p,
+div.bg-blue-secondary div.bg-gray-50 p,
+.bg-blue-secondary .bg-blue-50 p:first-child,
+.bg-blue-secondary .bg-green-50 p:first-child,
+.bg-blue-secondary .bg-purple-50 p:first-child,
+.bg-blue-secondary .bg-orange-50 p:first-child {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Ensure all light background cards have black text */
+div[class*="bg-"][class*="-50"] p {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
 }
