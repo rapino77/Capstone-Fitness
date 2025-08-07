@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
 
 const DeloadPrompt = ({ 
   deloadData, 
@@ -8,20 +7,24 @@ const DeloadPrompt = ({
   onClose,
   isVisible 
 }) => {
-  const [selectedOption, setSelectedOption] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
   if (!isVisible || !deloadData) {
     return null;
   }
 
-  const handleAccept = () => {
-    if (selectedOption) {
-      onAccept(selectedOption);
+  // Use the moderate deload option (15% reduction) as the default suggestion
+  const suggestedDeload = deloadData.options && deloadData.options.length > 0 
+    ? deloadData.options.find(option => option.type === 'moderate') || deloadData.options[1] || deloadData.options[0]
+    : null;
+
+  const handleYesDeload = () => {
+    if (suggestedDeload) {
+      onAccept(suggestedDeload);
     }
   };
 
-  const handleDecline = () => {
+  const handleNoDeload = () => {
     onDecline();
   };
 
@@ -45,161 +48,102 @@ const DeloadPrompt = ({
         </div>
 
         <div className="p-6">
-          {/* Performance Comparison */}
+          {/* Performance Comparison - Simplified */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Performance Comparison</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+              <div className="flex items-center mb-3">
+                <span className="text-red-500 text-xl mr-3">⚠️</span>
                 <div>
-                  <div className="text-gray-600 font-medium">Last Workout</div>
-                  <div className="font-mono text-lg">{deloadData.comparison.last}</div>
-                  {deloadData.lastWorkout?.date && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {format(new Date(deloadData.lastWorkout.date), 'MMM dd, yyyy')}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-gray-600 font-medium">Current Workout</div>
-                  <div className="font-mono text-lg">{deloadData.comparison.current}</div>
-                  <div className="text-xs text-gray-500 mt-1">Today</div>
+                  <div className="font-medium text-red-800">Performance Decrease Detected</div>
+                  <div className="text-sm text-red-600 mt-1">
+                    Your current workout shows lower numbers than your last session
+                  </div>
                 </div>
               </div>
               
-              {/* Change Indicators */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="text-sm font-medium text-gray-700 mb-2">Changes Detected:</div>
-                <div className="space-y-1">
-                  {deloadData.comparison.changes.map((change, index) => (
-                    <div key={index} className="flex items-center text-sm">
-                      <span className="text-red-500 mr-2">↓</span>
-                      <span className="text-red-700">{change.message}</span>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-gray-600 font-medium mb-1">Last Workout</div>
+                  <div className="font-mono text-gray-900">{deloadData.comparison.last}</div>
                 </div>
-                
-                {deloadData.volumeImpact && (
-                  <div className="mt-2 p-2 bg-red-50 rounded border border-red-200">
-                    <div className="text-sm text-red-800">
-                      <span className="font-medium">Volume Impact:</span> {deloadData.volumeImpact}
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <div className="text-gray-600 font-medium mb-1">Current Workout</div>
+                  <div className="font-mono text-gray-900">{deloadData.comparison.current}</div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Deload Options */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Suggested Deload Options</h3>
-            
-            {deloadData.options.length > 0 ? (
-              <div className="space-y-3">
-                {deloadData.options.map((option, index) => (
-                  <div 
-                    key={index}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                      selectedOption?.type === option.type
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                    onClick={() => setSelectedOption(option)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <input
-                            type="radio"
-                            checked={selectedOption?.type === option.type}
-                            onChange={() => setSelectedOption(option)}
-                            className="mr-3"
-                          />
-                          <div>
-                            <h4 className="font-medium text-gray-900 capitalize">{option.type} Deload</h4>
-                            <p className="text-sm text-gray-600">{option.description}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="ml-6">
-                          <div className="font-mono text-lg text-blue-700 mb-2">
-                            {option.preview}
-                          </div>
-                          
-                          <div className="text-xs text-gray-500 mb-2">
-                            Benefits: {option.benefits.join(' • ')}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4 text-right">
-                        <div className="text-2xl font-bold text-orange-600">-{option.percentage}%</div>
-                        <div className="text-xs text-gray-500">from peak</div>
-                      </div>
+          {/* Deload Suggestion - Simplified */}
+          {suggestedDeload && (
+            <div className="mb-6">
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center mb-3">
+                  <span className="text-blue-500 text-xl mr-3">🔄</span>
+                  <div>
+                    <div className="font-medium text-blue-800">Suggested Deload</div>
+                    <div className="text-sm text-blue-600 mt-1">
+                      Reduce weight to promote recovery and prevent overreaching
                     </div>
                   </div>
-                ))}
+                </div>
+                
+                <div className="bg-white rounded-lg p-3 border border-blue-200">
+                  <div className="font-mono text-lg text-blue-700 mb-2">
+                    {suggestedDeload.preview}
+                  </div>
+                  <div className="text-sm text-blue-600">
+                    {suggestedDeload.description} • Benefits: Recovery, technique focus, long-term gains
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-4 text-gray-500">
-                <div className="text-4xl mb-2">💪</div>
-                <div className="font-medium">No deload options available</div>
-                <div className="text-sm mt-1">Your current weight is already at a good level</div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Recommendations */}
+          {/* Explanation */}
           <div className="mb-6">
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+              className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 mb-3"
             >
-              <span>Training Recommendations</span>
+              <span>Why deload?</span>
               <span className="ml-1">{showDetails ? '▼' : '▶'}</span>
             </button>
             
             {showDetails && (
-              <div className="mt-3 bg-blue-50 rounded-lg p-4">
-                <ul className="text-sm text-blue-800 space-y-1">
-                  {deloadData.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-blue-600 mr-2">•</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-sm text-gray-700 space-y-2">
+                  <p>• <strong>Prevents overreaching:</strong> Gives your body time to recover</p>
+                  <p>• <strong>Improves technique:</strong> Lighter weights help focus on form</p>
+                  <p>• <strong>Promotes long-term gains:</strong> Strategic rest leads to better progress</p>
+                  <p>• <strong>Mental break:</strong> Reduces training stress and builds confidence</p>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          {/* Simple Action Buttons */}
+          <div className="flex space-x-3">
             <button
-              onClick={handleDecline}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              onClick={handleNoDeload}
+              className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
             >
-              Keep Current Weight
+              No, Continue with Current Weight
             </button>
             
-            {deloadData.options.length > 0 && (
+            {suggestedDeload && (
               <button
-                onClick={handleAccept}
-                disabled={!selectedOption}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                  selectedOption
-                    ? 'bg-orange-500 text-white hover:bg-orange-600'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                onClick={handleYesDeload}
+                className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
               >
-                Apply {selectedOption?.type || ''} Deload
+                Yes, Apply Deload
               </button>
             )}
           </div>
 
           {/* Help Text */}
           <div className="mt-4 text-xs text-gray-500 text-center">
-            Deloads help prevent overreaching and promote long-term strength gains.
-            You can always adjust the weight manually after applying a deload.
+            You can always adjust weights manually in the form after making your choice
           </div>
         </div>
       </div>
