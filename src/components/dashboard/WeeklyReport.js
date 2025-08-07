@@ -155,26 +155,60 @@ const WeeklyReport = () => {
       // Fetch goals (if endpoint exists)
       try {
         const goalsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
-          params: { userId: 'default-user' }
+          params: { 
+            userId: 'default-user',
+            status: 'all' // Get all goals, not just active ones
+          }
         });
         
-        if (goalsResponse.data.success && goalsResponse.data.goals) {
-          const completedThisWeek = goalsResponse.data.goals.filter(goal => {
-            if (goal.status !== 'Completed' && goal.Status !== 'Completed') return false;
-            const completionDate = new Date(goal.completionDate || goal['Completion Date']);
+        if (goalsResponse.data.success && (goalsResponse.data.goals || goalsResponse.data.data)) {
+          const allGoals = goalsResponse.data.goals || goalsResponse.data.data;
+          
+          // Find goals completed this week
+          const completedThisWeek = allGoals.filter(goal => {
+            if ((goal.status || goal.Status) !== 'Completed') return false;
+            const completionDate = new Date(goal.completionDate || goal['Completion Date'] || goal.updatedAt);
             return completionDate >= start && completionDate <= end;
           });
 
+          // Process all active/paused goals for review
+          const activeGoals = allGoals.filter(goal => 
+            ['Active', 'Paused'].includes(goal.status || goal.Status)
+          ).map(goal => {
+            const currentValue = goal.currentValue || goal['Current Value'] || 0;
+            const targetValue = goal.targetValue || goal['Target Value'] || 1;
+            const progressPercentage = Math.min((currentValue / targetValue) * 100, 100);
+            const targetDate = new Date(goal.targetDate || goal['Target Date']);
+            const daysRemaining = Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24));
+            
+            return {
+              id: goal.id || goal.ID,
+              name: goal.goalTitle || goal.name || goal.Name || goal['Goal Name'],
+              type: goal.goalType || goal.type || goal.Type || goal['Goal Type'],
+              status: goal.status || goal.Status,
+              currentValue,
+              targetValue,
+              progressPercentage,
+              targetDate,
+              daysRemaining,
+              priority: goal.priority || goal.Priority || 'Medium',
+              exerciseName: goal.exerciseName || goal['Exercise Name']
+            };
+          });
+
           report.goalsAchieved = completedThisWeek.map(goal => ({
-            name: goal.name || goal.Name || goal['Goal Name'],
-            type: goal.type || goal.Type || goal['Goal Type'],
-            achievedDate: new Date(goal.completionDate || goal['Completion Date']),
+            name: goal.goalTitle || goal.name || goal.Name || goal['Goal Name'],
+            type: goal.goalType || goal.type || goal.Type || goal['Goal Type'],
+            achievedDate: new Date(goal.completionDate || goal['Completion Date'] || goal.updatedAt),
             targetValue: goal.targetValue || goal['Target Value'],
-            achievedValue: goal.achievedValue || goal['Achieved Value']
+            achievedValue: goal.currentValue || goal['Current Value']
           }));
+
+          report.currentGoals = activeGoals;
         }
       } catch (goalsErr) {
         console.log('Goals endpoint not available:', goalsErr.message);
+        report.currentGoals = [];
       }
 
       // Check for PRs in this week's workouts
@@ -226,6 +260,7 @@ const WeeklyReport = () => {
         measurements: []
       },
       goalsAchieved: [],
+      currentGoals: [],
       personalRecords: []
     };
   };
@@ -245,6 +280,94 @@ const WeeklyReport = () => {
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  // Helper functions for goal analysis and recommendations
+  const getGoalStatusColor = (status) => {
+    switch (status) {
+      case 'Active': return 'bg-green-100 text-green-800';
+      case 'Paused': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getProgressColor = (percentage) => {
+    if (percentage >= 100) return 'bg-green-500';
+    if (percentage >= 75) return 'bg-blue-500';
+    if (percentage >= 50) return 'bg-yellow-500';
+    if (percentage >= 25) return 'bg-orange-500';
+    return 'bg-red-500';
+  };
+
+  const getGoalRecommendations = (goal) => {
+    const recommendations = [];
+    
+    // Progress-based recommendations
+    if (goal.progressPercentage < 25 && goal.daysRemaining < 30) {
+      recommendations.push({
+        type: 'urgent',
+        icon: '🚨',
+        message: 'Critical: Low progress with deadline approaching. Consider breaking this goal into smaller milestones.',
+        priority: 'high'
+      });
+    } else if (goal.progressPercentage < 50 && goal.daysRemaining < 60) {
+      recommendations.push({
+        type: 'warning',
+        icon: '⚠️',
+        message: 'Behind schedule. Increase frequency or intensity of related activities.',
+        priority: 'medium'
+      });
+    } else if (goal.progressPercentage > 75) {
+      recommendations.push({
+        type: 'success',
+        icon: '🎯',
+        message: 'Great progress! Stay consistent to reach your goal on time.',
+        priority: 'low'
+      });
+    }
+
+    // Goal-type specific recommendations
+    if (goal.type === 'Body Weight') {
+      if (goal.progressPercentage < 30) {
+        recommendations.push({
+          type: 'tip',
+          icon: '💡',
+          message: 'Focus on consistent daily weigh-ins and nutrition tracking.',
+          priority: 'medium'
+        });
+      }
+    } else if (goal.type === 'Exercise PR') {
+      if (goal.progressPercentage < 40) {
+        recommendations.push({
+          type: 'tip',
+          icon: '💪',
+          message: `Increase ${goal.exerciseName} frequency or try progressive overload techniques.`,
+          priority: 'medium'
+        });
+      }
+    }
+
+    // Status-based recommendations
+    if (goal.status === 'Paused') {
+      recommendations.push({
+        type: 'info',
+        icon: '▶️',
+        message: 'Goal is paused. Consider resuming if circumstances have improved.',
+        priority: 'medium'
+      });
+    }
+
+    // Default encouragement
+    if (recommendations.length === 0) {
+      recommendations.push({
+        type: 'encouragement',
+        icon: '🌟',
+        message: 'Keep up the steady progress! Small consistent steps lead to big results.',
+        priority: 'low'
+      });
+    }
+
+    return recommendations;
   };
 
   if (loading) {
@@ -478,7 +601,7 @@ const WeeklyReport = () => {
           )}
         </div>
 
-        {/* Goals Achieved Section */}
+        {/* Goal Review Section */}
         <div>
           <button
             onClick={() => toggleSection('goals')}
@@ -488,7 +611,7 @@ const WeeklyReport = () => {
               <svg className="h-5 w-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Goals Achieved ({reportData.goalsAchieved.length})
+              Goal Review ({reportData.currentGoals?.length || 0} active, {reportData.goalsAchieved?.length || 0} achieved this week)
             </h3>
             <svg className={`h-5 w-5 transform transition-transform ${expandedSections.goals ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -496,31 +619,107 @@ const WeeklyReport = () => {
           </button>
           
           {expandedSections.goals && (
-            <div className="mt-4">
-              {reportData.goalsAchieved.length > 0 ? (
-                <div className="space-y-3">
-                  {reportData.goalsAchieved.map((goal, index) => (
-                    <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-green-800">{goal.name}</h4>
-                          <p className="text-sm text-green-600">
-                            Achieved on {format(goal.achievedDate, 'MMM d')}
-                          </p>
+            <div className="mt-4 space-y-6">
+              {/* Goals Achieved This Week */}
+              {reportData.goalsAchieved && reportData.goalsAchieved.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-white mb-3 flex items-center">
+                    <span className="text-2xl mr-2">🎉</span>
+                    Goals Achieved This Week
+                  </h4>
+                  <div className="space-y-3">
+                    {reportData.goalsAchieved.map((goal, index) => (
+                      <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium text-green-800">{goal.name}</h5>
+                            <p className="text-sm text-green-600">
+                              Achieved on {format(goal.achievedDate, 'MMM d')} • {goal.achievedValue} / {goal.targetValue}
+                            </p>
+                          </div>
+                          <svg className="h-8 w-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
+                            <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+                          </svg>
                         </div>
-                        <svg className="h-8 w-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
-                          <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
-                        </svg>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Active Goals */}
+              {reportData.currentGoals && reportData.currentGoals.length > 0 ? (
+                <div>
+                  <h4 className="font-medium text-white mb-3 flex items-center">
+                    <span className="text-2xl mr-2">🎯</span>
+                    Current Goals Status
+                  </h4>
+                  <div className="space-y-4">
+                    {reportData.currentGoals.map((goal, index) => {
+                      const recommendations = getGoalRecommendations(goal);
+                      return (
+                        <div key={index} className="bg-white bg-opacity-10 rounded-lg p-4 border border-gray-300">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <h5 className="font-medium text-white">{goal.name}</h5>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGoalStatusColor(goal.status)}`}>
+                                  {goal.status}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-200 space-x-4">
+                                <span>{goal.type}</span>
+                                {goal.exerciseName && <span>• {goal.exerciseName}</span>}
+                                <span>• Due: {format(goal.targetDate, 'MMM dd, yyyy')}</span>
+                                <span className={`${goal.daysRemaining < 0 ? 'text-red-300' : goal.daysRemaining < 7 ? 'text-yellow-300' : 'text-gray-300'}`}>
+                                  • {goal.daysRemaining < 0 ? `${Math.abs(goal.daysRemaining)} days overdue` : `${goal.daysRemaining} days left`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="mb-3">
+                            <div className="flex justify-between text-sm text-gray-200 mb-1">
+                              <span>Progress: {goal.currentValue} / {goal.targetValue}</span>
+                              <span>{goal.progressPercentage.toFixed(1)}%</span>
+                            </div>
+                            <div className="w-full bg-gray-600 rounded-full h-3">
+                              <div
+                                className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(goal.progressPercentage)}`}
+                                style={{ width: `${Math.min(goal.progressPercentage, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Recommendations */}
+                          <div className="space-y-2">
+                            <h6 className="text-sm font-medium text-gray-200">Recommendations:</h6>
+                            {recommendations.map((rec, recIndex) => (
+                              <div key={recIndex} className={`text-sm p-2 rounded flex items-start space-x-2 ${
+                                rec.type === 'urgent' ? 'bg-red-500 bg-opacity-20 border border-red-400' :
+                                rec.type === 'warning' ? 'bg-yellow-500 bg-opacity-20 border border-yellow-400' :
+                                rec.type === 'success' ? 'bg-green-500 bg-opacity-20 border border-green-400' :
+                                'bg-blue-500 bg-opacity-20 border border-blue-400'
+                              }`}>
+                                <span>{rec.icon}</span>
+                                <span className="text-gray-100">{rec.message}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
-                <div className="bg-gray-50 p-6 rounded-lg text-center">
-                  <p className="text-gray-500 mb-2">No goals completed this week</p>
-                  <p className="text-sm text-gray-400">Visit the Goals tab to set and track your fitness goals!</p>
-                </div>
+                !reportData.goalsAchieved?.length && (
+                  <div className="bg-gray-50 p-6 rounded-lg text-center">
+                    <p className="text-gray-500 mb-2">No active goals found</p>
+                    <p className="text-sm text-gray-400">Visit the Goals tab to set and track your fitness goals!</p>
+                  </div>
+                )
               )}
             </div>
           )}
