@@ -4,6 +4,7 @@ import { CelebrationProvider } from './context/CelebrationContext';
 import WorkoutDashboard from './components/workouts/WorkoutDashboard';
 import WorkoutHistory from './components/workouts/WorkoutHistory';
 import TrackingDashboard from './components/tracking/TrackingDashboard';
+import BadgeDisplay from './components/badges/BadgeDisplay';
 import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
@@ -35,6 +36,7 @@ const AppContent = () => {
     { id: 'dashboard', name: 'Dashboard', icon: '📊' },
     { id: 'workout', name: 'Log Workout', icon: '💪' },
     { id: 'tracking', name: 'Analytics', icon: '📈' },
+    { id: 'badges', name: 'Badges', icon: '🏆' },
     { id: 'goals', name: 'Goals', icon: '🎯' },
     { id: 'history', name: 'History', icon: '📋' }
   ];
@@ -129,6 +131,10 @@ const AppContent = () => {
           
           {activeTab === 'tracking' && (
             <TrackingDashboard />
+          )}
+          
+          {activeTab === 'badges' && (
+            <BadgeDisplay />
           )}
           
           {activeTab === 'goals' && (
