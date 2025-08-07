@@ -3,7 +3,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { CelebrationProvider } from './context/CelebrationContext';
 import WorkoutForm from './components/workouts/WorkoutForm';
 import WorkoutHistory from './components/workouts/WorkoutHistory';
-import WeightLogger from './components/weight/WeightLogger';
+import TrackingDashboard from './components/tracking/TrackingDashboard';
 import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
@@ -34,9 +34,9 @@ const AppContent = () => {
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: '📊' },
     { id: 'workout', name: 'Log Workout', icon: '💪' },
-    { id: 'weight', name: 'Track Weight', icon: '⚖️' },
+    { id: 'tracking', name: 'Analytics', icon: '📈' },
     { id: 'goals', name: 'Goals', icon: '🎯' },
-    { id: 'history', name: 'History', icon: '📈' }
+    { id: 'history', name: 'History', icon: '📋' }
   ];
 
   return (
@@ -127,8 +127,8 @@ const AppContent = () => {
             <WorkoutForm onSuccess={handleWorkoutSuccess} />
           )}
           
-          {activeTab === 'weight' && (
-            <WeightLogger />
+          {activeTab === 'tracking' && (
+            <TrackingDashboard />
           )}
           
           {activeTab === 'goals' && (
