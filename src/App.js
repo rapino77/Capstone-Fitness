@@ -10,6 +10,7 @@ import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
+import EntranceAnimation from './components/common/EntranceAnimation';
 import './styles/theme.css';
 import './styles/animations.css';
 
@@ -21,6 +22,8 @@ const AppContent = () => {
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
+  const [showEntrance, setShowEntrance] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
 
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
@@ -60,6 +63,11 @@ const AppContent = () => {
     }
   };
 
+  const handleEntranceComplete = () => {
+    setShowEntrance(false);
+    setIsAppReady(true);
+  };
+
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: '📊' },
     { id: 'workout', name: 'Log Workout', icon: '💪' },
@@ -70,10 +78,19 @@ const AppContent = () => {
   ];
 
   return (
-    <div 
-      className="min-h-screen transition-colors duration-200"
-      style={{ backgroundColor: theme.colors.backgroundSecondary }}
-    >
+    <>
+      {/* Entrance Animation */}
+      {showEntrance && (
+        <EntranceAnimation onComplete={handleEntranceComplete} />
+      )}
+
+      {/* Main Application */}
+      <div 
+        className={`min-h-screen transition-all duration-500 ${
+          isAppReady ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
+        }`}
+        style={{ backgroundColor: theme.colors.backgroundSecondary }}
+      >
       {/* Theme Settings */}
       <ThemeSettings />
       
@@ -229,7 +246,8 @@ const AppContent = () => {
             )}
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 };
 
