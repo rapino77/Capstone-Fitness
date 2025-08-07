@@ -152,8 +152,6 @@ function getProgressionLogic() {
   };
 
   function calculateNextWorkout(recentWorkouts, exerciseName, customParams = {}) {
-    const params = { ...PROGRESSION_PARAMS, ...customParams };
-    
     console.log('calculateNextWorkout called with:', {
       workoutCount: recentWorkouts ? recentWorkouts.length : 0,
       exercise: exerciseName,
@@ -162,11 +160,11 @@ function getProgressionLogic() {
     
     if (!recentWorkouts || recentWorkouts.length === 0) {
       console.log('No workout history found for exercise:', exerciseName);
-      // Provide beginner-friendly starting suggestions - inline function for scoping
+      // Provide beginner-friendly starting suggestions
       const starterSuggestion = getStarterSuggestionInline(exerciseName);
       return {
         suggestion: starterSuggestion.suggestion,
-        reason: starterSuggestion.reason + ' (No previous workouts found - log a workout to get personalized suggestions)',
+        reason: starterSuggestion.reason + ' (No previous workouts found)',
         confidence: 'medium',
         isFirstWorkout: true,
         exerciseType: starterSuggestion.exerciseType,
@@ -274,175 +272,158 @@ function getProgressionLogic() {
       };
     }
 
+    // Sort workouts by date (most recent first)
     const sortedWorkouts = [...recentWorkouts].sort((a, b) => 
       new Date(b.date) - new Date(a.date)
     );
 
+    console.log('=== SIMPLE WEEKLY PROGRESSION ===');
+    console.log('Exercise:', exerciseName);
+    console.log('Total workouts found:', sortedWorkouts.length);
+    
+    // Apply simple weekly progression logic
+    return calculateWeeklyProgression(sortedWorkouts, exerciseName);
+  }
+
+  function calculateWeeklyProgression(sortedWorkouts, exerciseName) {
     const lastWorkout = sortedWorkouts[0];
     const lastSets = lastWorkout.sets || lastWorkout.Sets || 3;
     const lastReps = lastWorkout.reps || lastWorkout.Reps || 10;
     const lastWeight = lastWorkout.weight || lastWorkout.Weight || 0;
     
-    console.log('=== PROGRESSION CALCULATION DEBUG ===');
-    console.log('Exercise:', exerciseName);
-    console.log('Number of workouts found:', sortedWorkouts.length);
-    console.log('Last workout raw data:', lastWorkout);
-    console.log('Extracted values - Sets:', lastSets, 'Reps:', lastReps, 'Weight:', lastWeight);
-    console.log('Will suggest:', lastWeight + 5, 'lbs');
+    console.log('Last workout:', {
+      sets: lastSets,
+      reps: lastReps, 
+      weight: lastWeight,
+      date: lastWorkout.date
+    });
 
-    if (sortedWorkouts.length < params.minWorkoutsForAnalysis) {
-      // For simple progression when we have some data but not enough for full analysis
-      // Just add 5 pounds to the last weight
+    // Simple weekly progression logic:
+    // 1. If only 1 workout, add 5 lbs
+    if (sortedWorkouts.length === 1) {
+      const nextWeight = lastWeight + 5;
       return {
         suggestion: {
           sets: lastSets,
           reps: lastReps,
-          weight: lastWeight + 5
+          weight: nextWeight
         },
-        reason: `Add 5 lbs from your last workout (${lastWeight} → ${lastWeight + 5} lbs)`,
+        reason: `Weekly progression: Add 5 lbs (${lastWeight} → ${nextWeight} lbs)`,
         confidence: 'high',
-        status: 'insufficient_data',
+        status: 'progressing',
         lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
         formatted: {
-          summary: `Simple progression: add 5 lbs`,
-          changes: [`Weight: ${lastWeight} → ${lastWeight + 5} lbs (+5)`],
-          reason: 'Progressive overload based on your last workout'
+          summary: `Add 5 lbs for weekly progression`,
+          changes: [`Weight: ${lastWeight} → ${nextWeight} lbs (+5)`],
+          reason: 'Weekly progressive overload'
         }
       };
     }
 
-    const analysis = analyzeRecentPerformance(sortedWorkouts.slice(0, params.minWorkoutsForAnalysis));
-    // Pass exercise name to analysis for proper parameter application
-    analysis.exerciseName = exerciseName;
-    return applyProgressionStrategy(lastSets, lastReps, lastWeight, params, analysis.status, analysis);
-  }
-
-  function analyzeRecentPerformance(recentWorkouts) {
-    const volumes = recentWorkouts.map(w => w.sets * w.reps * (w.weight || 0));
-    const weights = recentWorkouts.map(w => w.weight || 0);
-    const reps = recentWorkouts.map(w => w.reps || 0);
+    // 2. Check if we made the previous weight target
+    const secondLastWorkout = sortedWorkouts[1];
+    const previousWeight = secondLastWorkout.weight || secondLastWorkout.Weight || 0;
     
-    const weightProgressing = weights.every((w, i) => i === 0 || w >= weights[i - 1]);
-    const weightStagnant = weights.every(w => w === weights[0]);
-    const repsProgressing = reps.every((r, i) => i === 0 || r >= reps[i - 1]);
-    const repsMaxed = reps[0] >= PROGRESSION_PARAMS.maxRepRange.high;
-    const volumeStagnant = volumes.every(v => Math.abs(v - volumes[0]) < volumes[0] * 0.05);
-    
-    if (weightProgressing && !weightStagnant) {
-      return { status: 'progressing_well', type: 'weight' };
-    } else if (repsProgressing && !repsMaxed) {
-      return { status: 'progressing_well', type: 'reps' };
-    } else if (volumeStagnant) {
-      return { status: 'plateau', sessionsAtPlateau: recentWorkouts.length };
-    } else if (volumes[0] < volumes[volumes.length - 1] * 0.9) {
-      return { status: 'regressing' };
-    } else {
-      return { status: 'maintaining' };
-    }
-  }
-
-  function applyProgressionStrategy(sets, reps, weight, params, status, analysis = {}) {
-    let suggestion = { sets, reps, weight };
-    let reason = '';
-    let confidence = 'medium';
-
-    // Get exercise-specific parameters
-    const exerciseParams = getProgressionParams(analysis.exerciseName || '');
-    console.log('Exercise-specific params for', analysis.exerciseName, ':', exerciseParams);
-    params = { ...params, ...exerciseParams };
-    console.log('Final params after merge:', { 
-      strategy: params.strategy, 
-      weightIncrement: params.weightIncrement,
-      maxRepRange: params.maxRepRange
+    console.log('Comparing weights:', {
+      lastWeight,
+      previousWeight,
+      madeTarget: lastWeight >= previousWeight
     });
 
-    // Get strategy AFTER merging exercise-specific parameters
-    const strategy = params.strategy;
-
-    if (strategy === PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION) {
-      if (status === 'progressing_well' || status === 'insufficient_data') {
-        if (reps < params.maxRepRange.high) {
-          suggestion.reps = Math.min(reps + params.repIncrement, params.maxRepRange.high);
-          reason = `Increase reps to ${suggestion.reps} (double progression method)`;
-          confidence = 'high';
-        } else {
-          // Add weight based on exercise type (5 lbs default, 2.5 lbs for isolation)
-          const increment = params.weightIncrement || 5;
-          suggestion.weight = weight + increment;
-          suggestion.reps = params.maxRepRange.low;
-          reason = `Increase weight by ${increment} lbs to ${suggestion.weight}lbs and reset reps to ${suggestion.reps}`;
-          confidence = 'high';
+    // 3. If we made the weight, add 5 lbs
+    if (lastWeight >= previousWeight) {
+      const nextWeight = lastWeight + 5;
+      return {
+        suggestion: {
+          sets: lastSets,
+          reps: lastReps,
+          weight: nextWeight
+        },
+        reason: `You hit ${lastWeight} lbs! Time to progress to ${nextWeight} lbs`,
+        confidence: 'high',
+        status: 'progressing',
+        lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
+        formatted: {
+          summary: `Successful progression: add 5 lbs`,
+          changes: [`Weight: ${lastWeight} → ${nextWeight} lbs (+5)`],
+          reason: 'You successfully completed the target weight'
         }
-      } else if (status === 'plateau') {
-        if (analysis.sessionsAtPlateau >= params.plateauThreshold) {
-          suggestion.sets = sets + params.setIncrement;
-          reason = `Add an extra set to break through plateau`;
-          confidence = 'medium';
-        } else {
-          reason = `Maintain current load and focus on form`;
-          confidence = 'low';
-        }
-      } else if (status === 'regressing') {
-        suggestion.weight = Math.round(weight * params.deloadPercentage);
-        reason = `Deload to ${suggestion.weight}lbs for recovery`;
-        confidence = 'high';
-      }
-    } else if (strategy === PROGRESSION_STRATEGIES.LINEAR) {
-      if (status !== 'regressing') {
-        // Always add 5 pounds for linear progression
-        suggestion.weight = weight + 5;
-        reason = `Linear progression: increase weight by 5 lbs to ${suggestion.weight}lbs`;
-        confidence = status === 'progressing_well' ? 'high' : 'medium';
-      } else {
-        suggestion.weight = Math.round(weight * params.deloadPercentage);
-        reason = `Deload to ${suggestion.weight}lbs for recovery`;
-        confidence = 'high';
-      }
+      };
     }
 
+    // 4. If we missed the weight, check for consecutive misses
+    if (lastWeight < previousWeight) {
+      // Count consecutive misses
+      let consecutiveMisses = 1; // Current miss
+      
+      for (let i = 2; i < sortedWorkouts.length; i++) {
+        const currentWorkout = sortedWorkouts[i-1];
+        const prevWorkout = sortedWorkouts[i];
+        
+        const currentWeight = currentWorkout.weight || currentWorkout.Weight || 0;
+        const prevWeight = prevWorkout.weight || prevWorkout.Weight || 0;
+        
+        if (currentWeight < prevWeight) {
+          consecutiveMisses++;
+        } else {
+          break;
+        }
+      }
+
+      console.log('Consecutive misses:', consecutiveMisses);
+
+      // 5. If 2+ consecutive misses, deload by 25%
+      if (consecutiveMisses >= 2) {
+        const deloadWeight = Math.round(lastWeight * 0.75);
+        return {
+          suggestion: {
+            sets: lastSets,
+            reps: lastReps,
+            weight: deloadWeight
+          },
+          reason: `Deload time! You've missed the target weight ${consecutiveMisses} times in a row. Reset to ${deloadWeight} lbs (-25%)`,
+          confidence: 'high',
+          status: 'deloading',
+          lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
+          formatted: {
+            summary: `Deload after ${consecutiveMisses} consecutive misses`,
+            changes: [`Weight: ${lastWeight} → ${deloadWeight} lbs (-25%)`],
+            reason: 'Deload to build back up with better form'
+          }
+        };
+      }
+
+      // 6. If 1 miss, keep the same weight
+      return {
+        suggestion: {
+          sets: lastSets,
+          reps: lastReps,
+          weight: previousWeight // Go back to the target we missed
+        },
+        reason: `You missed ${previousWeight} lbs last time. Let's try it again!`,
+        confidence: 'medium',
+        status: 'retry',
+        lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
+        formatted: {
+          summary: `Retry the missed weight`,
+          changes: [`Weight: ${lastWeight} → ${previousWeight} lbs (retry)`],
+          reason: 'Give the missed weight another attempt'
+        }
+      };
+    }
+
+    // Fallback (shouldn't reach here)
     return {
-      suggestion,
-      reason,
-      confidence,
-      strategy,
-      status,
-      lastWorkout: { sets, reps, weight },
-      analysis
+      suggestion: {
+        sets: lastSets,
+        reps: lastReps,
+        weight: lastWeight + 5
+      },
+      reason: 'Continue progressive overload',
+      confidence: 'medium',
+      status: 'progressing',
+      lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight }
     };
-  }
-
-  function getProgressionParams(exerciseName) {
-    const exerciseLower = exerciseName.toLowerCase();
-    
-    if (exerciseLower.includes('squat') || exerciseLower.includes('deadlift') || 
-        exerciseLower.includes('bench') || exerciseLower.includes('press')) {
-      return {
-        weightIncrement: 5,
-        maxRepRange: { low: 5, high: 8 },
-        strategy: PROGRESSION_STRATEGIES.LINEAR
-      };
-    }
-    
-    if (exerciseLower.includes('curl') || exerciseLower.includes('extension') || 
-        exerciseLower.includes('fly') || exerciseLower.includes('raise')) {
-      return {
-        weightIncrement: 2.5,  // Keep smaller increments for isolation exercises
-        maxRepRange: { low: 10, high: 15 },
-        strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION
-      };
-    }
-    
-    if (exerciseLower.includes('pull-up') || exerciseLower.includes('push-up') || 
-        exerciseLower.includes('dip') || exerciseLower.includes('chin-up')) {
-      return {
-        weightIncrement: 0,
-        repIncrement: 2,
-        maxRepRange: { low: 5, high: 20 },
-        strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION
-      };
-    }
-    
-    return {};
   }
 
   function formatProgressionSuggestion(progressionData) {
