@@ -944,3 +944,20 @@ div[class*="bg-"][class*="-200"] p {
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
 }
+
+/* Force black text on all light colored buttons */
+.bg-blue-100,
+.bg-green-100,
+.bg-yellow-100,
+.bg-orange-100,
+.bg-purple-100,
+.bg-gray-100 {
+  color: #000000 !important;
+}
+
+/* Force black text on button elements with light backgrounds */
+button.text-black,
+button[class*="bg-"][class*="-100"] {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
