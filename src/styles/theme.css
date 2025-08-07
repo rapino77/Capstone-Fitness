@@ -270,10 +270,10 @@ body {
   color: white !important;
 }
 
-.bg-blue-primary *:not(.section-header):not(.fitness-title):not(select):not(option),
-.bg-blue-secondary *:not(.section-header):not(.fitness-title):not(select):not(option),
-.bg-blue-accent *:not(.section-header):not(.fitness-title):not(select):not(option),
-.bg-blue-gradient *:not(.section-header):not(.fitness-title):not(select):not(option) {
+.bg-blue-primary *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white),
+.bg-blue-secondary *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white),
+.bg-blue-accent *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white),
+.bg-blue-gradient *:not(.section-header):not(.fitness-title):not(select):not(option):not(.bg-gray-50):not(.bg-gray-100):not(.bg-white) {
   color: inherit !important;
 }
 
@@ -621,7 +621,29 @@ form select option {
   color: #111827 !important;
 }
 
-/* Specific fix for workout history cards in blue backgrounds */
+/* Specific fix for workout history cards in blue backgrounds - HIGHEST PRIORITY */
+.bg-blue-primary .bg-gray-50,
+.bg-blue-secondary .bg-gray-50,
+.bg-blue-accent .bg-gray-50,
+.bg-blue-gradient .bg-gray-50,
+.bg-blue-primary .bg-gray-100,
+.bg-blue-secondary .bg-gray-100,
+.bg-blue-accent .bg-gray-100,
+.bg-blue-gradient .bg-gray-100 {
+  color: #111827 !important; /* Force black text */
+}
+
+.bg-blue-primary .bg-gray-50 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-secondary .bg-gray-50 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-accent .bg-gray-50 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-gradient .bg-gray-50 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-primary .bg-gray-100 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-secondary .bg-gray-100 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-accent .bg-gray-100 *:not(.text-red-600):not(.text-red-800),
+.bg-blue-gradient .bg-gray-100 *:not(.text-red-600):not(.text-red-800) {
+  color: #111827 !important; /* Force all child elements to black except red delete button */
+}
+
 .bg-blue-primary .bg-gray-50 h4,
 .bg-blue-secondary .bg-gray-50 h4,
 .bg-blue-accent .bg-gray-50 h4,
@@ -653,6 +675,16 @@ form select option {
 .bg-blue-accent .bg-gray-100 .text-sm,
 .bg-blue-gradient .bg-gray-100 .text-sm {
   color: #4b5563 !important; /* Medium gray */
+}
+
+/* Override with even higher specificity for workout history */
+.bg-blue-primary .bg-gray-50 .text-gray-900,
+.bg-blue-primary .bg-gray-50 .text-gray-600,
+.bg-blue-primary .bg-gray-50 .text-gray-500,
+.bg-blue-primary .bg-gray-100 .text-gray-900,
+.bg-blue-primary .bg-gray-100 .text-gray-600,
+.bg-blue-primary .bg-gray-100 .text-gray-500 {
+  color: #111827 !important;
 }
 
 /* Animation classes */
