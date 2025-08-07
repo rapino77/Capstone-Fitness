@@ -92,6 +92,7 @@ const ChallengeSystem = ({ onSuccess }) => {
   };
 
   useEffect(() => {
+    console.log('🔄 Component mounted, fetching data...');
     fetchData();
   }, []);
 
@@ -100,7 +101,7 @@ const ChallengeSystem = ({ onSuccess }) => {
       updateChallengeProgress();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workoutData, bodyWeightData, activeChallenges]);
+  }, [workoutData, bodyWeightData]);
 
   const fetchData = async () => {
     try {
@@ -434,9 +435,6 @@ const ChallengeSystem = ({ onSuccess }) => {
     // Show success message
     alert(`🎉 Challenge Created Successfully!\n\n${newChallenge.name}\nTarget: ${newChallenge.target}\nReward: ${newChallenge.points} points`);
     
-    // Force component refresh by re-fetching data
-    fetchData();
-    
     setShowCreateModal(false);
     setSelectedChallengeType('');
   };
@@ -567,13 +565,17 @@ const ChallengeSystem = ({ onSuccess }) => {
         
         {/* Debug Info */}
         <div className="text-xs text-gray-300 mt-2">
-          Debug: localStorage has {JSON.parse(localStorage.getItem('activeChallenges') || '[]').length} challenges, 
-          state has {activeChallenges.length} challenges
+          Debug: localStorage has {(() => {
+            try {
+              return JSON.parse(localStorage.getItem('activeChallenges') || '[]').length;
+            } catch (e) {
+              return 'error';
+            }
+          })()} challenges, state has {activeChallenges.length} challenges
         </div>
       </div>
 
       {/* Active Challenges */}
-      {console.log('🎨 Rendering with activeChallenges:', activeChallenges)}
       {activeChallenges.length > 0 && (
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -670,7 +672,6 @@ const ChallengeSystem = ({ onSuccess }) => {
       )}
 
       {/* Empty State */}
-      {console.log('🔍 Empty state check - activeChallenges.length:', activeChallenges.length, 'completedChallenges.length:', completedChallenges.length)}
       {activeChallenges.length === 0 && completedChallenges.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🏆</div>
