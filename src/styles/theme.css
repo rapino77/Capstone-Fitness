@@ -292,13 +292,28 @@ body {
   border: 2px solid #1e40af !important;
 }
 
-/* Fix dropdown option text visibility */
+/* Fix dropdown option text visibility - make all dropdown options have black text */
+select option,
 .bg-blue-primary select option,
 .bg-blue-secondary select option,
 .bg-blue-accent select option,
 .bg-blue-gradient select option {
   background-color: white !important;
   color: black !important;
+}
+
+/* Ensure all select elements have proper styling */
+select {
+  color: black !important;
+}
+
+/* Override any inherited white text from blue backgrounds for select elements */
+.bg-blue-primary select,
+.bg-blue-secondary select,
+.bg-blue-accent select,
+.bg-blue-gradient select {
+  color: black !important;
+  background-color: white !important;
 }
 
 /* Fix buttons and other interactive elements on blue backgrounds */
