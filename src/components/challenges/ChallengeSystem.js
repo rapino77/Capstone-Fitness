@@ -415,6 +415,9 @@ const ChallengeSystem = ({ onSuccess }) => {
     // Show success message
     alert(`🎉 Challenge Created Successfully!\n\n${newChallenge.name}\nTarget: ${newChallenge.target}\nReward: ${newChallenge.points} points`);
     
+    // Force component refresh by re-fetching data
+    fetchData();
+    
     setShowCreateModal(false);
     setSelectedChallengeType('');
   };
@@ -467,15 +470,29 @@ const ChallengeSystem = ({ onSuccess }) => {
           </div>
         </div>
         
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-        >
-          + New Challenge
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => {
+              console.log('🔄 Force refreshing challenges...');
+              console.log('📦 Current localStorage activeChallenges:', localStorage.getItem('activeChallenges'));
+              console.log('🎯 Current activeChallenges state:', activeChallenges);
+              fetchData();
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+          >
+            🔄 Refresh
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+          >
+            + New Challenge
+          </button>
+        </div>
       </div>
 
       {/* Active Challenges */}
+      {console.log('🎨 Rendering with activeChallenges:', activeChallenges)}
       {activeChallenges.length > 0 && (
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -572,16 +589,34 @@ const ChallengeSystem = ({ onSuccess }) => {
       )}
 
       {/* Empty State */}
-      {activeChallenges.length === 0 && completedChallenges.length === 0 && (
+      {console.log('🔍 Empty state check - activeChallenges.length:', activeChallenges.length, 'completedChallenges.length:', completedChallenges.length)}
+      {activeChallenges.length === 0 && completedChallenges.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🏆</div>
           <h3 className="text-xl font-semibold text-white mb-2">No Challenges Yet</h3>
           <p className="text-gray-200 mb-6">Create your first challenge to start earning rewards!</p>
+          <div className="mb-4 text-sm text-gray-300">
+            Debug: Active={activeChallenges.length}, Completed={completedChallenges.length}, Loading={isLoading.toString()}
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors"
           >
             Create First Challenge
+          </button>
+        </div>
+      )}
+      
+      {/* Show active challenges even if there are completed ones */}
+      {activeChallenges.length === 0 && completedChallenges.length > 0 && !isLoading && (
+        <div className="text-center py-8 mb-6">
+          <h3 className="text-lg font-semibold text-white mb-2">No Active Challenges</h3>
+          <p className="text-gray-200 mb-4">All your challenges are completed! Create a new one to keep the momentum going.</p>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+          >
+            Create New Challenge
           </button>
         </div>
       )}

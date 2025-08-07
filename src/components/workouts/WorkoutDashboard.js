@@ -3,6 +3,7 @@ import WorkoutForm from './WorkoutForm';
 import WorkoutTemplates from '../templates/WorkoutTemplates';
 import RestDayScheduler from '../scheduler/RestDayScheduler';
 import ChallengeSystem from '../challenges/ChallengeSystem';
+import WorkoutSummaries from '../summaries/WorkoutSummaries';
 import Sidebar from '../common/Sidebar';
 
 const WorkoutDashboard = ({ onSuccess }) => {
@@ -34,6 +35,12 @@ const WorkoutDashboard = ({ onSuccess }) => {
       description: 'Set and track fitness challenges'
     },
     {
+      id: 'summaries',
+      name: 'Workout Summaries',
+      icon: '📊',
+      description: 'Generate and share daily workout summaries'
+    },
+    {
       id: 'quick-log',
       name: 'Template Quick Log',
       icon: '⚡',
@@ -51,6 +58,8 @@ const WorkoutDashboard = ({ onSuccess }) => {
         return <RestDayScheduler />;
       case 'challenges':
         return <ChallengeSystem onSuccess={onSuccess} />;
+      case 'summaries':
+        return <WorkoutSummaries />;
       case 'quick-log':
         return <TemplateQuickLog onSuccess={onSuccess} />;
       default:
