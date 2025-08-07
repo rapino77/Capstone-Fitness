@@ -349,8 +349,14 @@ body {
 input[type="date"],
 input[type="number"],
 input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
 textarea {
   color: black !important;
+  -webkit-text-fill-color: black !important;
 }
 
 /* Ensure all form inputs in blue backgrounds have black text */
@@ -377,6 +383,20 @@ textarea {
 .bg-blue-gradient textarea:focus {
   color: black !important;
   background-color: white !important;
+  -webkit-text-fill-color: black !important;
+}
+
+/* Force all inputs to have black text with maximum specificity */
+.bg-blue-primary form input,
+.bg-blue-secondary form input,
+.bg-blue-accent form input,
+.bg-blue-gradient form input,
+.bg-blue-primary form textarea,
+.bg-blue-secondary form textarea,
+.bg-blue-accent form textarea,
+.bg-blue-gradient form textarea {
+  color: black !important;
+  -webkit-text-fill-color: black !important;
 }
 
 /* Fix dropdown option text visibility - make all dropdown options have black text */
