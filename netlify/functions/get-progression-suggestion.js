@@ -312,6 +312,8 @@ function getProgressionLogic() {
     }
 
     const analysis = analyzeRecentPerformance(sortedWorkouts.slice(0, params.minWorkoutsForAnalysis));
+    // Pass exercise name to analysis for proper parameter application
+    analysis.exerciseName = exerciseName;
     return applyProgressionStrategy(lastSets, lastReps, lastWeight, params, analysis.status, analysis);
   }
 
@@ -340,14 +342,22 @@ function getProgressionLogic() {
   }
 
   function applyProgressionStrategy(sets, reps, weight, params, status, analysis = {}) {
-    const strategy = params.strategy;
     let suggestion = { sets, reps, weight };
     let reason = '';
     let confidence = 'medium';
 
     // Get exercise-specific parameters
     const exerciseParams = getProgressionParams(analysis.exerciseName || '');
+    console.log('Exercise-specific params for', analysis.exerciseName, ':', exerciseParams);
     params = { ...params, ...exerciseParams };
+    console.log('Final params after merge:', { 
+      strategy: params.strategy, 
+      weightIncrement: params.weightIncrement,
+      maxRepRange: params.maxRepRange
+    });
+
+    // Get strategy AFTER merging exercise-specific parameters
+    const strategy = params.strategy;
 
     if (strategy === PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION) {
       if (status === 'progressing_well' || status === 'insufficient_data') {
