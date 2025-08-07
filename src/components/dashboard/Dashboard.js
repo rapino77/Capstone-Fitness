@@ -409,25 +409,35 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
               });
               
               // Filter and validate chart data
-              const validChartData = (data.chartData || []).filter(point => {
-                if (!point) return false;
-                
-                const weight = Number(point.weight);
-                const hasValidWeight = !isNaN(weight) && weight > 0;
-                const hasValidDate = point.date && !isNaN(new Date(point.date).getTime());
-                
-                if (!hasValidWeight || !hasValidDate) {
-                  console.log(`Filtering out invalid point for ${exercise}:`, {
-                    point,
-                    hasValidWeight,
-                    hasValidDate,
-                    weight,
-                    parsedWeight: Number(point.weight)
-                  });
-                }
-                
-                return hasValidWeight && hasValidDate;
-              });
+              const validChartData = (data.chartData || [])
+                .filter(point => {
+                  if (!point) return false;
+                  
+                  const weight = Number(point.weight);
+                  const hasValidWeight = !isNaN(weight) && weight > 0;
+                  const hasValidDate = point.date && !isNaN(new Date(point.date).getTime());
+                  
+                  if (!hasValidWeight || !hasValidDate) {
+                    console.log(`Filtering out invalid point for ${exercise}:`, {
+                      point,
+                      hasValidWeight,
+                      hasValidDate,
+                      weight,
+                      parsedWeight: Number(point.weight)
+                    });
+                  }
+                  
+                  return hasValidWeight && hasValidDate;
+                })
+                .map(point => ({
+                  // Ensure consistent data format for Recharts
+                  date: point.date,
+                  weight: Number(point.weight),
+                  oneRM: Number(point.oneRM || 0),
+                  volume: Number(point.volume || 0),
+                  workouts: Number(point.workouts || 0)
+                }))
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
               
               console.log(`Chart data validation for ${exercise}:`, {
                 originalLength: data.chartData?.length || 0,
@@ -452,54 +462,82 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                   </div>
                   
                   {validChartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LineChart 
-                        data={validChartData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="date" 
-                          tickFormatter={(date) => {
-                            try {
-                              return format(new Date(date), 'MM/dd');
-                            } catch (e) {
-                              console.log('Date formatting error:', date, e);
-                              return String(date).substring(0, 10); // Fallback
-                            }
-                          }}
-                        />
-                        <YAxis 
-                          domain={validChartData.length === 1 ? [0, 'dataMax + 10'] : ['dataMin - 2', 'dataMax + 2']}
-                          tickFormatter={(value) => `${Math.round(value)}`}
-                        />
-                        <Tooltip 
-                          labelFormatter={(date) => {
-                            try {
-                              return format(new Date(date), 'MMM dd, yyyy');
-                            } catch (e) {
-                              return String(date);
-                            }
-                          }}
-                          formatter={(value) => [`${value} lbs`, 'Weight']}
-                          contentStyle={{
-                            backgroundColor: '#1f2937',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: '#ffffff'
-                          }}
-                          labelStyle={{ color: '#ffffff' }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="weight" 
-                          stroke="#3B82F6" 
-                          strokeWidth={2}
-                          dot={{ fill: '#3B82F6', r: 4 }}
-                          connectNulls={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-2">
+                        Data Points: {validChartData.length} | Date Range: {validChartData.length > 0 ? `${validChartData[0].date} to ${validChartData[validChartData.length-1].date}` : 'None'}
+                      </div>
+                      {/* Debug: show raw chart data */}
+                      <details className="text-xs text-gray-400 mb-2">
+                        <summary>Debug Data (click to expand)</summary>
+                        <pre className="bg-gray-100 p-2 mt-1 max-h-32 overflow-auto">
+                          {JSON.stringify(validChartData, null, 2)}
+                        </pre>
+                      </details>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart 
+                          data={validChartData}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            type="category"
+                            tickFormatter={(date) => {
+                              try {
+                                return format(new Date(date), 'MM/dd');
+                              } catch (e) {
+                                console.log('Date formatting error:', date, e);
+                                return String(date).substring(0, 10); // Fallback
+                              }
+                            }}
+                          />
+                          <YAxis 
+                            type="number"
+                            domain={validChartData.length === 1 ? [0, 'dataMax + 10'] : ['dataMin - 2', 'dataMax + 2']}
+                            tickFormatter={(value) => `${Math.round(value)}`}
+                          />
+                          <Tooltip 
+                            labelFormatter={(date) => {
+                              try {
+                                return format(new Date(date), 'MMM dd, yyyy');
+                              } catch (e) {
+                                return String(date);
+                              }
+                            }}
+                            formatter={(value) => [`${value} lbs`, 'Weight']}
+                            contentStyle={{
+                              backgroundColor: '#1f2937',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: '#ffffff'
+                            }}
+                            labelStyle={{ color: '#ffffff' }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="weight" 
+                            stroke="#3B82F6" 
+                            strokeWidth={3}
+                            dot={{ fill: '#3B82F6', r: 5, strokeWidth: 2 }}
+                            connectNulls={false}
+                            isAnimationActive={false}
+                          />
+                          {/* Add a second line with slightly different styling to help debug */}
+                          {validChartData.length > 1 && (
+                            <Line 
+                              type="linear" 
+                              dataKey="weight" 
+                              stroke="#10B981" 
+                              strokeWidth={1}
+                              strokeDasharray="5 5"
+                              dot={false}
+                              connectNulls={false}
+                              isAnimationActive={false}
+                            />
+                          )}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                   ) : (
                     <div className="bg-gray-50 rounded-lg p-8 text-center">
                       <div className="text-gray-400 text-4xl mb-2">📈</div>

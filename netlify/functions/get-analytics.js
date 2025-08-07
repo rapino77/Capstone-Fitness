@@ -578,8 +578,21 @@ function analyzeStrengthProgression(workouts) {
         volume: Number(entry.totalVolume) || 0,
         workouts: entry.workoutCount
       }))
-      .filter(entry => entry.weight > 0) // Remove invalid entries
+      .filter(entry => entry.weight > 0 && entry.date) // Remove invalid entries
       .sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
+    
+    // Ensure we have valid data for chart rendering
+    if (chartData.length > 0) {
+      // Log detailed chart data for debugging
+      console.log(`Detailed chart data for ${exercise}:`, {
+        dataPoints: chartData.map(point => ({
+          date: point.date,
+          weight: point.weight,
+          isValidDate: !isNaN(new Date(point.date).getTime()),
+          isValidWeight: !isNaN(point.weight) && point.weight > 0
+        }))
+      });
+    }
 
     console.log(`Chart data for ${exercise}:`, {
       rawWorkouts: workoutData.length,
