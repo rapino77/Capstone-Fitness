@@ -258,7 +258,24 @@ function getProgressionLogic() {
     const lastWeight = lastWorkout.weight || 0;
 
     if (sortedWorkouts.length < params.minWorkoutsForAnalysis) {
-      return applyProgressionStrategy(lastSets, lastReps, lastWeight, params, 'insufficient_data');
+      // For simple progression when we have some data but not enough for full analysis
+      // Just add 5 pounds to the last weight
+      return {
+        suggestion: {
+          sets: lastSets,
+          reps: lastReps,
+          weight: lastWeight + 5
+        },
+        reason: `Add 5 lbs from your last workout (${lastWeight} → ${lastWeight + 5} lbs)`,
+        confidence: 'high',
+        status: 'insufficient_data',
+        lastWorkout: { sets: lastSets, reps: lastReps, weight: lastWeight },
+        formatted: {
+          summary: `Simple progression: add 5 lbs`,
+          changes: [`Weight: ${lastWeight} → ${lastWeight + 5} lbs (+5)`],
+          reason: 'Progressive overload based on your last workout'
+        }
+      };
     }
 
     const analysis = analyzeRecentPerformance(sortedWorkouts.slice(0, params.minWorkoutsForAnalysis));
