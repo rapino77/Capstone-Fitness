@@ -55,7 +55,8 @@ const WorkoutForm = ({ onSuccess }) => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
         params: {
-          userId: 'default-user'
+          userId: 'default-user',
+          _t: Date.now() // Cache busting parameter
         }
       });
       
@@ -103,7 +104,8 @@ const WorkoutForm = ({ onSuccess }) => {
         params: {
           exercise: exercise,
           userId: 'default-user',
-          workoutsToAnalyze: '5'
+          workoutsToAnalyze: '5',
+          _t: Date.now() // Cache busting parameter
         }
       });
       
@@ -194,7 +196,10 @@ const WorkoutForm = ({ onSuccess }) => {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, submissionData);
       
       if (response.data.success) {
-        setSubmitMessage({ type: 'success', text: 'Workout logged successfully!' });
+        setSubmitMessage({ 
+          type: 'success', 
+          text: 'Workout logged successfully! 🔄 Updating progression suggestions...' 
+        });
         
         // Handle PR celebration
         if (prResult.isPR) {
@@ -225,13 +230,22 @@ const WorkoutForm = ({ onSuccess }) => {
         
         // Re-select the exercise and refresh suggestion for next workout
         if (exerciseToKeep && exerciseToKeep !== 'Other') {
+          // Give more time for database to update and prevent caching
           setTimeout(() => {
+            console.log('🔄 Refreshing data after workout submission...');
             setValue('exercise', exerciseToKeep);
             if (progressiveOverloadEnabled) {
-              fetchProgressionSuggestion(exerciseToKeep);
-              fetchLastWorkout(exerciseToKeep);
+              // Clear current suggestions to show loading state
+              setProgressionSuggestion(null);
+              setLastWorkout(null);
+              
+              // Fetch fresh data with a small delay between calls
+              setTimeout(() => {
+                fetchLastWorkout(exerciseToKeep);
+                fetchProgressionSuggestion(exerciseToKeep);
+              }, 200);
             }
-          }, 500);
+          }, 1500); // Increased delay to allow database propagation
         }
       }
     } catch (error) {
@@ -336,9 +350,15 @@ const WorkoutForm = ({ onSuccess }) => {
                   <div className="flex space-x-2">
                     <button
                       type="button"
-                      onClick={() => fetchProgressionSuggestion(selectedExercise)}
+                      onClick={() => {
+                        console.log('🔄 Manual refresh triggered for:', selectedExercise);
+                        setProgressionSuggestion(null);
+                        setLastWorkout(null);
+                        fetchLastWorkout(selectedExercise);
+                        fetchProgressionSuggestion(selectedExercise);
+                      }}
                       className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300 transition-colors"
-                      title="Refresh suggestion"
+                      title="Refresh suggestion and last workout data"
                     >
                       🔄
                     </button>
