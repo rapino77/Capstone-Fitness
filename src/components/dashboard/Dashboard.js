@@ -410,12 +410,31 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
               
               // Filter and validate chart data
               const validChartData = (data.chartData || []).filter(point => {
-                const hasValidWeight = point && typeof point.weight === 'number' && point.weight > 0;
-                const hasValidDate = point && point.date && !isNaN(new Date(point.date).getTime());
+                if (!point) return false;
+                
+                const weight = Number(point.weight);
+                const hasValidWeight = !isNaN(weight) && weight > 0;
+                const hasValidDate = point.date && !isNaN(new Date(point.date).getTime());
+                
+                if (!hasValidWeight || !hasValidDate) {
+                  console.log(`Filtering out invalid point for ${exercise}:`, {
+                    point,
+                    hasValidWeight,
+                    hasValidDate,
+                    weight,
+                    parsedWeight: Number(point.weight)
+                  });
+                }
+                
                 return hasValidWeight && hasValidDate;
               });
               
-              console.log(`Valid chart data for ${exercise}:`, validChartData);
+              console.log(`Chart data validation for ${exercise}:`, {
+                originalLength: data.chartData?.length || 0,
+                validLength: validChartData.length,
+                originalData: data.chartData,
+                validData: validChartData
+              });
               
               return (
                 <div key={exercise} className="bg-white rounded-lg shadow-md p-6">
@@ -434,23 +453,50 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                   
                   {validChartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={200}>
-                      <LineChart data={validChartData}>
+                      <LineChart 
+                        data={validChartData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis 
                           dataKey="date" 
-                          tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+                          tickFormatter={(date) => {
+                            try {
+                              return format(new Date(date), 'MM/dd');
+                            } catch (e) {
+                              console.log('Date formatting error:', date, e);
+                              return String(date).substring(0, 10); // Fallback
+                            }
+                          }}
                         />
-                        <YAxis domain={['dataMin - 2', 'dataMax + 2']} />
+                        <YAxis 
+                          domain={validChartData.length === 1 ? [0, 'dataMax + 10'] : ['dataMin - 2', 'dataMax + 2']}
+                          tickFormatter={(value) => `${Math.round(value)}`}
+                        />
                         <Tooltip 
-                          labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                          labelFormatter={(date) => {
+                            try {
+                              return format(new Date(date), 'MMM dd, yyyy');
+                            } catch (e) {
+                              return String(date);
+                            }
+                          }}
                           formatter={(value) => [`${value} lbs`, 'Weight']}
+                          contentStyle={{
+                            backgroundColor: '#1f2937',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#ffffff'
+                          }}
+                          labelStyle={{ color: '#ffffff' }}
                         />
                         <Line 
                           type="monotone" 
                           dataKey="weight" 
                           stroke="#3B82F6" 
                           strokeWidth={2}
-                          dot={{ fill: '#3B82F6' }}
+                          dot={{ fill: '#3B82F6', r: 4 }}
+                          connectNulls={false}
                         />
                       </LineChart>
                     </ResponsiveContainer>

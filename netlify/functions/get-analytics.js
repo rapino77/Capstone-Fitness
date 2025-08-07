@@ -480,11 +480,15 @@ function analyzeStrengthProgression(workouts) {
     const sets = parseInt(workout.get('Sets')) || 0;
     const reps = parseInt(workout.get('Reps')) || 0;
 
-    // Skip invalid data
-    if (!exercise || !rawDate || weight <= 0 || sets <= 0 || reps <= 0) {
+    // Skip invalid data - be more lenient
+    if (!exercise || !rawDate || weight <= 0) {
       console.log('Skipping invalid workout:', { exercise, rawDate, weight, sets, reps });
       return;
     }
+    
+    // Use defaults for missing sets/reps
+    const finalSets = sets > 0 ? sets : 1;
+    const finalReps = reps > 0 ? reps : 1;
 
     // Validate date
     const date = new Date(rawDate);
@@ -500,11 +504,11 @@ function analyzeStrengthProgression(workouts) {
     exerciseData[exercise].push({
       date: rawDate, // Keep as string for consistency
       weight,
-      sets,
-      reps,
-      volume: sets * reps * weight,
+      sets: finalSets,
+      reps: finalReps,
+      volume: finalSets * finalReps * weight,
       // Calculate estimated 1RM using Brzycki formula
-      estimatedOneRM: reps > 1 ? weight * (36 / (37 - reps)) : weight
+      estimatedOneRM: finalReps > 1 ? weight * (36 / (37 - finalReps)) : weight
     });
   });
 
@@ -581,7 +585,9 @@ function analyzeStrengthProgression(workouts) {
       rawWorkouts: workoutData.length,
       chartDataPoints: chartData.length,
       dateRange: chartData.length > 0 ? `${chartData[0].date} to ${chartData[chartData.length-1].date}` : 'none',
-      weightRange: chartData.length > 0 ? `${Math.min(...chartData.map(c => c.weight))} to ${Math.max(...chartData.map(c => c.weight))} lbs` : 'none'
+      weightRange: chartData.length > 0 ? `${Math.min(...chartData.map(c => c.weight))} to ${Math.max(...chartData.map(c => c.weight))} lbs` : 'none',
+      sampleChartData: chartData.slice(0, 2), // Show first 2 data points for debugging
+      allWeights: chartData.map(c => c.weight)
     });
 
     progressionData[exercise] = {
