@@ -22,6 +22,29 @@ code {
   scrollbar-color: #9CA3AF #E5E7EB;
 }
 
+/* Force all text in strength charts to be black */
+.strength-chart-scroll text {
+  fill: #000000 !important;
+  color: #000000 !important;
+}
+
+.strength-chart-scroll .recharts-text {
+  fill: #000000 !important;
+}
+
+.strength-chart-scroll .recharts-cartesian-axis-tick-value {
+  fill: #000000 !important;
+}
+
+.strength-chart-scroll .recharts-label {
+  fill: #000000 !important;
+}
+
+.strength-chart-scroll .recharts-legend-item-text {
+  color: #000000 !important;
+  fill: #000000 !important;
+}
+
 .strength-chart-scroll::-webkit-scrollbar {
   height: 8px;
 }

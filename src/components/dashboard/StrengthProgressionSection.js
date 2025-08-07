@@ -187,7 +187,10 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
                 {validChartData.length > 0 ? (
                   currentViewMode === 'chart' ? (
                     <div className="overflow-x-auto overflow-y-hidden border border-gray-200 rounded-lg bg-gray-50 strength-chart-scroll">
-                      <div style={{ minWidth: Math.max(600, validChartData.length * 60) + 'px' }}>
+                      <div style={{ 
+                        minWidth: Math.max(600, validChartData.length * 60) + 'px',
+                        color: '#000000'
+                      }}>
                         <ResponsiveContainer width="100%" height={300}>
                           <LineChart 
                             data={dataWithAllMA}
@@ -225,7 +228,14 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
                                 backgroundColor: '#ffffff',
                                 border: '1px solid #e5e7eb',
                                 borderRadius: '8px',
-                                color: '#111827'
+                                color: '#000000'
+                              }}
+                              labelStyle={{ 
+                                color: '#000000',
+                                fontWeight: 'bold'
+                              }}
+                              itemStyle={{ 
+                                color: '#000000'
                               }}
                             />
                             <Legend wrapperStyle={{ color: '#000000' }} />
