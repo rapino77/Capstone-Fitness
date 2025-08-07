@@ -128,7 +128,7 @@ const DeloadPrompt = ({
               onClick={handleNoDeload}
               className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
             >
-              No, Continue with Current Weight
+              No, Deload
             </button>
             
             {suggestedDeload && (
@@ -136,7 +136,7 @@ const DeloadPrompt = ({
                 onClick={handleYesDeload}
                 className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
               >
-                Yes, Apply Deload
+                Yes, Deload
               </button>
             )}
           </div>
