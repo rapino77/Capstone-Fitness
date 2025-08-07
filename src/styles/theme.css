@@ -611,6 +611,50 @@ form select option {
   color: #4b5563 !important;
 }
 
+.bg-white .text-gray-900,
+.bg-gray-50 .text-gray-900,
+.bg-blue-50 .text-gray-900,
+.bg-green-50 .text-gray-900,
+.bg-purple-50 .text-gray-900,
+.bg-yellow-50 .text-gray-900,
+.bg-orange-50 .text-gray-900 {
+  color: #111827 !important;
+}
+
+/* Specific fix for workout history cards in blue backgrounds */
+.bg-blue-primary .bg-gray-50 h4,
+.bg-blue-secondary .bg-gray-50 h4,
+.bg-blue-accent .bg-gray-50 h4,
+.bg-blue-gradient .bg-gray-50 h4,
+.bg-blue-primary .bg-gray-100 h4,
+.bg-blue-secondary .bg-gray-100 h4,
+.bg-blue-accent .bg-gray-100 h4,
+.bg-blue-gradient .bg-gray-100 h4 {
+  color: #111827 !important; /* Very dark gray/black */
+}
+
+.bg-blue-primary .bg-gray-50 p,
+.bg-blue-secondary .bg-gray-50 p,
+.bg-blue-accent .bg-gray-50 p,
+.bg-blue-gradient .bg-gray-50 p,
+.bg-blue-primary .bg-gray-100 p,
+.bg-blue-secondary .bg-gray-100 p,
+.bg-blue-accent .bg-gray-100 p,
+.bg-blue-gradient .bg-gray-100 p {
+  color: #374151 !important; /* Dark gray */
+}
+
+.bg-blue-primary .bg-gray-50 .text-sm,
+.bg-blue-secondary .bg-gray-50 .text-sm,
+.bg-blue-accent .bg-gray-50 .text-sm,
+.bg-blue-gradient .bg-gray-50 .text-sm,
+.bg-blue-primary .bg-gray-100 .text-sm,
+.bg-blue-secondary .bg-gray-100 .text-sm,
+.bg-blue-accent .bg-gray-100 .text-sm,
+.bg-blue-gradient .bg-gray-100 .text-sm {
+  color: #4b5563 !important; /* Medium gray */
+}
+
 /* Animation classes */
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
