@@ -32,8 +32,10 @@ const WeeklyReport = () => {
     setError(null);
     
     try {
+      console.log('🔄 Fetching weekly report for:', weekStart, 'to', weekEnd);
       // Try to fetch real data from existing endpoints
       const reportData = await fetchRealWeeklyData(weekStart, weekEnd);
+      console.log('📊 Weekly report data:', reportData);
       setReportData(reportData);
     } catch (err) {
       console.error('Failed to fetch weekly report:', err);
@@ -74,9 +76,12 @@ const WeeklyReport = () => {
     
     try {
       // Fetch workouts for the week
+      console.log('📞 Calling get-workouts API...');
       const workoutsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
         params: { userId: 'default-user' }
       });
+      
+      console.log('💪 Workouts API response:', workoutsResponse.data);
       
       if (workoutsResponse.data.success && workoutsResponse.data.workouts) {
         allWorkouts = workoutsResponse.data.workouts;
@@ -120,9 +125,12 @@ const WeeklyReport = () => {
       }
 
       // Fetch weight measurements for the week
+      console.log('📞 Calling get-weights API...');
       const weightsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`, {
         params: { userId: 'default-user' }
       });
+      
+      console.log('⚖️ Weights API response:', weightsResponse.data);
       
       if (weightsResponse.data.success && weightsResponse.data.weights) {
         const allWeights = weightsResponse.data.weights;
@@ -186,6 +194,11 @@ const WeeklyReport = () => {
 
     } catch (apiErr) {
       console.log('API endpoints not available, using empty data:', apiErr.message);
+      
+      // Check if this is likely an environment configuration issue
+      if (apiErr.response?.status === 500 || apiErr.message.includes('Network Error')) {
+        console.warn('⚠️ This might be due to missing environment variables (AIRTABLE_PERSONAL_ACCESS_TOKEN, AIRTABLE_BASE_ID)');
+      }
     }
 
     return report;

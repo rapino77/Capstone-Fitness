@@ -25,7 +25,8 @@
       "Bash(npx netlify-lambda serve:*)",
       "Bash(cat:*)",
       "Bash(npx tsc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(netlify functions:list:*)"
     ],
     "deny": []
   }
