@@ -10,7 +10,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [progressionSuggestion, setProgressionSuggestion] = useState(null);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [progressiveOverloadEnabled, setProgressiveOverloadEnabled] = useState(true);
-  const [recentWorkouts, setRecentWorkouts] = useState([]);
+  // const [recentWorkouts, setRecentWorkouts] = useState([]); // Commented out for debugging
   
   const {
     register,
@@ -47,41 +47,40 @@ const WorkoutForm = ({ onSuccess }) => {
   ];
 
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
+    console.log('🔄 fetchProgressionSuggestion called for:', exercise);
     setLoadingSuggestion(true);
+    
+    // For now, let's skip the API call entirely and go straight to local calculation
+    // This will help us determine if the issue is with the API call or something else
+    console.log('🔧 Using local calculation only (skipping API for debugging)');
+    
     try {
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-progression-suggestion`, {
-        params: { exercise },
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
+      // Simulate a brief loading time
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (response.data.success && response.data.progression) {
-        setProgressionSuggestion(response.data.progression);
-        setRecentWorkouts(response.data.workoutHistory || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch progression suggestion:', error);
-      // If API fails, try to calculate locally if we have recent workouts
-      // Otherwise, use local starter suggestions for first-time exercises
       const params = getProgressionParams(exercise);
-      const suggestion = calculateNextWorkout(recentWorkouts, exercise, params);
+      const suggestion = calculateNextWorkout([], exercise, params);
+      console.log('💡 Local suggestion generated:', suggestion);
       setProgressionSuggestion(suggestion);
+    } catch (error) {
+      console.error('❌ Local calculation failed:', error);
     } finally {
+      console.log('🏁 Setting loading to false');
       setLoadingSuggestion(false);
     }
-  }, [recentWorkouts]);
+  }, []);
 
   // Fetch progression suggestion when exercise changes
   useEffect(() => {
+    console.log('🎯 useEffect triggered - selectedExercise:', selectedExercise, 'progressiveOverloadEnabled:', progressiveOverloadEnabled);
+    
     if (selectedExercise && selectedExercise !== 'Other' && progressiveOverloadEnabled) {
+      console.log('🚀 Triggering fetchProgressionSuggestion for:', selectedExercise);
       fetchProgressionSuggestion(selectedExercise);
     } else {
+      console.log('❌ Not fetching suggestion - conditions not met');
       setProgressionSuggestion(null);
+      setLoadingSuggestion(false);
     }
   }, [selectedExercise, progressiveOverloadEnabled, fetchProgressionSuggestion]);
 
