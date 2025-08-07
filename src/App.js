@@ -10,6 +10,7 @@ import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
+import CoolLoadingAnimation from './components/common/CoolLoadingAnimation';
 import './styles/theme.css';
 import './styles/animations.css';
 
@@ -21,6 +22,8 @@ const AppContent = () => {
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState('pulse-wave');
 
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
@@ -36,12 +39,31 @@ const AppContent = () => {
     setRefreshGoals(prev => prev + 1);
   };
 
-  const handleTabChange = (tabId) => {
-    if (tabId === activeTab) return; // Don't change if already active
-    setActiveTab(tabId);
+  const getRandomLoadingType = () => {
+    const types = ['pulse-wave', 'spinning-orbs', 'bouncing-dots', 'morphing-square', 'gradient-spin', 'pulsing-heart'];
+    return types[Math.floor(Math.random() * types.length)];
   };
 
-  const handleSearchNavigation = (item) => {
+  const handleTabChange = async (tabId) => {
+    if (tabId === activeTab) return; // Don't change if already active
+    
+    setIsLoading(true);
+    setLoadingType(getRandomLoadingType());
+    
+    // Cool loading animation duration
+    await new Promise(resolve => setTimeout(resolve, 400));
+    
+    setActiveTab(tabId);
+    setIsLoading(false);
+  };
+
+  const handleSearchNavigation = async (item) => {
+    setIsLoading(true);
+    setLoadingType(getRandomLoadingType());
+    
+    // Cool loading animation duration
+    await new Promise(resolve => setTimeout(resolve, 350));
+    
     // Navigate to the main tab
     setActiveTab(item.path);
     
@@ -58,6 +80,8 @@ const AppContent = () => {
     if (item.path === 'goals') {
       setShowGoalCreator(false); // Ensure we show the goal tracker, not creator
     }
+    
+    setIsLoading(false);
   };
 
   const tabs = [
@@ -155,7 +179,7 @@ const AppContent = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="tab-content smooth-transition">
+        <div className="tab-content smooth-transition relative">
             {activeTab === 'dashboard' && (
               <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
             )}
@@ -226,6 +250,16 @@ const AppContent = () => {
             
             {activeTab === 'history' && (
               <WorkoutHistory key={refreshHistory} />
+            )}
+            
+            {/* Cool Loading Overlay */}
+            {isLoading && (
+              <CoolLoadingAnimation 
+                type={loadingType}
+                size="large"
+                message="Loading..."
+                overlay={true}
+              />
             )}
         </div>
       </main>

@@ -289,15 +289,85 @@
   -webkit-text-fill-color: #ffffff !important;
 }
 
-/* Search results dropdown styling */
-.search-results-title {
+/* Search results dropdown styling with stronger overrides */
+.search-results-title,
+.search-results-title * {
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
-.search-results-subtitle {
+.search-results-subtitle,
+.search-results-subtitle * {
   color: #e5e7eb !important;
+  -webkit-text-fill-color: #e5e7eb !important;
 }
 
-.search-results-no-results {
+.search-results-no-results,
+.search-results-no-results * {
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Additional overrides for search dropdown */
+.search-dropdown {
+  color: #ffffff !important;
+}
+
+.search-dropdown * {
+  color: inherit !important;
+}
+
+.search-dropdown .font-medium {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.search-dropdown .text-sm {
+  color: #e5e7eb !important;
+  -webkit-text-fill-color: #e5e7eb !important;
+}
+
+/* Cool loading animation enhancements */
+.animation-delay-75 {
+  animation-delay: 0.075s;
+}
+
+.animation-delay-150 {
+  animation-delay: 0.15s;
+}
+
+.animation-delay-300 {
+  animation-delay: 0.3s;
+}
+
+/* Backdrop blur for loading overlays */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+}
+
+/* Enhanced loading overlay */
+.cool-loading-overlay {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
 }

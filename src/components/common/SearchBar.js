@@ -123,7 +123,7 @@ const SearchBar = ({ onNavigate }) => {
 
       {isOpen && filteredResults.length > 0 && (
         <div 
-          className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+          className="search-dropdown absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
@@ -150,10 +150,22 @@ const SearchBar = ({ onNavigate }) => {
               <div className="flex items-center space-x-3">
                 <span className="text-lg">{item.icon}</span>
                 <div>
-                  <div className="font-medium search-results-title">
+                  <div 
+                    className="font-medium search-results-title"
+                    style={{ 
+                      color: '#ffffff !important',
+                      WebkitTextFillColor: '#ffffff !important'
+                    }}
+                  >
                     {item.name}
                   </div>
-                  <div className="text-sm search-results-subtitle">
+                  <div 
+                    className="text-sm search-results-subtitle"
+                    style={{ 
+                      color: '#e5e7eb !important',
+                      WebkitTextFillColor: '#e5e7eb !important'
+                    }}
+                  >
                     Navigate to {item.name}
                   </div>
                 </div>
@@ -168,13 +180,19 @@ const SearchBar = ({ onNavigate }) => {
 
       {isOpen && query.length > 0 && filteredResults.length === 0 && (
         <div 
-          className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 p-4 text-center"
+          className="search-dropdown absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 p-4 text-center"
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border
           }}
         >
-          <div className="text-sm search-results-no-results">
+          <div 
+            className="text-sm search-results-no-results"
+            style={{ 
+              color: '#ffffff !important',
+              WebkitTextFillColor: '#ffffff !important'
+            }}
+          >
             No results found for "{query}"
           </div>
         </div>
