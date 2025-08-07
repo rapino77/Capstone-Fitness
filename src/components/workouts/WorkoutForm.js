@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import axios from 'axios';
-import { calculateNextWorkout, getProgressionParams, createMockWorkoutHistory } from '../../utils/progressiveOverload';
+// import { calculateNextWorkout, getProgressionParams, createMockWorkoutHistory } from '../../utils/progressiveOverload';
 import { detectPR, formatPRForCelebration, logPRAchievement } from '../../utils/prDetection';
 import { useCelebration } from '../../context/CelebrationContext';
 
