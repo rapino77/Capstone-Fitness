@@ -497,6 +497,10 @@ function analyzeStrengthProgression(workouts) {
 
   // Process each exercise's data
   const progressionData = {};
+  console.log('=== STRENGTH PROGRESSION DEBUG ===');
+  console.log('Exercises found:', Object.keys(exerciseData));
+  console.log('Workout counts per exercise:', Object.entries(exerciseData).map(([ex, data]) => `${ex}: ${data.length}`));
+  
   Object.entries(exerciseData).forEach(([exercise, workoutData]) => {
     // Sort by date
     const sortedWorkouts = workoutData.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -515,7 +519,6 @@ function analyzeStrengthProgression(workouts) {
     const averageWeeklyIncrease = weightIncrease / weeksBetween;
 
     // Create chart data points (aggregate by date to handle multiple workouts per day)
-    const chartData = [];
     const dateMap = new Map();
 
     sortedWorkouts.forEach(workout => {
@@ -538,13 +541,20 @@ function analyzeStrengthProgression(workouts) {
     });
 
     // Convert map to array and format for charts
-    chartData.push(...Array.from(dateMap.values()).map(entry => ({
+    const chartData = Array.from(dateMap.values()).map(entry => ({
       date: entry.date,
       weight: entry.maxWeight,
       oneRM: Math.round(entry.maxOneRM * 10) / 10, // Round to 1 decimal
       volume: entry.totalVolume,
       workouts: entry.workoutCount
-    })));
+    })).sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
+
+    console.log(`Chart data for ${exercise}:`, {
+      rawWorkouts: workoutData.length,
+      chartDataPoints: chartData.length,
+      dateRange: chartData.length > 0 ? `${chartData[0].date} to ${chartData[chartData.length-1].date}` : 'none',
+      weightRange: chartData.length > 0 ? `${Math.min(...chartData.map(c => c.weight))} to ${Math.max(...chartData.map(c => c.weight))} lbs` : 'none'
+    });
 
     progressionData[exercise] = {
       chartData: chartData,

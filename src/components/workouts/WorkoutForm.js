@@ -4,7 +4,9 @@ import { format } from 'date-fns';
 import axios from 'axios';
 // import { calculateNextWorkout, getProgressionParams, createMockWorkoutHistory } from '../../utils/progressiveOverload';
 import { detectPR, formatPRForCelebration, logPRAchievement } from '../../utils/prDetection';
+import { detectImmediateDeload, formatDeloadPrompt } from '../../utils/deloadDetection';
 import { useCelebration } from '../../context/CelebrationContext';
+import DeloadPrompt from './DeloadPrompt';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,8 +16,10 @@ const WorkoutForm = ({ onSuccess }) => {
   const [progressiveOverloadEnabled, setProgressiveOverloadEnabled] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
   const [lastWorkout, setLastWorkout] = useState(null);
+  const [deloadPromptData, setDeloadPromptData] = useState(null);
+  const [showDeloadPrompt, setShowDeloadPrompt] = useState(false);
+  const [recentWorkouts, setRecentWorkouts] = useState([]);
   const { celebratePR } = useCelebration();
-  // const [recentWorkouts, setRecentWorkouts] = useState([]); // Commented out for debugging
   
   const {
     register,
@@ -137,9 +141,13 @@ const WorkoutForm = ({ onSuccess }) => {
           
           console.log('📊 Setting last workout data:', lastWorkoutData);
           setLastWorkout(lastWorkoutData);
+          
+          // Store recent workouts for deload detection (limit to 10 most recent)
+          setRecentWorkouts(exerciseWorkouts.slice(0, 10));
         } else {
           console.log('📊 No workouts found for exercise, clearing last workout');
           setLastWorkout(null);
+          setRecentWorkouts([]);
         }
       } else {
         console.log('📊 API call unsuccessful or no data');
@@ -263,6 +271,32 @@ const WorkoutForm = ({ onSuccess }) => {
       const prResult = await detectPR(submissionData);
       console.log('🎯 PR Detection Result:', prResult);
 
+      // Check for deload before submitting
+      console.log('🔄 Checking for deload...', {
+        current: submissionData,
+        recent: recentWorkouts.length
+      });
+      
+      const deloadResult = detectImmediateDeload(submissionData, recentWorkouts);
+      console.log('🔄 Deload Detection Result:', deloadResult);
+      
+      if (deloadResult.showPrompt && deloadResult.isDeload) {
+        // Show deload prompt and pause submission
+        const promptData = formatDeloadPrompt(deloadResult);
+        if (promptData) {
+          console.log('🔄 Showing deload prompt...');
+          setDeloadPromptData({
+            ...promptData,
+            originalSubmissionData: submissionData,
+            prResult,
+            recentWorkouts
+          });
+          setShowDeloadPrompt(true);
+          setIsSubmitting(false);
+          return; // Stop submission to show prompt
+        }
+      }
+
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, submissionData);
       console.log('💾 Workout logging response:', {
         success: response.data.success,
@@ -340,6 +374,163 @@ const WorkoutForm = ({ onSuccess }) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Deload prompt handlers
+  const handleDeloadAccept = async (selectedOption) => {
+    console.log('🔄 User accepted deload option:', selectedOption);
+    
+    if (!deloadPromptData?.originalSubmissionData) {
+      console.error('❌ No original submission data available');
+      setShowDeloadPrompt(false);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Apply the deload option to the workout data
+      const deloadedData = {
+        ...deloadPromptData.originalSubmissionData,
+        sets: selectedOption.sets,
+        reps: selectedOption.reps,
+        weight: selectedOption.weight,
+        notes: (deloadPromptData.originalSubmissionData.notes || '') + 
+               `\nDeload applied: ${selectedOption.description} (${selectedOption.weight} lbs)`
+      };
+      
+      console.log('🔄 Submitting workout with deload:', deloadedData);
+      
+      // Update form values to reflect the deload
+      setValue('sets', selectedOption.sets);
+      setValue('reps', selectedOption.reps);
+      setValue('weight', selectedOption.weight);
+      
+      // Submit the deloaded workout
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, deloadedData);
+      
+      if (response.data.success) {
+        setSubmitMessage({ 
+          type: 'success', 
+          text: `Workout logged with ${selectedOption.type} deload! 🔄 Recovery-focused training applied.` 
+        });
+        
+        // Handle PR celebration if it was detected
+        if (deloadPromptData.prResult?.isPR) {
+          const celebrationData = formatPRForCelebration(deloadPromptData.prResult);
+          if (celebrationData) {
+            console.log('🎉 Triggering PR celebration:', celebrationData);
+            await logPRAchievement(celebrationData);
+            celebratePR(celebrationData);
+          }
+        }
+        
+        const exerciseToKeep = deloadedData.exercise;
+        reset();
+        setProgressionSuggestion(null);
+        if (onSuccess) onSuccess(response.data);
+        
+        // Re-fetch data after successful submission
+        if (exerciseToKeep && exerciseToKeep !== 'Other') {
+          setTimeout(() => {
+            setValue('exercise', exerciseToKeep);
+            setTimeout(() => {
+              fetchLastWorkout(exerciseToKeep);
+              if (progressiveOverloadEnabled) {
+                setTimeout(() => {
+                  fetchProgressionSuggestion(exerciseToKeep);
+                }, 500);
+              }
+            }, 1000);
+          }, 2000);
+        }
+      }
+      
+      setShowDeloadPrompt(false);
+      setDeloadPromptData(null);
+      
+    } catch (error) {
+      console.error('❌ Failed to submit deloaded workout:', error);
+      setSubmitMessage({ 
+        type: 'error', 
+        text: error.response?.data?.error || 'Failed to log deloaded workout' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeloadDecline = async () => {
+    console.log('🔄 User declined deload, proceeding with original workout');
+    
+    if (!deloadPromptData?.originalSubmissionData) {
+      console.error('❌ No original submission data available');
+      setShowDeloadPrompt(false);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Submit the original workout data
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, deloadPromptData.originalSubmissionData);
+      
+      if (response.data.success) {
+        setSubmitMessage({ 
+          type: 'success', 
+          text: 'Workout logged successfully! 💪 Continuing with your chosen weights.' 
+        });
+        
+        // Handle PR celebration if it was detected
+        if (deloadPromptData.prResult?.isPR) {
+          const celebrationData = formatPRForCelebration(deloadPromptData.prResult);
+          if (celebrationData) {
+            console.log('🎉 Triggering PR celebration:', celebrationData);
+            await logPRAchievement(celebrationData);
+            celebratePR(celebrationData);
+          }
+        }
+        
+        const exerciseToKeep = deloadPromptData.originalSubmissionData.exercise;
+        reset();
+        setProgressionSuggestion(null);
+        if (onSuccess) onSuccess(response.data);
+        
+        // Re-fetch data after successful submission
+        if (exerciseToKeep && exerciseToKeep !== 'Other') {
+          setTimeout(() => {
+            setValue('exercise', exerciseToKeep);
+            setTimeout(() => {
+              fetchLastWorkout(exerciseToKeep);
+              if (progressiveOverloadEnabled) {
+                setTimeout(() => {
+                  fetchProgressionSuggestion(exerciseToKeep);
+                }, 500);
+              }
+            }, 1000);
+          }, 2000);
+        }
+      }
+      
+      setShowDeloadPrompt(false);
+      setDeloadPromptData(null);
+      
+    } catch (error) {
+      console.error('❌ Failed to submit original workout:', error);
+      setSubmitMessage({ 
+        type: 'error', 
+        text: error.response?.data?.error || 'Failed to log workout' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeloadClose = () => {
+    console.log('🔄 User closed deload prompt');
+    setShowDeloadPrompt(false);
+    setDeloadPromptData(null);
+    setIsSubmitting(false);
   };
 
   return (
@@ -677,6 +868,15 @@ const WorkoutForm = ({ onSuccess }) => {
           {isSubmitting ? 'Logging...' : 'Log Workout'}
         </button>
       </form>
+
+      {/* Deload Prompt Modal */}
+      <DeloadPrompt
+        deloadData={deloadPromptData}
+        onAccept={handleDeloadAccept}
+        onDecline={handleDeloadDecline}
+        onClose={handleDeloadClose}
+        isVisible={showDeloadPrompt}
+      />
     </div>
   );
 };

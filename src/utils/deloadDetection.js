@@ -267,4 +267,195 @@ const generateDeloadRecommendations = (frequency, averageDays, preferredType, su
   return recommendations;
 };
 
+// New functions for real-time deload detection and prompting
+
+/**
+ * Detects if current workout represents a performance decrease that may warrant a deload
+ * @param {Object} currentWorkout - The workout being logged
+ * @param {Array} recentWorkouts - Recent workouts for the same exercise (sorted by date desc)
+ * @returns {Object} Deload detection result with suggestions
+ */
+export function detectImmediateDeload(currentWorkout, recentWorkouts) {
+  if (!recentWorkouts || recentWorkouts.length === 0) {
+    return {
+      isDeload: false,
+      reason: 'No workout history available for comparison',
+      showPrompt: false
+    };
+  }
+
+  // Get the most recent workout for comparison
+  const lastWorkout = recentWorkouts[0];
+  
+  // Calculate performance changes
+  const weightDecrease = parseFloat(currentWorkout.weight) < parseFloat(lastWorkout.weight || lastWorkout.Weight || 0);
+  const repsDecrease = parseInt(currentWorkout.reps) < parseInt(lastWorkout.reps || lastWorkout.Reps || 0);
+  const setsDecrease = parseInt(currentWorkout.sets) < parseInt(lastWorkout.sets || lastWorkout.Sets || 0);
+  
+  // Calculate volume changes
+  const currentVolume = parseInt(currentWorkout.sets) * parseInt(currentWorkout.reps) * parseFloat(currentWorkout.weight);
+  const lastVolume = parseInt(lastWorkout.sets || lastWorkout.Sets || 0) * 
+                    parseInt(lastWorkout.reps || lastWorkout.Reps || 0) * 
+                    parseFloat(lastWorkout.weight || lastWorkout.Weight || 0);
+  
+  const volumeDecreasePercent = lastVolume > 0 ? ((lastVolume - currentVolume) / lastVolume) * 100 : 0;
+  
+  // Determine if this qualifies for a deload prompt
+  const decreaseIndicators = [];
+  
+  if (weightDecrease) {
+    const weightDiff = parseFloat(lastWorkout.weight || lastWorkout.Weight || 0) - parseFloat(currentWorkout.weight);
+    decreaseIndicators.push({
+      type: 'weight',
+      message: `Weight decreased by ${weightDiff} lbs`,
+      from: parseFloat(lastWorkout.weight || lastWorkout.Weight || 0),
+      to: parseFloat(currentWorkout.weight)
+    });
+  }
+  
+  if (repsDecrease) {
+    const repDiff = parseInt(lastWorkout.reps || lastWorkout.Reps || 0) - parseInt(currentWorkout.reps);
+    decreaseIndicators.push({
+      type: 'reps',
+      message: `Reps decreased by ${repDiff}`,
+      from: parseInt(lastWorkout.reps || lastWorkout.Reps || 0),
+      to: parseInt(currentWorkout.reps)
+    });
+  }
+  
+  if (setsDecrease) {
+    const setDiff = parseInt(lastWorkout.sets || lastWorkout.Sets || 0) - parseInt(currentWorkout.sets);
+    decreaseIndicators.push({
+      type: 'sets',
+      message: `Sets decreased by ${setDiff}`,
+      from: parseInt(lastWorkout.sets || lastWorkout.Sets || 0),
+      to: parseInt(currentWorkout.sets)
+    });
+  }
+  
+  // Only show deload prompt if there's a meaningful decrease
+  const showPrompt = decreaseIndicators.length > 0 || volumeDecreasePercent > 10;
+  
+  if (!showPrompt) {
+    return {
+      isDeload: false,
+      reason: 'Performance maintained or improved',
+      showPrompt: false
+    };
+  }
+
+  // Calculate suggested deload options
+  const recentPeakWeight = Math.max(...recentWorkouts.slice(0, 5).map(w => parseFloat(w.weight || w.Weight || 0)));
+  const currentWeight = parseFloat(currentWorkout.weight);
+  
+  const deloadOptions = [
+    {
+      type: 'light',
+      weight: Math.max(Math.round((recentPeakWeight * 0.9) * 2) / 2, currentWeight - 10),
+      percentage: 10,
+      description: 'Light deload - reduce weight by 10%',
+      sets: parseInt(lastWorkout.sets || lastWorkout.Sets || 3),
+      reps: parseInt(lastWorkout.reps || lastWorkout.Reps || 10)
+    },
+    {
+      type: 'moderate',
+      weight: Math.max(Math.round((recentPeakWeight * 0.85) * 2) / 2, currentWeight - 15),
+      percentage: 15,
+      description: 'Moderate deload - reduce weight by 15%',
+      sets: Math.max(parseInt(lastWorkout.sets || lastWorkout.Sets || 3) - 1, 2),
+      reps: parseInt(lastWorkout.reps || lastWorkout.Reps || 10)
+    },
+    {
+      type: 'full',
+      weight: Math.max(Math.round((recentPeakWeight * 0.8) * 2) / 2, currentWeight - 20),
+      percentage: 20,
+      description: 'Full deload - reduce weight by 20%',
+      sets: Math.max(parseInt(lastWorkout.sets || lastWorkout.Sets || 3) - 1, 2),
+      reps: Math.max(parseInt(lastWorkout.reps || lastWorkout.Reps || 10) - 2, 6)
+    }
+  ].filter(option => option.weight > 0 && option.weight < currentWeight); // Only show options that are reductions
+
+  return {
+    isDeload: true,
+    showPrompt: true,
+    indicators: decreaseIndicators,
+    volumeChange: {
+      previous: Math.round(lastVolume),
+      current: Math.round(currentVolume),
+      decreasePercent: Math.round(volumeDecreasePercent)
+    },
+    lastWorkout: {
+      weight: parseFloat(lastWorkout.weight || lastWorkout.Weight || 0),
+      sets: parseInt(lastWorkout.sets || lastWorkout.Sets || 0),
+      reps: parseInt(lastWorkout.reps || lastWorkout.Reps || 0),
+      date: lastWorkout.date || lastWorkout.Date
+    },
+    currentWorkout: {
+      weight: parseFloat(currentWorkout.weight),
+      sets: parseInt(currentWorkout.sets),
+      reps: parseInt(currentWorkout.reps)
+    },
+    recentPeakWeight,
+    deloadOptions,
+    reasoning: `Performance decreased compared to last workout: ${decreaseIndicators.map(i => i.message).join(', ')}`
+  };
+}
+
+/**
+ * Get formatted deload prompt data for UI display
+ */
+export function formatDeloadPrompt(deloadData) {
+  if (!deloadData.showPrompt) {
+    return null;
+  }
+
+  const { lastWorkout, currentWorkout, deloadOptions, indicators, volumeChange } = deloadData;
+  
+  return {
+    title: '🔄 Deload Detected',
+    message: 'Your performance decreased compared to your last workout. Would you like to adjust your training load?',
+    comparison: {
+      last: `${lastWorkout.sets} sets × ${lastWorkout.reps} reps @ ${lastWorkout.weight} lbs`,
+      current: `${currentWorkout.sets} sets × ${currentWorkout.reps} reps @ ${currentWorkout.weight} lbs`,
+      changes: indicators
+    },
+    volumeImpact: volumeChange.decreasePercent > 0 ? 
+      `Training volume decreased by ${volumeChange.decreasePercent}%` : null,
+    options: deloadOptions.map(option => ({
+      ...option,
+      preview: `${option.sets} sets × ${option.reps} reps @ ${option.weight} lbs`,
+      benefits: getDeloadBenefits(option.type)
+    })),
+    recommendations: getDeloadRecommendations(deloadOptions.length > 0 ? 'suggested' : 'maintain')
+  };
+}
+
+function getDeloadBenefits(deloadType) {
+  const benefits = {
+    light: ['Maintain movement pattern', 'Reduce fatigue', 'Build confidence'],
+    moderate: ['Promote recovery', 'Reset progression', 'Improve technique'],
+    full: ['Complete recovery', 'Prevent overreaching', 'Long-term gains']
+  };
+  
+  return benefits[deloadType] || [];
+}
+
+function getDeloadRecommendations(situation) {
+  const recommendations = {
+    suggested: [
+      'Choose a deload option that feels sustainable',
+      'Focus on perfect form during deload weeks',
+      'Listen to your body and adjust as needed',
+      'Return to regular progression after 1-2 weeks'
+    ],
+    maintain: [
+      'Current workout is similar to previous - no deload needed',
+      'Continue with progressive overload',
+      'Monitor for signs of fatigue in coming workouts'
+    ]
+  };
+  
+  return recommendations[situation] || [];
+}
+
 export { calculateOneRM };
