@@ -88,7 +88,7 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
   console.log('Today:', new Date().toISOString().split('T')[0]);
   console.log('Timeframe days:', timeframeDays);
   console.log('Start date (inclusive):', dateFilter);
-  console.log('Will include workouts AFTER:', dateFilter);
+  console.log('Will include workouts ON OR AFTER:', dateFilter);
 
   const analytics = {
     summary: {},
@@ -103,10 +103,10 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
   if (includeWorkouts) {
     console.log('=== ANALYTICS WORKOUT FETCH ===');
     console.log('User ID:', userId);
-    console.log('Date filter (after):', dateFilter);
+    console.log('Date filter (on or after):', dateFilter);
     
     const workouts = await fetchRecords(base, 'Workouts', {
-      filterByFormula: `AND({User ID} = '${userId}', IS_AFTER({Date}, '${dateFilter}'))`,
+      filterByFormula: `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date}, '${dateFilter}'))`,
       sort: [{ field: 'Date', direction: 'asc' }]
     });
 
@@ -129,7 +129,7 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
   // Weight Analytics
   if (includeWeight) {
     const weightLogs = await fetchRecords(base, 'BodyWeight', {
-      filterByFormula: `AND({User ID} = '${userId}', IS_AFTER({Date}, '${dateFilter}'))`,
+      filterByFormula: `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date}, '${dateFilter}'))`,
       sort: [{ field: 'Date', direction: 'asc' }]
     });
 
@@ -148,7 +148,7 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
 
   // Progress Analytics (PRs)
   const progressRecords = await fetchRecords(base, 'Progress Records', {
-    filterByFormula: `AND({User ID} = '${userId}', IS_AFTER({Date Achieved}, '${dateFilter}'))`,
+    filterByFormula: `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date Achieved}, '${dateFilter}'))`,
     sort: [{ field: 'Date Achieved', direction: 'desc' }]
   });
 
