@@ -35,6 +35,7 @@ exports.handler = async (event, context) => {
     // Parse query parameters
     const params = event.queryStringParameters || {};
     const { 
+      userId = 'default-user',
       // startDate, 
       // endDate, 
       // exercise, 
@@ -53,16 +54,12 @@ exports.handler = async (event, context) => {
     // Filters will cause errors on non-existent fields
     // const filterFormula = '';
 
-    // Query configuration - remove sort since table has no fields
+    // Query configuration with User ID filter and sorting
     const queryConfig = {
-      pageSize: Math.min(parseInt(limit), 100)
-      // Can't sort by fields that don't exist
+      pageSize: Math.min(parseInt(limit), 100),
+      filterByFormula: `{User ID} = '${userId}'`,
+      sort: [{ field: 'Date', direction: 'desc' }]
     };
-
-    // Skip filter formula since table has no fields to filter on
-    // if (filterFormula) {
-    //   queryConfig.filterByFormula = filterFormula;
-    // }
 
     // Fetch records
     const records = [];
@@ -95,6 +92,7 @@ exports.handler = async (event, context) => {
     // Format response - handle empty records
     const formattedRecords = paginatedRecords.map(record => ({
       id: record.id,
+      userId: record.get('User ID') || 'default-user',
       exercise: record.get('Exercise') || 'Unknown Exercise',
       sets: record.get('Sets') || 0,
       reps: record.get('Reps') || 0,

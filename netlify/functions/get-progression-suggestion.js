@@ -57,6 +57,7 @@ exports.handler = async (event, context) => {
         .all();
 
       workouts = records.map(record => ({
+        userId: record.get('User ID'),
         date: record.get('Date'),
         sets: parseInt(record.get('Sets')) || 0,
         reps: parseInt(record.get('Reps')) || 0,
@@ -64,7 +65,26 @@ exports.handler = async (event, context) => {
         notes: record.get('Notes') || ''
       }));
 
+      console.log(`=== PROGRESSION SUGGESTION DEBUG ===`);
+      console.log(`Query filter: AND({User ID} = '${userId}', {Exercise} = '${exercise}')`);
       console.log(`Fetched ${workouts.length} workouts for ${exercise} analysis`);
+      console.log('Total records found:', records.length);
+      
+      if (records.length > 0 && workouts.length === 0) {
+        console.log('WARNING: Found records but no workouts mapped. Raw record data:');
+        records.forEach((record, idx) => {
+          console.log(`Record ${idx}:`, {
+            userId: record.get('User ID'),
+            exercise: record.get('Exercise'),
+            date: record.get('Date'),
+            sets: record.get('Sets'),
+            reps: record.get('Reps'),
+            weight: record.get('Weight'),
+            fields: Object.keys(record.fields)
+          });
+        });
+      }
+      
       if (workouts.length > 0) {
         console.log('Most recent workout:', workouts[0]);
         console.log('Most recent weight:', workouts[0].weight);

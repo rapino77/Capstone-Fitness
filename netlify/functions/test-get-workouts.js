@@ -43,9 +43,25 @@ exports.handler = async (event, context) => {
         );
     });
 
+    // Debug: Show raw field data first
+    console.log('=== RAW WORKOUT RECORDS ===');
+    records.forEach((record, idx) => {
+      console.log(`Record ${idx}:`, {
+        id: record.id,
+        fields: Object.keys(record.fields),
+        userId: record.get('User ID'),
+        exercise: record.get('Exercise'),
+        sets: record.get('Sets'),
+        reps: record.get('Reps'),
+        weight: record.get('Weight'),
+        date: record.get('Date')
+      });
+    });
+
     // Format like the original function expects
     const formattedRecords = records.map(record => ({
       id: record.id,
+      userId: record.get('User ID') || 'NO_USER_ID',
       exercise: record.get('Exercise') || 'Test Exercise',
       sets: record.get('Sets') || 3,
       reps: record.get('Reps') || 10,

@@ -56,6 +56,7 @@ exports.handler = async (event, context) => {
     // Create record in Airtable with actual workout data
     console.log('Creating workout record with data:', data);
     const record = await base('Workouts').create({
+      'User ID': data.userId || 'default-user',  // Add User ID field
       Exercise: data.exercise,
       Sets: parseInt(data.sets) || 0,
       Reps: parseInt(data.reps) || 0,

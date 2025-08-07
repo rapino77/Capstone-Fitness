@@ -167,9 +167,10 @@ const WorkoutForm = ({ onSuccess }) => {
     setSubmitMessage({ type: '', text: '' });
 
     try {
-      // Include progression tracking info
+      // Include progression tracking info and userId
       const submissionData = {
         ...data,
+        userId: 'default-user',  // Add userId to match what the API expects
         progressionApplied: progressionSuggestion?.suggestion && 
           data.sets === progressionSuggestion.suggestion.sets &&
           data.reps === progressionSuggestion.suggestion.reps &&
