@@ -167,6 +167,13 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
       }
     } catch (error) {
       console.error('Goal creation error:', error.response?.data || error);
+      console.error('Full error response:', error.response);
+      console.error('Error status:', error.response?.status);
+      console.error('Error details:', {
+        data: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
       setSubmitMessage({ 
         type: 'error', 
         text: error.response?.data?.error || 'Failed to create goal' 
