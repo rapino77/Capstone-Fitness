@@ -47,25 +47,38 @@ const WorkoutForm = ({ onSuccess }) => {
   ];
 
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
-    console.log('🔄 fetchProgressionSuggestion called for:', exercise);
+    console.log('🔄 Enhanced progression suggestion called for:', exercise);
     setLoadingSuggestion(true);
     
-    // For now, let's skip the API call entirely and go straight to local calculation
-    // This will help us determine if the issue is with the API call or something else
-    console.log('🔧 Using local calculation only (skipping API for debugging)');
-    
     try {
-      // Simulate a brief loading time
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Try enhanced API endpoint first
+      const response = await axios.get(`/.netlify/functions/get-enhanced-progression`, {
+        params: {
+          exercise: exercise,
+          userId: 'default-user'
+        },
+        timeout: 10000
+      });
       
+      if (response.data.success && response.data.progression) {
+        console.log('💡 Enhanced API suggestion received:', response.data.progression);
+        setProgressionSuggestion(response.data.progression);
+        return;
+      }
+    } catch (apiError) {
+      console.warn('⚠️ Enhanced API failed, falling back to local calculation:', apiError.message);
+    }
+    
+    // Fallback to local enhanced calculation
+    try {
       const params = getProgressionParams(exercise);
       const suggestion = calculateNextWorkout([], exercise, params);
-      console.log('💡 Local suggestion generated:', suggestion);
+      console.log('💡 Local enhanced suggestion generated:', suggestion);
       setProgressionSuggestion(suggestion);
     } catch (error) {
       console.error('❌ Local calculation failed:', error);
+      setProgressionSuggestion(null);
     } finally {
-      console.log('🏁 Setting loading to false');
       setLoadingSuggestion(false);
     }
   }, []);
@@ -217,6 +230,23 @@ const WorkoutForm = ({ onSuccess }) => {
                       ))}
                     </div>
                   </div>
+                  {progressionSuggestion.hypertrophyOptimized && (
+                    <div className="mt-2 p-2 bg-purple-100 border border-purple-200 rounded text-xs">
+                      <div className="font-medium text-purple-800 mb-1">🎯 Hypertrophy Analysis:</div>
+                      {progressionSuggestion.analysis && (
+                        <div className="space-y-1 text-purple-700">
+                          <div>Success Rate: {progressionSuggestion.analysis.successRate}%</div>
+                          {progressionSuggestion.analysis.weeklyGrowth !== undefined && (
+                            <div>Weekly Growth: {progressionSuggestion.analysis.weeklyGrowth > 0 ? '+' : ''}{progressionSuggestion.analysis.weeklyGrowth}%</div>
+                          )}
+                          <div>Volume Trend: {progressionSuggestion.analysis.volumeTrend}</div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            Optimized for 6-15 rep hypertrophy ranges
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : progressionSuggestion?.isFirstWorkout ? (

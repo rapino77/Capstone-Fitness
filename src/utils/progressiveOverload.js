@@ -20,9 +20,11 @@ export const PROGRESSION_PARAMS = {
   strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION // default strategy
 };
 
-// Calculate the next workout targets based on recent performance
+// Calculate the next workout targets based on recent performance with hypertrophy optimization
 export function calculateNextWorkout(recentWorkouts, exerciseName, customParams = {}) {
   const params = { ...PROGRESSION_PARAMS, ...customParams };
+  const exerciseParams = getProgressionParams(exerciseName);
+  const mergedParams = { ...params, ...exerciseParams };
   
   if (!recentWorkouts || recentWorkouts.length === 0) {
     // Provide beginner-friendly starting suggestions
@@ -46,19 +48,21 @@ export function calculateNextWorkout(recentWorkouts, exerciseName, customParams 
   const lastReps = lastWorkout.reps || lastWorkout.Reps || 10;
   const lastWeight = lastWorkout.weight || lastWorkout.Weight || 0;
 
-  // Not enough history for analysis
-  if (sortedWorkouts.length < params.minWorkoutsForAnalysis) {
-    return applyProgressionStrategy(lastSets, lastReps, lastWeight, params, 'insufficient_data');
-  }
-
-  // Analyze recent performance
-  const analysis = analyzeRecentPerformance(sortedWorkouts.slice(0, params.minWorkoutsForAnalysis));
+  // Enhanced analysis with hypertrophy focus
+  const performanceAnalysis = analyzeWeeklyProgression(sortedWorkouts, exerciseName);
+  const volumeAnalysis = analyzeVolumeProgression(sortedWorkouts);
+  const successRate = calculateSuccessRate(sortedWorkouts, mergedParams);
   
-  // Apply progression strategy based on analysis
-  return applyProgressionStrategy(lastSets, lastReps, lastWeight, params, analysis.status, analysis);
+  // Generate intelligent progression recommendation
+  return generateIntelligentProgression(
+    lastSets, lastReps, lastWeight, 
+    performanceAnalysis, volumeAnalysis, successRate, 
+    mergedParams, exerciseName
+  );
 }
 
-// Analyze recent workout performance
+// Legacy analyze function - kept for backward compatibility but unused in enhanced algorithm
+// eslint-disable-next-line no-unused-vars
 function analyzeRecentPerformance(recentWorkouts) {
   const volumes = recentWorkouts.map(w => 
     (w.sets || w.Sets) * (w.reps || w.Reps) * (w.weight || w.Weight || 0)
@@ -91,7 +95,8 @@ function analyzeRecentPerformance(recentWorkouts) {
   }
 }
 
-// Apply the selected progression strategy
+// Legacy progression strategy - kept for backward compatibility but unused in enhanced algorithm
+// eslint-disable-next-line no-unused-vars
 function applyProgressionStrategy(sets, reps, weight, params, status, analysis = {}) {
   const strategy = params.strategy;
   let suggestion = { sets, reps, weight };
@@ -157,46 +162,312 @@ function applyProgressionStrategy(sets, reps, weight, params, status, analysis =
   };
 }
 
-// Get personalized progression parameters based on exercise type
+// Get personalized progression parameters optimized for hypertrophy
 export function getProgressionParams(exerciseName) {
   const exerciseLower = exerciseName.toLowerCase();
   
-  // Compound movements - smaller increments, lower rep ranges
+  // Compound movements - hypertrophy optimized rep ranges
   if (exerciseLower.includes('squat') || exerciseLower.includes('deadlift') || 
       exerciseLower.includes('bench') || exerciseLower.includes('press')) {
     return {
       ...PROGRESSION_PARAMS,
-      weightIncrement: 5,
-      maxRepRange: { low: 5, high: 8 },
-      strategy: PROGRESSION_STRATEGIES.LINEAR
+      weightIncrement: 2.5, // Smaller increments for better progression
+      maxRepRange: { low: 6, high: 10 }, // Hypertrophy range for compounds
+      strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION,
+      hypertrophyFocus: true,
+      basePercentageIncrease: 0.025, // 2.5% weekly increase
+      volumeTargetMultiplier: 1.1 // 10% volume increase when needed
     };
   }
   
-  // Isolation movements - higher rep ranges, double progression
+  // Isolation movements - higher rep ranges for hypertrophy
   if (exerciseLower.includes('curl') || exerciseLower.includes('extension') || 
-      exerciseLower.includes('fly') || exerciseLower.includes('raise')) {
+      exerciseLower.includes('fly') || exerciseLower.includes('raise') ||
+      exerciseLower.includes('lateral') || exerciseLower.includes('tricep') ||
+      exerciseLower.includes('bicep')) {
     return {
       ...PROGRESSION_PARAMS,
-      weightIncrement: 2.5,
-      maxRepRange: { low: 10, high: 15 },
-      strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION
+      weightIncrement: 1.25, // Even smaller increments for isolation
+      maxRepRange: { low: 10, high: 15 }, // Higher rep hypertrophy range
+      strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION,
+      hypertrophyFocus: true,
+      basePercentageIncrease: 0.02, // 2% weekly increase
+      volumeTargetMultiplier: 1.15 // 15% volume increase when needed
     };
   }
   
-  // Bodyweight movements - rep progression
+  // Bodyweight movements - rep progression with hypertrophy focus
   if (exerciseLower.includes('pull-up') || exerciseLower.includes('push-up') || 
       exerciseLower.includes('dip') || exerciseLower.includes('chin-up')) {
     return {
       ...PROGRESSION_PARAMS,
       weightIncrement: 0,
-      repIncrement: 2,
-      maxRepRange: { low: 5, high: 20 },
-      strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION
+      repIncrement: 1, // Smaller rep jumps
+      maxRepRange: { low: 8, high: 15 }, // Hypertrophy rep range
+      strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION,
+      hypertrophyFocus: true,
+      basePercentageIncrease: 0.05, // 5% rep increase
+      volumeTargetMultiplier: 1.2 // 20% volume increase when needed
     };
   }
   
-  // Default parameters for other exercises
-  return PROGRESSION_PARAMS;
+  // Default hypertrophy-optimized parameters
+  return {
+    ...PROGRESSION_PARAMS,
+    maxRepRange: { low: 8, high: 12 }, // Classic hypertrophy range
+    hypertrophyFocus: true,
+    basePercentageIncrease: 0.025, // 2.5% weekly increase
+    volumeTargetMultiplier: 1.1
+  };
+}
+
+// Analyze week-over-week progression patterns
+function analyzeWeeklyProgression(sortedWorkouts, exerciseName) {
+  if (sortedWorkouts.length < 2) {
+    return { trend: 'insufficient_data', weeklyGrowth: 0, consistency: 0 };
+  }
+
+  const weeklyData = groupWorkoutsByWeek(sortedWorkouts);
+  const weeklyAverages = calculateWeeklyAverages(weeklyData);
+  
+  if (weeklyAverages.length < 2) {
+    return { trend: 'insufficient_data', weeklyGrowth: 0, consistency: 0 };
+  }
+
+  const growthRates = [];
+  for (let i = 1; i < weeklyAverages.length; i++) {
+    const currentWeek = weeklyAverages[i];
+    const previousWeek = weeklyAverages[i - 1];
+    
+    // Calculate percentage growth in total volume
+    const volumeGrowth = previousWeek.volume > 0 
+      ? (currentWeek.volume - previousWeek.volume) / previousWeek.volume
+      : 0;
+    
+    // Calculate intensity (weight) growth
+    const intensityGrowth = previousWeek.avgWeight > 0
+      ? (currentWeek.avgWeight - previousWeek.avgWeight) / previousWeek.avgWeight
+      : 0;
+
+    growthRates.push({
+      week: i,
+      volumeGrowth,
+      intensityGrowth,
+      combinedGrowth: (volumeGrowth + intensityGrowth) / 2
+    });
+  }
+
+  const avgWeeklyGrowth = growthRates.reduce((sum, g) => sum + g.combinedGrowth, 0) / growthRates.length;
+  const consistency = calculateConsistency(growthRates);
+  
+  let trend = 'stable';
+  if (avgWeeklyGrowth > 0.02) trend = 'increasing';
+  else if (avgWeeklyGrowth < -0.02) trend = 'decreasing';
+
+  return {
+    trend,
+    weeklyGrowth: avgWeeklyGrowth,
+    consistency,
+    growthRates,
+    weeklyAverages
+  };
+}
+
+// Group workouts by week for weekly progression analysis
+function groupWorkoutsByWeek(workouts) {
+  const weeklyData = {};
+  
+  workouts.forEach(workout => {
+    const date = new Date(workout.date || workout.Date);
+    const weekKey = getWeekKey(date);
+    
+    if (!weeklyData[weekKey]) {
+      weeklyData[weekKey] = [];
+    }
+    
+    weeklyData[weekKey].push({
+      sets: workout.sets || workout.Sets || 1,
+      reps: workout.reps || workout.Reps || 1,
+      weight: workout.weight || workout.Weight || 0,
+      volume: (workout.sets || workout.Sets || 1) * (workout.reps || workout.Reps || 1) * (workout.weight || workout.Weight || 0)
+    });
+  });
+  
+  return weeklyData;
+}
+
+function getWeekKey(date) {
+  const year = date.getFullYear();
+  const week = getWeekNumber(date);
+  return `${year}-W${week}`;
+}
+
+function getWeekNumber(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+function calculateWeeklyAverages(weeklyData) {
+  const weeks = Object.keys(weeklyData).sort();
+  
+  return weeks.map(weekKey => {
+    const weekWorkouts = weeklyData[weekKey];
+    const totalVolume = weekWorkouts.reduce((sum, w) => sum + w.volume, 0);
+    const avgWeight = weekWorkouts.reduce((sum, w) => sum + w.weight, 0) / weekWorkouts.length;
+    const avgSets = weekWorkouts.reduce((sum, w) => sum + w.sets, 0) / weekWorkouts.length;
+    const avgReps = weekWorkouts.reduce((sum, w) => sum + w.reps, 0) / weekWorkouts.length;
+    
+    return {
+      week: weekKey,
+      workoutCount: weekWorkouts.length,
+      volume: totalVolume,
+      avgWeight,
+      avgSets,
+      avgReps
+    };
+  });
+}
+
+function calculateConsistency(growthRates) {
+  if (growthRates.length < 2) return 0;
+  
+  const mean = growthRates.reduce((sum, g) => sum + g.combinedGrowth, 0) / growthRates.length;
+  const variance = growthRates.reduce((sum, g) => sum + Math.pow(g.combinedGrowth - mean, 2), 0) / growthRates.length;
+  const standardDeviation = Math.sqrt(variance);
+  
+  // Higher consistency = lower standard deviation (inverted and normalized)
+  return Math.max(0, 1 - (standardDeviation * 2));
+}
+
+// Analyze volume progression for hypertrophy optimization
+function analyzeVolumeProgression(sortedWorkouts) {
+  if (sortedWorkouts.length < 3) {
+    return { trend: 'insufficient_data', volumeGrowth: 0 };
+  }
+
+  const recentVolumes = sortedWorkouts.slice(0, 6).map(w => 
+    (w.sets || w.Sets || 1) * (w.reps || w.Reps || 1) * (w.weight || w.Weight || 0)
+  );
+
+  const trend = calculateTrendDirection(recentVolumes);
+  const volumeGrowth = (recentVolumes[0] - recentVolumes[recentVolumes.length - 1]) / recentVolumes[recentVolumes.length - 1];
+
+  return {
+    trend: trend > 0.05 ? 'increasing' : trend < -0.05 ? 'decreasing' : 'stable',
+    volumeGrowth,
+    recentVolumes
+  };
+}
+
+function calculateTrendDirection(values) {
+  if (values.length < 2) return 0;
+  
+  const n = values.length;
+  const x = Array.from({length: n}, (_, i) => i);
+  const y = values;
+  
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+  const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
+  
+  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  return slope / (sumY / n); // Normalize by average value
+}
+
+// Calculate success rate based on rep completion in target ranges
+function calculateSuccessRate(sortedWorkouts, params) {
+  if (sortedWorkouts.length === 0) return 0.5; // Neutral starting point
+  
+  const targetRange = params.maxRepRange;
+  const recentWorkouts = sortedWorkouts.slice(0, Math.min(6, sortedWorkouts.length));
+  
+  const successfulWorkouts = recentWorkouts.filter(workout => {
+    const reps = workout.reps || workout.Reps || 0;
+    return reps >= targetRange.low && reps <= targetRange.high;
+  }).length;
+  
+  return successfulWorkouts / recentWorkouts.length;
+}
+
+// Generate intelligent progression recommendation based on comprehensive analysis
+function generateIntelligentProgression(sets, reps, weight, performanceAnalysis, volumeAnalysis, successRate, params, exerciseName) {
+  let suggestion = { sets, reps, weight };
+  let reason = '';
+  let confidence = 'medium';
+
+  // Base percentage increase from exercise-specific parameters
+  const baseIncrease = params.basePercentageIncrease || 0.025;
+  
+  // Adjust progression based on success rate
+  let progressionMultiplier = 1.0;
+  if (successRate >= 0.9) {
+    progressionMultiplier = 1.2; // Aggressive progression for high success
+    confidence = 'high';
+  } else if (successRate >= 0.7) {
+    progressionMultiplier = 1.0; // Standard progression
+    confidence = 'medium';
+  } else {
+    progressionMultiplier = 0.5; // Conservative progression or focus on volume
+    confidence = 'low';
+  }
+
+  // Adjust based on weekly progression trend
+  if (performanceAnalysis.trend === 'increasing' && performanceAnalysis.consistency > 0.7) {
+    progressionMultiplier *= 1.1; // Reward consistent progress
+  } else if (performanceAnalysis.trend === 'decreasing') {
+    progressionMultiplier *= 0.7; // Slow down progression if declining
+  }
+
+  // Calculate intelligent weight progression
+  if (params.hypertrophyFocus && reps < params.maxRepRange.high && successRate > 0.8) {
+    // Double progression approach - increase reps first in hypertrophy range
+    suggestion.reps = Math.min(reps + 1, params.maxRepRange.high);
+    reason = `Increase reps to ${suggestion.reps} for hypertrophy (success rate: ${Math.round(successRate * 100)}%)`;
+    confidence = 'high';
+  } else if (reps >= params.maxRepRange.high || successRate < 0.7) {
+    // Increase weight using intelligent percentage-based approach
+    const percentageIncrease = baseIncrease * progressionMultiplier;
+    const weightIncrease = Math.max(params.weightIncrement || 2.5, weight * percentageIncrease);
+    
+    suggestion.weight = Math.round((weight + weightIncrease) * 4) / 4; // Round to nearest 0.25
+    suggestion.reps = params.maxRepRange.low; // Reset to lower end of range
+    
+    reason = `Increase weight by ${Math.round(percentageIncrease * 100 * 10) / 10}% (${suggestion.weight - weight}lbs) based on ${Math.round(successRate * 100)}% success rate`;
+    confidence = successRate > 0.8 ? 'high' : 'medium';
+  } else if (volumeAnalysis.trend === 'decreasing' || successRate < 0.5) {
+    // Focus on volume increase or deload
+    if (performanceAnalysis.weeklyGrowth < -0.1) {
+      // Deload scenario
+      suggestion.weight = Math.round(weight * 0.9 * 4) / 4; // 10% deload
+      reason = `Deload by 10% due to declining performance (${Math.round(performanceAnalysis.weeklyGrowth * 100)}% weekly decline)`;
+      confidence = 'high';
+    } else {
+      // Volume increase
+      suggestion.sets = Math.min(sets + 1, 5); // Cap at 5 sets
+      reason = `Add extra set to increase volume (low success rate: ${Math.round(successRate * 100)}%)`;
+      confidence = 'medium';
+    }
+  }
+
+  return {
+    suggestion,
+    reason,
+    confidence,
+    strategy: params.strategy,
+    status: performanceAnalysis.trend,
+    lastWorkout: { sets, reps, weight },
+    analysis: {
+      successRate: Math.round(successRate * 100),
+      weeklyGrowth: Math.round(performanceAnalysis.weeklyGrowth * 100 * 10) / 10,
+      volumeTrend: volumeAnalysis.trend,
+      progressionMultiplier: Math.round(progressionMultiplier * 100) / 100
+    },
+    hypertrophyOptimized: true
+  };
 }
 
 // Format progression suggestion for display

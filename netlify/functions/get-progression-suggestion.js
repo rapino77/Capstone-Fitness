@@ -41,14 +41,33 @@ exports.handler = async (event, context) => {
 
     let workouts = [];
     
-    // For now, skip Airtable and proceed with empty workouts to test first-workout logic
-    // This ensures fast response times during development/testing
-    console.log('Skipping Airtable fetch, proceeding with empty workout history for testing');
-    
-    // TODO: Re-enable Airtable integration once proper credentials are configured
-    // if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
-    //   // Airtable integration code here
-    // }
+    // Fetch workout history from Airtable for intelligent progression analysis
+    if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
+      const base = new Airtable({
+        apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
+      }).base(process.env.AIRTABLE_BASE_ID);
+
+      // Get last 20 workouts for comprehensive analysis (approximately 4-6 weeks of data)
+      const records = await base('Workouts')
+        .select({
+          filterByFormula: `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`,
+          sort: [{ field: 'Date', direction: 'desc' }],
+          maxRecords: 20
+        })
+        .all();
+
+      workouts = records.map(record => ({
+        date: record.get('Date'),
+        sets: record.get('Sets'),
+        reps: record.get('Reps'),
+        weight: record.get('Weight'),
+        notes: record.get('Notes')
+      }));
+
+      console.log(`Fetched ${workouts.length} workouts for ${exercise} analysis`);
+    } else {
+      console.log('Airtable credentials not configured, using empty workout history');
+    }
 
     // Import the progression calculation logic
     const progressionLogic = getProgressionLogic();
