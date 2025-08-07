@@ -362,16 +362,25 @@ const ChallengeSystem = ({ onSuccess }) => {
   };
 
   const createChallenge = (template, variant) => {
+    console.log('🚀 createChallenge called with:', {template, variant, selectedChallengeType});
+    
+    // Validate inputs
+    if (!template || !variant || !selectedChallengeType) {
+      console.error('❌ Missing required parameters for challenge creation');
+      alert('Error: Missing challenge data. Please try again.');
+      return;
+    }
+    
     const newChallenge = {
       id: Date.now().toString(),
       type: selectedChallengeType,
-      name: variant.reward,
-      description: template.description,
-      icon: template.icon,
-      category: template.category,
-      target: variant.duration || variant.target || variant.workouts || variant.weeks,
-      reward: variant.reward,
-      points: variant.points,
+      name: variant.reward || `${template.name} Challenge`,
+      description: template.description || 'Custom challenge',
+      icon: template.icon || '🏆',
+      category: template.category || 'general',
+      target: variant.duration || variant.target || variant.workouts || variant.weeks || 1,
+      reward: variant.reward || 'Achievement Unlocked',
+      points: variant.points || 100,
       startDate: new Date().toISOString(),
       progress: 0,
       isComplete: false,
@@ -392,19 +401,29 @@ const ChallengeSystem = ({ onSuccess }) => {
       })
     };
     
-    console.log('🎯 Creating new challenge:', newChallenge);
+    console.log('✅ Challenge validation passed');
     
-    const updatedActive = [...activeChallenges, newChallenge];
-    setActiveChallenges(updatedActive);
+    console.log('🎯 Creating new challenge:', newChallenge);
+    console.log('📊 Current activeChallenges before update:', activeChallenges);
     
     try {
+      // First, update localStorage
+      const currentSaved = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
+      console.log('📦 Current localStorage before save:', currentSaved);
+      
+      const updatedActive = [...currentSaved, newChallenge];
       localStorage.setItem('activeChallenges', JSON.stringify(updatedActive));
+      
       console.log('✅ Challenge saved to localStorage successfully');
-      console.log('📦 Updated active challenges:', updatedActive);
+      console.log('📦 Updated localStorage challenges:', updatedActive);
       
       // Verify the save worked
       const saved = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
       console.log('🔍 Verification - challenges in localStorage:', saved);
+      
+      // Now update state
+      setActiveChallenges(updatedActive);
+      console.log('🔄 State updated with new challenges');
       
     } catch (error) {
       console.error('❌ Failed to save challenge to localStorage:', error);
@@ -473,9 +492,52 @@ const ChallengeSystem = ({ onSuccess }) => {
         <div className="flex space-x-2">
           <button
             onClick={() => {
-              console.log('🔄 Force refreshing challenges...');
+              console.log('🧪 Testing localStorage...');
+              
+              // Test basic localStorage functionality
+              try {
+                localStorage.setItem('test', 'working');
+                const testValue = localStorage.getItem('test');
+                console.log('✅ localStorage test:', testValue);
+                localStorage.removeItem('test');
+              } catch (error) {
+                console.error('❌ localStorage test failed:', error);
+              }
+              
+              // Check current challenges
               console.log('📦 Current localStorage activeChallenges:', localStorage.getItem('activeChallenges'));
               console.log('🎯 Current activeChallenges state:', activeChallenges);
+              console.log('🏆 Current completedChallenges state:', completedChallenges);
+              
+              // Try to manually add a test challenge
+              const testChallenge = {
+                id: 'test-' + Date.now(),
+                name: 'Test Challenge',
+                type: 'consecutive_workouts',
+                target: 7,
+                progress: 0,
+                startDate: new Date().toISOString()
+              };
+              
+              try {
+                const existing = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
+                const updated = [...existing, testChallenge];
+                localStorage.setItem('activeChallenges', JSON.stringify(updated));
+                console.log('🧪 Added test challenge manually:', testChallenge);
+                console.log('📦 Updated localStorage:', JSON.parse(localStorage.getItem('activeChallenges')));
+              } catch (error) {
+                console.error('❌ Failed to add test challenge:', error);
+              }
+              
+              fetchData();
+            }}
+            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm"
+          >
+            🧪 Debug
+          </button>
+          <button
+            onClick={() => {
+              console.log('🔄 Force refreshing challenges...');
               fetchData();
             }}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
@@ -488,6 +550,25 @@ const ChallengeSystem = ({ onSuccess }) => {
           >
             + New Challenge
           </button>
+          <button
+            onClick={() => {
+              if (window.confirm('Clear all challenges from localStorage?')) {
+                localStorage.removeItem('activeChallenges');
+                localStorage.removeItem('completedChallenges');
+                console.log('🧹 Cleared all challenges from localStorage');
+                fetchData();
+              }
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm"
+          >
+            🧹 Clear
+          </button>
+        </div>
+        
+        {/* Debug Info */}
+        <div className="text-xs text-gray-300 mt-2">
+          Debug: localStorage has {JSON.parse(localStorage.getItem('activeChallenges') || '[]').length} challenges, 
+          state has {activeChallenges.length} challenges
         </div>
       </div>
 
