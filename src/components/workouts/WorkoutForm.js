@@ -78,7 +78,11 @@ const WorkoutForm = ({ onSuccess }) => {
       console.log('🚀 Triggering fetchProgressionSuggestion for:', selectedExercise);
       fetchProgressionSuggestion(selectedExercise);
     } else {
-      console.log('❌ Not fetching suggestion - conditions not met');
+      console.log('❌ Not fetching suggestion - conditions not met', {
+        selectedExercise: selectedExercise,
+        isOther: selectedExercise === 'Other',
+        progressiveOverloadEnabled: progressiveOverloadEnabled
+      });
       setProgressionSuggestion(null);
       setLoadingSuggestion(false);
     }
