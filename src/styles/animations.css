@@ -288,3 +288,16 @@
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
+
+/* Search results dropdown styling */
+.search-results-title {
+  color: #ffffff !important;
+}
+
+.search-results-subtitle {
+  color: #e5e7eb !important;
+}
+
+.search-results-no-results {
+  color: #ffffff !important;
+}

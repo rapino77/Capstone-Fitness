@@ -150,16 +150,10 @@ const SearchBar = ({ onNavigate }) => {
               <div className="flex items-center space-x-3">
                 <span className="text-lg">{item.icon}</span>
                 <div>
-                  <div 
-                    className="font-medium"
-                    style={{ color: theme.colors.text }}
-                  >
+                  <div className="font-medium search-results-title">
                     {item.name}
                   </div>
-                  <div 
-                    className="text-sm"
-                    style={{ color: theme.colors.textSecondary }}
-                  >
+                  <div className="text-sm search-results-subtitle">
                     Navigate to {item.name}
                   </div>
                 </div>
@@ -180,10 +174,7 @@ const SearchBar = ({ onNavigate }) => {
             borderColor: theme.colors.border
           }}
         >
-          <div 
-            className="text-sm"
-            style={{ color: theme.colors.textSecondary }}
-          >
+          <div className="text-sm search-results-no-results">
             No results found for "{query}"
           </div>
         </div>
