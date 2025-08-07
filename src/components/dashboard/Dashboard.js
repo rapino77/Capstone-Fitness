@@ -15,6 +15,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import WeeklyReport from './WeeklyReport';
 
 const Dashboard = ({ refreshTrigger = 0 }) => {
   const [analytics, setAnalytics] = useState(null);
@@ -108,6 +109,9 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
           ))}
         </div>
       </div>
+
+      {/* Weekly Report Section */}
+      <WeeklyReport />
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
