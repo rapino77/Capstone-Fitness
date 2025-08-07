@@ -127,17 +127,22 @@ const WorkoutForm = ({ onSuccess }) => {
     console.log('🎯 useEffect triggered - selectedExercise:', selectedExercise, 'progressiveOverloadEnabled:', progressiveOverloadEnabled);
     
     if (selectedExercise && selectedExercise !== 'Other') {
-      console.log('🚀 Fetching data for:', selectedExercise);
+      console.log('✅ Conditions met! Fetching data for:', selectedExercise);
+      console.log('Progressive overload enabled?', progressiveOverloadEnabled);
+      
       fetchLastWorkout(selectedExercise);
       
       if (progressiveOverloadEnabled) {
+        console.log('📊 Calling fetchProgressionSuggestion for:', selectedExercise);
         fetchProgressionSuggestion(selectedExercise);
+      } else {
+        console.log('⚠️ Progressive overload is disabled');
       }
     } else {
-      console.log('❌ Not fetching data - conditions not met', {
-        selectedExercise: selectedExercise,
-        isOther: selectedExercise === 'Other'
-      });
+      console.log('❌ Not fetching data - conditions not met');
+      console.log('selectedExercise:', selectedExercise);
+      console.log('Is it "Other"?:', selectedExercise === 'Other');
+      console.log('Is it empty?:', !selectedExercise);
       setProgressionSuggestion(null);
       setLastWorkout(null);
       setLoadingSuggestion(false);
@@ -201,15 +206,22 @@ const WorkoutForm = ({ onSuccess }) => {
           }
         }
         
+        // Store the exercise before resetting
+        const exerciseToKeep = data.exercise;
+        
         reset();
         setProgressionSuggestion(null);
         if (onSuccess) onSuccess(response.data);
         
-        // Refresh suggestion for next workout after successful submission
-        if (selectedExercise && selectedExercise !== 'Other' && progressiveOverloadEnabled) {
+        // Re-select the exercise and refresh suggestion for next workout
+        if (exerciseToKeep && exerciseToKeep !== 'Other') {
           setTimeout(() => {
-            fetchProgressionSuggestion(selectedExercise);
-          }, 1000);
+            setValue('exercise', exerciseToKeep);
+            if (progressiveOverloadEnabled) {
+              fetchProgressionSuggestion(exerciseToKeep);
+              fetchLastWorkout(exerciseToKeep);
+            }
+          }, 500);
         }
       }
     } catch (error) {
