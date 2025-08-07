@@ -85,7 +85,7 @@ const AppContent = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-4 px-4 text-center font-medium whitespace-nowrap transition-all duration-200 ${
+                className={`flex-1 py-4 px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header ${
                   index !== tabs.length - 1 ? 'border-r' : ''
                 }`}
                 style={{

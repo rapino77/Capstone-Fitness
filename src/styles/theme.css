@@ -1,5 +1,5 @@
 /* Import cool fonts from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;600;700&family=Rajdhani:wght@400;600;700&display=swap');
 
 /* Global theme variables and styles */
 :root {
@@ -202,6 +202,17 @@ body {
   font-weight: 700;
   letter-spacing: 1px;
   color: white !important;
+}
+
+/* Cool font for main section headers (Dashboard, Log Workout, etc.) */
+.main-section-header {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
 /* Ensure section headers always show white text in both light and dark modes */
@@ -414,8 +425,12 @@ form select option {
 .bg-blue-primary .bg-orange-50,
 .bg-blue-secondary .bg-orange-50,
 .bg-blue-accent .bg-orange-50,
-.bg-blue-gradient .bg-orange-50 {
-  background-color: rgba(255, 255, 255, 0.9) !important;
+.bg-blue-gradient .bg-orange-50,
+.bg-blue-primary .bg-gray-50,
+.bg-blue-secondary .bg-gray-50,
+.bg-blue-accent .bg-gray-50,
+.bg-blue-gradient .bg-gray-50 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
   border: 1px solid rgba(59, 130, 246, 0.3) !important;
   border-radius: 8px !important;
 }
@@ -545,6 +560,55 @@ form select option {
 .bg-blue-accent .bg-gray-50 .text-sm,
 .bg-blue-gradient .bg-gray-50 .text-sm {
   color: #6b7280 !important; /* Gray text for small text in cards */
+}
+
+/* Comprehensive fix: All text on white/light backgrounds should be dark */
+.bg-white,
+.bg-gray-50,
+.bg-blue-50,
+.bg-green-50,
+.bg-purple-50,
+.bg-yellow-50,
+.bg-orange-50,
+.bg-red-50,
+.bg-indigo-50,
+.bg-pink-50 {
+  color: #1f2937 !important; /* Dark text on light backgrounds */
+}
+
+/* Ensure all text elements in white/light backgrounds are dark */
+.bg-white *,
+.bg-gray-50 *,
+.bg-blue-50 *,
+.bg-green-50 *,
+.bg-purple-50 *,
+.bg-yellow-50 *,
+.bg-orange-50 *,
+.bg-red-50 *,
+.bg-indigo-50 *,
+.bg-pink-50 * {
+  color: inherit !important;
+}
+
+/* Specific overrides for common text classes on light backgrounds */
+.bg-white .text-gray-500,
+.bg-gray-50 .text-gray-500,
+.bg-blue-50 .text-gray-500,
+.bg-green-50 .text-gray-500,
+.bg-purple-50 .text-gray-500,
+.bg-yellow-50 .text-gray-500,
+.bg-orange-50 .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.bg-white .text-gray-600,
+.bg-gray-50 .text-gray-600,
+.bg-blue-50 .text-gray-600,
+.bg-green-50 .text-gray-600,
+.bg-purple-50 .text-gray-600,
+.bg-yellow-50 .text-gray-600,
+.bg-orange-50 .text-gray-600 {
+  color: #4b5563 !important;
 }
 
 /* Animation classes */
