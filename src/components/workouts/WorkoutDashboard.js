@@ -6,8 +6,21 @@ import ChallengeSystem from '../challenges/ChallengeSystem';
 import WorkoutSummaries from '../summaries/WorkoutSummaries';
 import Sidebar from '../common/Sidebar';
 
-const WorkoutDashboard = ({ onSuccess }) => {
-  const [activeSection, setActiveSection] = useState('log');
+const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }) => {
+  const [activeSection, setActiveSection] = useState(initialSection);
+  
+  // Update section when initialSection changes (from search navigation)
+  React.useEffect(() => {
+    setActiveSection(initialSection);
+  }, [initialSection]);
+  
+  // Update parent state when section changes internally
+  const handleSectionChange = (newSection) => {
+    setActiveSection(newSection);
+    if (onSectionChange) {
+      onSectionChange(newSection);
+    }
+  };
   
   const sections = [
     {
@@ -73,7 +86,7 @@ const WorkoutDashboard = ({ onSuccess }) => {
       <Sidebar 
         sections={sections}
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={handleSectionChange}
       />
       
       {/* Main Content */}

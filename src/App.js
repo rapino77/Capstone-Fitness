@@ -9,11 +9,14 @@ import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
 import ThemeSettings from './components/common/ThemeSettings';
+import SearchBar from './components/common/SearchBar';
 import './styles/theme.css';
 
 const AppContent = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeWorkoutSection, setActiveWorkoutSection] = useState('log');
+  const [activeTrackingSection, setActiveTrackingSection] = useState('weight');
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
@@ -30,6 +33,25 @@ const AppContent = () => {
 
   const handleGoalUpdated = () => {
     setRefreshGoals(prev => prev + 1);
+  };
+
+  const handleSearchNavigation = (item) => {
+    // Navigate to the main tab
+    setActiveTab(item.path);
+    
+    // If there's a section, set the appropriate section state
+    if (item.section) {
+      if (item.path === 'workout') {
+        setActiveWorkoutSection(item.section);
+      } else if (item.path === 'tracking') {
+        setActiveTrackingSection(item.section);
+      }
+    }
+    
+    // Handle special cases
+    if (item.path === 'goals') {
+      setShowGoalCreator(false); // Ensure we show the goal tracker, not creator
+    }
   };
 
   const tabs = [
@@ -58,14 +80,21 @@ const AppContent = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-4xl fitness-title">
-              Fitness Command Center
-            </h1>
-            <div 
-              className="text-sm transition-colors duration-200"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              Your complete fitness tracking solution
+            <div className="flex items-center space-x-3">
+              <div className="text-4xl">🏋️‍♂️</div>
+              <h1 className="text-4xl fitness-title">
+                Fitness Command Center
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-6">
+              <SearchBar onNavigate={handleSearchNavigation} />
+              <div 
+                className="text-sm transition-colors duration-200 hidden sm:block"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                Your complete fitness tracking solution
+              </div>
             </div>
           </div>
         </div>
@@ -126,11 +155,18 @@ const AppContent = () => {
           )}
           
           {activeTab === 'workout' && (
-            <WorkoutDashboard onSuccess={handleWorkoutSuccess} />
+            <WorkoutDashboard 
+              onSuccess={handleWorkoutSuccess} 
+              initialSection={activeWorkoutSection}
+              onSectionChange={setActiveWorkoutSection}
+            />
           )}
           
           {activeTab === 'tracking' && (
-            <TrackingDashboard />
+            <TrackingDashboard 
+              initialSection={activeTrackingSection}
+              onSectionChange={setActiveTrackingSection}
+            />
           )}
           
           {activeTab === 'badges' && (
