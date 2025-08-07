@@ -924,7 +924,23 @@ div.bg-blue-secondary div.bg-gray-50 p,
 }
 
 /* Ensure all light background cards have black text */
-div[class*="bg-"][class*="-50"] p {
+div[class*="bg-"][class*="-50"] p,
+div[class*="bg-"][class*="-100"] p,
+div[class*="bg-"][class*="-200"] p {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Force black text on Current Week badge */
+.bg-white span,
+.bg-white .text-black {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Force black text on gradient background cards */
+.bg-gradient-to-br p.text-black,
+.bg-gradient-to-br p[class*="text-black"] {
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
 }
