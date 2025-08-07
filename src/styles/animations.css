@@ -371,3 +371,141 @@
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* Enhanced Hover Effects */
+.hover-lift {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  transform: scale(1.02);
+}
+
+.hover-bounce {
+  transition: transform 0.2s ease;
+}
+
+.hover-bounce:hover {
+  transform: scale(1.05);
+  animation: bounce 0.6s ease;
+}
+
+/* Sidebar button enhancements */
+.sidebar-button-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-button-enhanced::before {
+  content: '';
+  position: absolute;
+  left: -100%;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.sidebar-button-enhanced:hover::before {
+  left: 100%;
+}
+
+.hover-scale-102:hover {
+  transform: scale(1.02);
+}
+
+.hover-scale-105:hover {
+  transform: scale(1.05);
+}
+
+.hover-scale-110:hover {
+  transform: scale(1.1);
+}
+
+/* Section header hover effects */
+.section-header-hover {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.section-header-hover:hover {
+  transform: translateX(5px);
+  color: #3b82f6;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+/* Button hover effects */
+.button-hover-effect {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.button-hover-effect::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.button-hover-effect:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Tab hover animations */
+.tab-hover {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.tab-hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+
+.tab-hover:hover::after {
+  width: 100%;
+}
+
+/* Icon hover effects */
+.icon-hover {
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.icon-hover:hover {
+  transform: rotate(10deg) scale(1.2);
+}
+
+/* Smooth transitions for all interactive elements */
+.interactive {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive:hover {
+  filter: brightness(1.1) saturate(1.2);
+}

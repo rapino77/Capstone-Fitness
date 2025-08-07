@@ -10,7 +10,6 @@ import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
-import CoolLoadingAnimation from './components/common/CoolLoadingAnimation';
 import './styles/theme.css';
 import './styles/animations.css';
 
@@ -22,8 +21,6 @@ const AppContent = () => {
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingType, setLoadingType] = useState('pulse-wave');
 
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
@@ -39,31 +36,12 @@ const AppContent = () => {
     setRefreshGoals(prev => prev + 1);
   };
 
-  const getRandomLoadingType = () => {
-    const types = ['pulse-wave', 'spinning-orbs', 'bouncing-dots', 'morphing-square', 'gradient-spin', 'pulsing-heart'];
-    return types[Math.floor(Math.random() * types.length)];
-  };
-
-  const handleTabChange = async (tabId) => {
+  const handleTabChange = (tabId) => {
     if (tabId === activeTab) return; // Don't change if already active
-    
-    setIsLoading(true);
-    setLoadingType(getRandomLoadingType());
-    
-    // Cool loading animation duration
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
     setActiveTab(tabId);
-    setIsLoading(false);
   };
 
-  const handleSearchNavigation = async (item) => {
-    setIsLoading(true);
-    setLoadingType(getRandomLoadingType());
-    
-    // Cool loading animation duration
-    await new Promise(resolve => setTimeout(resolve, 350));
-    
+  const handleSearchNavigation = (item) => {
     // Navigate to the main tab
     setActiveTab(item.path);
     
@@ -80,8 +58,6 @@ const AppContent = () => {
     if (item.path === 'goals') {
       setShowGoalCreator(false); // Ensure we show the goal tracker, not creator
     }
-    
-    setIsLoading(false);
   };
 
   const tabs = [
@@ -111,8 +87,8 @@ const AppContent = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-start">
             <div className="flex items-center space-x-3 mr-8">
-              <div className="text-4xl">⚡</div>
-              <h1 className="text-4xl fitness-title">
+              <div className="text-4xl icon-hover">⚡</div>
+              <h1 className="text-4xl fitness-title hover-glow cursor-pointer">
                 Fitness Command Center
               </h1>
             </div>
@@ -146,7 +122,7 @@ const AppContent = () => {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex-1 py-4 px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header ${
+                className={`hover-lift flex-1 py-4 px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header ${
                   index !== tabs.length - 1 ? 'border-r' : ''
                 }`}
                 style={{
@@ -170,8 +146,8 @@ const AppContent = () => {
                 }}
               >
                 <div className="flex items-center justify-center space-x-2">
-                  <span>{tab.icon}</span>
-                  <span>{tab.name}</span>
+                  <span className="icon-hover">{tab.icon}</span>
+                  <span className="transition-colors duration-200">{tab.name}</span>
                 </div>
               </button>
             ))}
@@ -250,16 +226,6 @@ const AppContent = () => {
             
             {activeTab === 'history' && (
               <WorkoutHistory key={refreshHistory} />
-            )}
-            
-            {/* Cool Loading Overlay */}
-            {isLoading && (
-              <CoolLoadingAnimation 
-                type={loadingType}
-                size="large"
-                message="Loading..."
-                overlay={true}
-              />
             )}
         </div>
       </main>
