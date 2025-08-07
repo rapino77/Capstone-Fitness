@@ -58,10 +58,10 @@ exports.handler = async (event, context) => {
 
       workouts = records.map(record => ({
         date: record.get('Date'),
-        sets: record.get('Sets'),
-        reps: record.get('Reps'),
-        weight: record.get('Weight'),
-        notes: record.get('Notes')
+        sets: parseInt(record.get('Sets')) || 0,
+        reps: parseInt(record.get('Reps')) || 0,
+        weight: parseFloat(record.get('Weight')) || 0,
+        notes: record.get('Notes') || ''
       }));
 
       console.log(`Fetched ${workouts.length} workouts for ${exercise} analysis`);
@@ -133,6 +133,12 @@ function getProgressionLogic() {
 
   function calculateNextWorkout(recentWorkouts, exerciseName, customParams = {}) {
     const params = { ...PROGRESSION_PARAMS, ...customParams };
+    
+    console.log('calculateNextWorkout called with:', {
+      workoutCount: recentWorkouts ? recentWorkouts.length : 0,
+      exercise: exerciseName,
+      firstWorkout: recentWorkouts && recentWorkouts.length > 0 ? recentWorkouts[0] : null
+    });
     
     if (!recentWorkouts || recentWorkouts.length === 0) {
       console.log('No workout history found for exercise:', exerciseName);
@@ -253,9 +259,16 @@ function getProgressionLogic() {
     );
 
     const lastWorkout = sortedWorkouts[0];
-    const lastSets = lastWorkout.sets || 3;
-    const lastReps = lastWorkout.reps || 10;
-    const lastWeight = lastWorkout.weight || 0;
+    const lastSets = lastWorkout.sets || lastWorkout.Sets || 3;
+    const lastReps = lastWorkout.reps || lastWorkout.Reps || 10;
+    const lastWeight = lastWorkout.weight || lastWorkout.Weight || 0;
+    
+    console.log('=== PROGRESSION CALCULATION DEBUG ===');
+    console.log('Exercise:', exerciseName);
+    console.log('Number of workouts found:', sortedWorkouts.length);
+    console.log('Last workout raw data:', lastWorkout);
+    console.log('Extracted values - Sets:', lastSets, 'Reps:', lastReps, 'Weight:', lastWeight);
+    console.log('Will suggest:', lastWeight + 5, 'lbs');
 
     if (sortedWorkouts.length < params.minWorkoutsForAnalysis) {
       // For simple progression when we have some data but not enough for full analysis
