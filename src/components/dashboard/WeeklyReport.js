@@ -346,21 +346,21 @@ const WeeklyReport = () => {
             <>
               {reportData.summary.totalWorkouts > 0 ? (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-black">Workouts</p>
-                    <p className="text-2xl font-bold text-blue-600">{reportData.summary.totalWorkouts}</p>
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-4 rounded-lg shadow-md border border-blue-300">
+                    <p className="text-sm text-black font-medium">Workouts</p>
+                    <p className="text-2xl font-bold text-blue-700">{reportData.summary.totalWorkouts}</p>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-black">Total Exercises</p>
-                    <p className="text-2xl font-bold text-green-600">{reportData.summary.totalExercises}</p>
+                  <div className="bg-gradient-to-br from-green-100 to-green-200 p-4 rounded-lg shadow-md border border-green-300">
+                    <p className="text-sm text-black font-medium">Total Exercises</p>
+                    <p className="text-2xl font-bold text-green-700">{reportData.summary.totalExercises}</p>
                   </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <p className="text-sm text-black">Total Weight</p>
-                    <p className="text-2xl font-bold text-purple-600">{reportData.summary.totalWeight.toLocaleString()} lbs</p>
+                  <div className="bg-gradient-to-br from-purple-100 to-purple-200 p-4 rounded-lg shadow-md border border-purple-300">
+                    <p className="text-sm text-black font-medium">Total Weight</p>
+                    <p className="text-2xl font-bold text-purple-700">{reportData.summary.totalWeight.toLocaleString()} lbs</p>
                   </div>
-                  <div className="bg-orange-50 p-4 rounded-lg">
-                    <p className="text-sm text-black">Week Streak</p>
-                    <p className="text-2xl font-bold text-orange-600">{reportData.summary.streak} weeks</p>
+                  <div className="bg-gradient-to-br from-orange-100 to-orange-200 p-4 rounded-lg shadow-md border border-orange-300">
+                    <p className="text-sm text-black font-medium">Week Streak</p>
+                    <p className="text-2xl font-bold text-orange-700">{reportData.summary.streak} weeks</p>
                   </div>
                 </div>
               ) : (
