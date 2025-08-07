@@ -50,19 +50,28 @@ const WorkoutForm = ({ onSuccess }) => {
     console.log('🔄 Enhanced progression suggestion called for:', exercise);
     setLoadingSuggestion(true);
     
+    // Set a maximum timeout to prevent infinite loading
+    const maxTimeout = setTimeout(() => {
+      console.warn('⏰ Progression suggestion timed out, stopping loading');
+      setLoadingSuggestion(false);
+      setProgressionSuggestion(null);
+    }, 8000);
+    
     try {
-      // Try enhanced API endpoint first
+      // Try enhanced API endpoint first with shorter timeout
       const response = await axios.get(`/.netlify/functions/get-enhanced-progression`, {
         params: {
           exercise: exercise,
           userId: 'default-user'
         },
-        timeout: 10000
+        timeout: 4000 // Short timeout for faster fallback
       });
       
       if (response.data.success && response.data.progression) {
         console.log('💡 Enhanced API suggestion received:', response.data.progression);
         setProgressionSuggestion(response.data.progression);
+        clearTimeout(maxTimeout);
+        setLoadingSuggestion(false);
         return;
       }
     } catch (apiError) {
@@ -76,11 +85,20 @@ const WorkoutForm = ({ onSuccess }) => {
       console.log('💡 Local enhanced suggestion generated:', suggestion);
       setProgressionSuggestion(suggestion);
     } catch (error) {
-      console.error('❌ Local calculation failed:', error);
-      setProgressionSuggestion(null);
-    } finally {
-      setLoadingSuggestion(false);
+      console.error('❌ All progression methods failed:', error);
+      // Provide a basic fallback suggestion
+      setProgressionSuggestion({
+        suggestion: { sets: 3, reps: 10, weight: 0 },
+        reason: 'Basic starting suggestion (calculation unavailable)',
+        confidence: 'low',
+        isFirstWorkout: true,
+        exerciseType: 'general'
+      });
     }
+    
+    // Always stop loading and clear timeout
+    clearTimeout(maxTimeout);
+    setLoadingSuggestion(false);
   }, []);
 
   // Fetch progression suggestion when exercise changes

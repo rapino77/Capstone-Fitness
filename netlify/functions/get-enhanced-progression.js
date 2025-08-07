@@ -41,32 +41,44 @@ exports.handler = async (event, context) => {
 
     let workouts = [];
     
-    // Fetch workout history from Airtable for intelligent progression analysis
+    // Fetch workout history from Airtable with timeout and better error handling
     if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
-      const base = new Airtable({
-        apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
-      }).base(process.env.AIRTABLE_BASE_ID);
+      try {
+        const base = new Airtable({
+          apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
+        }).base(process.env.AIRTABLE_BASE_ID);
 
-      // Get workout history for comprehensive analysis
-      const records = await base('Workouts')
-        .select({
-          filterByFormula: `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`,
-          sort: [{ field: 'Date', direction: 'desc' }],
-          maxRecords: parseInt(workoutsToAnalyze)
-        })
-        .all();
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Airtable query timeout')), 8000);
+        });
 
-      workouts = records.map(record => ({
-        date: record.get('Date'),
-        sets: record.get('Sets'),
-        reps: record.get('Reps'),
-        weight: record.get('Weight'),
-        notes: record.get('Notes')
-      }));
+        const airtablePromise = base('Workouts')
+          .select({
+            filterByFormula: `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`,
+            sort: [{ field: 'Date', direction: 'desc' }],
+            maxRecords: parseInt(workoutsToAnalyze)
+          })
+          .all();
 
-      console.log(`Fetched ${workouts.length} workouts for ${exercise} analysis`);
+        const records = await Promise.race([airtablePromise, timeoutPromise]);
+
+        workouts = records.map(record => ({
+          date: record.get('Date'),
+          sets: record.get('Sets'),
+          reps: record.get('Reps'),
+          weight: record.get('Weight'),
+          notes: record.get('Notes')
+        }));
+
+        console.log(`Fetched ${workouts.length} workouts for ${exercise} analysis`);
+      } catch (airtableError) {
+        console.warn(`Airtable fetch failed: ${airtableError.message}, proceeding with empty workout history`);
+        workouts = [];
+      }
     } else {
       console.log('Airtable credentials not configured, using empty workout history');
+      workouts = [];
     }
 
     // Import the enhanced progression calculation logic
