@@ -13,6 +13,7 @@ import {
   ComposedChart
 } from 'recharts';
 import { format, subDays } from 'date-fns';
+import { detectAllDeloads, analyzeDeloadPatterns } from '../../utils/deloadDetection';
 
 const StrengthProgression = () => {
   const [workoutData, setWorkoutData] = useState([]);
@@ -22,6 +23,9 @@ const StrengthProgression = () => {
   const [timeRange, setTimeRange] = useState(90); // days
   const [chartType, setChartType] = useState('weight'); // 'weight', 'volume', 'oneRM', 'all'
   const [stats, setStats] = useState({});
+  const [deloads, setDeloads] = useState({});
+  const [deloadAnalysis, setDeloadAnalysis] = useState({});
+  const [showDeloads, setShowDeloads] = useState(true);
 
   useEffect(() => {
     fetchWorkoutData();
@@ -51,6 +55,7 @@ const StrengthProgression = () => {
   useEffect(() => {
     if (workoutData.length > 0 && selectedExercises.length > 0) {
       calculateProgressionStats(workoutData);
+      analyzeDeloads(workoutData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedExercises, workoutData]);
@@ -66,12 +71,26 @@ const StrengthProgression = () => {
         const workouts = response.data.workouts || response.data.data;
         setWorkoutData(workouts);
         calculateProgressionStats(workouts);
+        analyzeDeloads(workouts);
       }
     } catch (error) {
       console.error('Failed to fetch workout data:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const analyzeDeloads = (workouts) => {
+    // Detect all deloads
+    const allDeloads = detectAllDeloads(workouts);
+    setDeloads(allDeloads);
+    
+    // Analyze deload patterns for selected exercises
+    const analysis = {};
+    selectedExercises.forEach(exercise => {
+      analysis[exercise] = analyzeDeloadPatterns(workouts, exercise);
+    });
+    setDeloadAnalysis(analysis);
   };
 
   const calculateProgressionStats = (workouts) => {
@@ -141,7 +160,25 @@ const StrengthProgression = () => {
       groupedData[date][`${exercise}_1RM`] = Math.max(currentOneRM, oneRM);
     });
 
-    return Object.values(groupedData).sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Add deload markers to chart data
+    const chartData = Object.values(groupedData).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    if (showDeloads) {
+      selectedExercises.forEach(exercise => {
+        if (deloads[exercise]) {
+          deloads[exercise].forEach(deload => {
+            const deloadDate = format(deload.date, 'yyyy-MM-dd');
+            const dataPoint = chartData.find(d => d.date === deloadDate);
+            if (dataPoint) {
+              dataPoint[`${exercise}_deload`] = dataPoint[`${exercise}_weight`];
+              dataPoint[`${exercise}_deload_info`] = deload;
+            }
+          });
+        }
+      });
+    }
+
+    return chartData;
   };
 
   const getExerciseColors = () => {
@@ -215,6 +252,19 @@ const StrengthProgression = () => {
               <option value="all">All Metrics</option>
             </select>
           </div>
+
+          {/* Deload Toggle */}
+          <div>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showDeloads}
+                onChange={(e) => setShowDeloads(e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-sm text-white">Show Deloads</span>
+            </label>
+          </div>
         </div>
 
         {/* Exercise Selection */}
@@ -251,6 +301,50 @@ const StrengthProgression = () => {
                     <p>Est. 1RM: {stat.currentOneRM} lbs</p>
                     <p>Workouts: {stat.workoutCount}</p>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Deload Analysis */}
+        {Object.keys(deloadAnalysis).length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+              <span className="mr-2">📉</span>
+              Deload Analysis
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(deloadAnalysis).map(([exercise, analysis]) => (
+                <div key={exercise} className="bg-white bg-opacity-10 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">{exercise}</h4>
+                  {analysis.frequency === 'insufficient_data' ? (
+                    <p className="text-sm text-gray-300">Not enough data for analysis</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-100">
+                        <p>Deload Frequency: Every {analysis.averageDaysBetween} days</p>
+                        <p>Total Deloads: {analysis.totalDeloads}</p>
+                        <p>Success Rate: {analysis.successRate}%</p>
+                        <p>Preferred Type: {analysis.preferredType}</p>
+                      </div>
+                      
+                      {analysis.recommendations.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs font-medium text-gray-200 mb-1">Recommendations:</p>
+                          {analysis.recommendations.slice(0, 2).map((rec, index) => (
+                            <div key={index} className={`text-xs p-2 rounded mb-1 ${
+                              rec.type === 'warning' ? 'bg-yellow-500 bg-opacity-20' :
+                              rec.type === 'success' ? 'bg-green-500 bg-opacity-20' :
+                              'bg-blue-500 bg-opacity-20'
+                            }`}>
+                              {rec.message}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -293,6 +387,23 @@ const StrengthProgression = () => {
                     fillOpacity={0.3}
                     name={`${exercise} (Volume)`}
                   />
+                  {/* Deload markers for combined chart */}
+                  {showDeloads && (
+                    <Line
+                      yAxisId="weight"
+                      type="monotone"
+                      dataKey={`${exercise}_deload`}
+                      stroke="#ef4444"
+                      strokeWidth={0}
+                      dot={{ 
+                        fill: '#ef4444', 
+                        strokeWidth: 3, 
+                        r: 8,
+                        stroke: '#ffffff'
+                      }}
+                      name={`${exercise} Deloads`}
+                    />
+                  )}
                 </React.Fragment>
               ))}
             </ComposedChart>
@@ -310,15 +421,32 @@ const StrengthProgression = () => {
               <Legend />
               
               {selectedExercises.map(exercise => (
-                <Line
-                  key={exercise}
-                  type="monotone"
-                  dataKey={`${exercise}_${chartType}`}
-                  stroke={colors[exercise]}
-                  strokeWidth={3}
-                  dot={{ fill: colors[exercise], strokeWidth: 2, r: 5 }}
-                  name={exercise}
-                />
+                <React.Fragment key={exercise}>
+                  <Line
+                    type="monotone"
+                    dataKey={`${exercise}_${chartType}`}
+                    stroke={colors[exercise]}
+                    strokeWidth={3}
+                    dot={{ fill: colors[exercise], strokeWidth: 2, r: 5 }}
+                    name={exercise}
+                  />
+                  {/* Deload markers */}
+                  {showDeloads && (
+                    <Line
+                      type="monotone"
+                      dataKey={`${exercise}_deload`}
+                      stroke="#ef4444"
+                      strokeWidth={0}
+                      dot={{ 
+                        fill: '#ef4444', 
+                        strokeWidth: 3, 
+                        r: 8,
+                        stroke: '#ffffff'
+                      }}
+                      name={`${exercise} Deloads`}
+                    />
+                  )}
+                </React.Fragment>
               ))}
             </LineChart>
           )}

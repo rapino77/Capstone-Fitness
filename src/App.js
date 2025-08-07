@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { CelebrationProvider } from './context/CelebrationContext';
-import WorkoutForm from './components/workouts/WorkoutForm';
+import WorkoutDashboard from './components/workouts/WorkoutDashboard';
 import WorkoutHistory from './components/workouts/WorkoutHistory';
 import TrackingDashboard from './components/tracking/TrackingDashboard';
 import GoalCreator from './components/goals/GoalCreator';
@@ -124,7 +124,7 @@ const AppContent = () => {
           )}
           
           {activeTab === 'workout' && (
-            <WorkoutForm onSuccess={handleWorkoutSuccess} />
+            <WorkoutDashboard onSuccess={handleWorkoutSuccess} />
           )}
           
           {activeTab === 'tracking' && (
