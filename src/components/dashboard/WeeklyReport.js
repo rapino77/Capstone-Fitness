@@ -32,26 +32,9 @@ const WeeklyReport = () => {
     setError(null);
     
     try {
-      // Try to fetch from API first
-      if (process.env.REACT_APP_API_URL) {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-weekly-report`, {
-          params: {
-            weekStart: format(weekStart, 'yyyy-MM-dd'),
-            weekEnd: format(weekEnd, 'yyyy-MM-dd'),
-            userId: 'default-user'
-          }
-        });
-        
-        if (response.data.success && response.data.data) {
-          // Use actual API data
-          setReportData(response.data.data);
-          return;
-        }
-      }
-      
-      // Fallback to empty data if API is not available
-      const emptyData = generateEmptyWeeklyReport(weekStart, weekEnd);
-      setReportData(emptyData);
+      // Try to fetch real data from existing endpoints
+      const reportData = await fetchRealWeeklyData(weekStart, weekEnd);
+      setReportData(reportData);
     } catch (err) {
       console.error('Failed to fetch weekly report:', err);
       // Use empty data on error
@@ -60,6 +43,152 @@ const WeeklyReport = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fetch real data from existing endpoints
+  const fetchRealWeeklyData = async (start, end) => {
+    const report = {
+      weekStart: start,
+      weekEnd: end,
+      summary: {
+        totalWorkouts: 0,
+        totalExercises: 0,
+        totalSets: 0,
+        totalReps: 0,
+        totalWeight: 0,
+        avgWorkoutDuration: 0,
+        streak: 0
+      },
+      workouts: [],
+      weight: {
+        startWeight: null,
+        endWeight: null,
+        change: 0,
+        measurements: []
+      },
+      goalsAchieved: [],
+      personalRecords: []
+    };
+
+    let allWorkouts = [];
+    
+    try {
+      // Fetch workouts for the week
+      const workoutsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
+        params: { userId: 'default-user' }
+      });
+      
+      if (workoutsResponse.data.success && workoutsResponse.data.workouts) {
+        allWorkouts = workoutsResponse.data.workouts;
+        
+        // Filter workouts for this week
+        const weekWorkouts = allWorkouts.filter(workout => {
+          const workoutDate = new Date(workout.date || workout.Date);
+          return workoutDate >= start && workoutDate <= end;
+        });
+
+        // Process workouts into daily groups
+        const workoutsByDate = {};
+        weekWorkouts.forEach(workout => {
+          const date = workout.date || workout.Date;
+          if (!workoutsByDate[date]) {
+            workoutsByDate[date] = {
+              date: new Date(date),
+              exercises: []
+            };
+          }
+          
+          workoutsByDate[date].exercises.push({
+            name: workout.exercise || workout.Exercise,
+            sets: workout.sets || workout.Sets || 0,
+            reps: workout.reps || workout.Reps || 0,
+            weight: workout.weight || workout.Weight || 0,
+            isPR: workout.isPR || workout['Is PR'] || false
+          });
+        });
+
+        report.workouts = Object.values(workoutsByDate).sort((a, b) => a.date - b.date);
+
+        // Calculate summary
+        report.summary.totalWorkouts = Object.keys(workoutsByDate).length;
+        report.summary.totalExercises = weekWorkouts.length;
+        report.summary.totalSets = weekWorkouts.reduce((sum, w) => sum + (w.sets || w.Sets || 0), 0);
+        report.summary.totalReps = weekWorkouts.reduce((sum, w) => sum + ((w.sets || w.Sets || 0) * (w.reps || w.Reps || 0)), 0);
+        report.summary.totalWeight = weekWorkouts.reduce((sum, w) => sum + ((w.sets || w.Sets || 0) * (w.reps || w.Reps || 0) * (w.weight || w.Weight || 0)), 0);
+        report.summary.avgWorkoutDuration = 45; // Default estimate
+        report.summary.streak = 1; // Default
+      }
+
+      // Fetch weight measurements for the week
+      const weightsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`, {
+        params: { userId: 'default-user' }
+      });
+      
+      if (weightsResponse.data.success && weightsResponse.data.weights) {
+        const allWeights = weightsResponse.data.weights;
+        
+        // Filter weights for this week
+        const weekWeights = allWeights.filter(weight => {
+          const weightDate = new Date(weight.date || weight.Date);
+          return weightDate >= start && weightDate <= end;
+        }).sort((a, b) => new Date(a.date || a.Date) - new Date(b.date || b.Date));
+
+        if (weekWeights.length > 0) {
+          report.weight.startWeight = weekWeights[0].weight || weekWeights[0].Weight;
+          report.weight.endWeight = weekWeights[weekWeights.length - 1].weight || weekWeights[weekWeights.length - 1].Weight;
+          report.weight.change = report.weight.endWeight - report.weight.startWeight;
+          report.weight.measurements = weekWeights.map(w => ({
+            date: new Date(w.date || w.Date),
+            weight: w.weight || w.Weight
+          }));
+        }
+      }
+
+      // Fetch goals (if endpoint exists)
+      try {
+        const goalsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
+          params: { userId: 'default-user' }
+        });
+        
+        if (goalsResponse.data.success && goalsResponse.data.goals) {
+          const completedThisWeek = goalsResponse.data.goals.filter(goal => {
+            if (goal.status !== 'Completed' && goal.Status !== 'Completed') return false;
+            const completionDate = new Date(goal.completionDate || goal['Completion Date']);
+            return completionDate >= start && completionDate <= end;
+          });
+
+          report.goalsAchieved = completedThisWeek.map(goal => ({
+            name: goal.name || goal.Name || goal['Goal Name'],
+            type: goal.type || goal.Type || goal['Goal Type'],
+            achievedDate: new Date(goal.completionDate || goal['Completion Date']),
+            targetValue: goal.targetValue || goal['Target Value'],
+            achievedValue: goal.achievedValue || goal['Achieved Value']
+          }));
+        }
+      } catch (goalsErr) {
+        console.log('Goals endpoint not available:', goalsErr.message);
+      }
+
+      // Check for PRs in this week's workouts
+      const weekWorkouts = allWorkouts.filter(workout => {
+        const workoutDate = new Date(workout.date || workout.Date);
+        return workoutDate >= start && workoutDate <= end;
+      });
+      
+      report.personalRecords = weekWorkouts
+        .filter(w => w.isPR || w['Is PR'])
+        .map(w => ({
+          exercise: w.exercise || w.Exercise,
+          weight: w.weight || w.Weight || 0,
+          reps: w.reps || w.Reps || 0,
+          date: new Date(w.date || w.Date)
+        }));
+
+    } catch (apiErr) {
+      console.log('API endpoints not available, using empty data:', apiErr.message);
+    }
+
+    return report;
   };
 
   // Return empty data structure when no real data exists
