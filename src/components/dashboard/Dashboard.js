@@ -407,83 +407,65 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                 chartData: data.chartData,
                 metrics: data.metrics
               });
+              
+              // Filter and validate chart data
+              const validChartData = (data.chartData || []).filter(point => {
+                const hasValidWeight = point && typeof point.weight === 'number' && point.weight > 0;
+                const hasValidDate = point && point.date && !isNaN(new Date(point.date).getTime());
+                return hasValidWeight && hasValidDate;
+              });
+              
+              console.log(`Valid chart data for ${exercise}:`, validChartData);
+              
               return (
-              <div key={exercise} className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4">{exercise} Progress</h3>
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>Current: {data.metrics.currentWeight} lbs</span>
-                    <span className={`font-medium ${
-                      data.metrics.weightIncrease > 0 ? 'text-green-600' : 
-                      data.metrics.weightIncrease < 0 ? 'text-red-600' : 'text-gray-600'
-                    }`}>
-                      {data.metrics.weightIncrease > 0 ? '+' : ''}{data.metrics.weightIncrease} lbs
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {data.metrics.totalSessions} sessions over {data.metrics.timespan} days
-                  </div>
-                </div>
-                
-                {/* Chart */}
-                {data.chartData && data.chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart 
-                      data={data.chartData.filter(point => point.weight > 0 && point.date)} // Filter valid data points
-                      margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
-                        tickFormatter={(date) => {
-                          try {
-                            return format(new Date(date), 'MM/dd');
-                          } catch (e) {
-                            return date; // Fallback to raw date if formatting fails
-                          }
-                        }}
-                      />
-                      <YAxis 
-                        domain={['dataMin - 2', 'dataMax + 2']}
-                        tickFormatter={(value) => `${value}`}
-                      />
-                      <Tooltip 
-                        labelFormatter={(date) => {
-                          try {
-                            return format(new Date(date), 'MMM dd, yyyy');
-                          } catch (e) {
-                            return date;
-                          }
-                        }}
-                        formatter={(value) => [`${value} lbs`, 'Weight']}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="weight" 
-                        stroke="#3B82F6" 
-                        strokeWidth={2}
-                        dot={{ fill: '#3B82F6', r: 4 }}
-                        connectNulls={false} // Don't connect null values
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center">
-                    <div className="text-gray-400 text-4xl mb-2">📈</div>
-                    <div className="text-sm text-gray-600">
-                      {data.chartData && data.chartData.length === 1 
-                        ? 'Need one more workout to show progression'
-                        : 'Need workouts to show progression'
-                      }
+                <div key={exercise} className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold mb-4">{exercise} Progress</h3>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Current: {data.metrics.currentWeight} lbs</span>
+                      <span className={`font-medium ${
+                        data.metrics.weightIncrease > 0 ? 'text-green-600' : 
+                        data.metrics.weightIncrease < 0 ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {data.metrics.weightIncrease > 0 ? '+' : ''}{data.metrics.weightIncrease?.toFixed(1)} lbs
+                      </span>
                     </div>
-                    {data.chartData && data.chartData.length === 1 && (
-                      <div className="text-xs text-gray-500 mt-2">
-                        Current: {data.chartData[0].weight} lbs
-                      </div>
-                    )}
                   </div>
-                )}
-              </div>
+                  
+                  {validChartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={validChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="date" 
+                          tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+                        />
+                        <YAxis domain={['dataMin - 2', 'dataMax + 2']} />
+                        <Tooltip 
+                          labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                          formatter={(value) => [`${value} lbs`, 'Weight']}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="weight" 
+                          stroke="#3B82F6" 
+                          strokeWidth={2}
+                          dot={{ fill: '#3B82F6' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-8 text-center">
+                      <div className="text-gray-400 text-4xl mb-2">📈</div>
+                      <div className="text-sm text-gray-600">
+                        No data available for progression chart
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Log workouts to see your {exercise} progression over time!
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
         </div>

@@ -518,16 +518,22 @@ function analyzeStrengthProgression(workouts) {
     // Sort by date
     const sortedWorkouts = workoutData.sort((a, b) => new Date(a.date) - new Date(b.date));
     
+    // Skip exercises with insufficient data
+    if (sortedWorkouts.length === 0) {
+      console.log(`Skipping ${exercise} - no valid workouts`);
+      return;
+    }
+
     // Calculate progression metrics
     const firstWorkout = sortedWorkouts[0];
     const lastWorkout = sortedWorkouts[sortedWorkouts.length - 1];
     
-    const weightIncrease = lastWorkout.weight - firstWorkout.weight;
-    const oneRMIncrease = lastWorkout.estimatedOneRM - firstWorkout.estimatedOneRM;
+    const weightIncrease = (lastWorkout.weight || 0) - (firstWorkout.weight || 0);
+    const oneRMIncrease = (lastWorkout.estimatedOneRM || 0) - (firstWorkout.estimatedOneRM || 0);
     const totalSessions = sortedWorkouts.length;
     
     // Calculate average weekly progression
-    const daysBetween = (new Date(lastWorkout.date) - new Date(firstWorkout.date)) / (1000 * 60 * 60 * 24);
+    const daysBetween = Math.max((new Date(lastWorkout.date) - new Date(firstWorkout.date)) / (1000 * 60 * 60 * 24), 1);
     const weeksBetween = Math.max(daysBetween / 7, 1); // Minimum 1 week to avoid division by zero
     const averageWeeklyIncrease = weightIncrease / weeksBetween;
 
@@ -582,15 +588,15 @@ function analyzeStrengthProgression(workouts) {
       chartData: chartData,
       metrics: {
         totalSessions,
-        weightIncrease,
-        oneRMIncrease: Math.round(oneRMIncrease * 10) / 10,
-        averageWeeklyIncrease: Math.round(averageWeeklyIncrease * 10) / 10,
-        startWeight: firstWorkout.weight,
-        currentWeight: lastWorkout.weight,
-        startOneRM: Math.round(firstWorkout.estimatedOneRM * 10) / 10,
-        currentOneRM: Math.round(lastWorkout.estimatedOneRM * 10) / 10,
-        timespan: Math.round(daysBetween),
-        progressPercentage: firstWorkout.weight > 0 ? Math.round((weightIncrease / firstWorkout.weight) * 100) : 0
+        weightIncrease: Number(weightIncrease.toFixed(1)) || 0,
+        oneRMIncrease: Math.round((oneRMIncrease || 0) * 10) / 10,
+        averageWeeklyIncrease: Math.round((averageWeeklyIncrease || 0) * 10) / 10,
+        startWeight: Number(firstWorkout.weight) || 0,
+        currentWeight: Number(lastWorkout.weight) || 0,
+        startOneRM: Math.round((firstWorkout.estimatedOneRM || 0) * 10) / 10,
+        currentOneRM: Math.round((lastWorkout.estimatedOneRM || 0) * 10) / 10,
+        timespan: Math.round(daysBetween) || 0,
+        progressPercentage: (firstWorkout.weight > 0) ? Math.round((weightIncrease / firstWorkout.weight) * 100) : 0
       }
     };
   });
