@@ -82,18 +82,23 @@ const WorkoutForm = ({ onSuccess }) => {
             const dateA = new Date(a.date || a.Date || '1900-01-01');
             const dateB = new Date(b.date || b.Date || '1900-01-01');
             
-            // If dates are equal, sort by createdTime or record ID
+            // If dates are equal, use multiple fallbacks to find newest
             if (dateA.getTime() === dateB.getTime()) {
-              // Try created time first
-              const createdA = a.createdTime ? new Date(a.createdTime) : null;
-              const createdB = b.createdTime ? new Date(b.createdTime) : null;
+              // Try weight as a simple heuristic - higher weight might be more recent
+              const weightA = parseFloat(a.weight || a.Weight || 0);
+              const weightB = parseFloat(b.weight || b.Weight || 0);
               
-              if (createdA && createdB && !isNaN(createdA.getTime()) && !isNaN(createdB.getTime())) {
-                return createdB - createdA; // Newer created time first
+              if (weightA !== weightB) {
+                return weightB - weightA; // Higher weight first (progressive overload)
               }
               
-              // Fallback to record ID comparison (newer IDs are typically later)
-              return (b.id || '').localeCompare(a.id || '');
+              // Fallback to record ID comparison 
+              const idA = a.id || '';
+              const idB = b.id || '';
+              
+              // Airtable IDs usually start with 'rec' followed by alphanumeric
+              // Later records tend to have lexicographically larger IDs
+              return idB.localeCompare(idA);
             }
             
             return dateB - dateA;

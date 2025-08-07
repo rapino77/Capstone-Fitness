@@ -59,8 +59,8 @@ exports.handler = async (event, context) => {
       pageSize: Math.min(parseInt(limit), 100),
       filterByFormula: `{User ID} = '${userId}'`,
       sort: [
-        { field: 'Date', direction: 'desc' },
-        { field: 'Created Time', direction: 'desc' }  // Secondary sort by creation time
+        { field: 'Date', direction: 'desc' }
+        // Removed Created Time sort as it might not exist in table
       ]
     };
 
@@ -93,18 +93,32 @@ exports.handler = async (event, context) => {
     const paginatedRecords = records.slice(offsetInt, offsetInt + parseInt(limit));
 
     // Format response - handle empty records
-    const formattedRecords = paginatedRecords.map(record => ({
-      id: record.id,
-      userId: record.get('User ID') || 'default-user',
-      exercise: record.get('Exercise') || 'Unknown Exercise',
-      sets: record.get('Sets') || 0,
-      reps: record.get('Reps') || 0,
-      weight: record.get('Weight') || 0,
-      date: record.get('Date') || new Date().toISOString().split('T')[0],
-      notes: record.get('Notes') || 'Empty record - add fields to Workouts table',
-      createdTime: record.get('Created Time') || record._rawJson?.createdTime || 'Unknown',
-      isEmpty: Object.keys(record.fields).length === 0
-    }));
+    const formattedRecords = paginatedRecords.map(record => {
+      // Safely try to get created time from various sources
+      let createdTime = 'Unknown';
+      try {
+        createdTime = record.get('Created Time') || 
+                     record._rawJson?.createdTime || 
+                     record.getId() || // Use record ID as fallback for ordering
+                     'Unknown';
+      } catch (err) {
+        // Ignore errors getting created time
+        createdTime = record.getId() || 'Unknown';
+      }
+
+      return {
+        id: record.id,
+        userId: record.get('User ID') || 'default-user',
+        exercise: record.get('Exercise') || 'Unknown Exercise',
+        sets: record.get('Sets') || 0,
+        reps: record.get('Reps') || 0,
+        weight: record.get('Weight') || 0,
+        date: record.get('Date') || new Date().toISOString().split('T')[0],
+        notes: record.get('Notes') || 'Empty record - add fields to Workouts table',
+        createdTime: createdTime,
+        isEmpty: Object.keys(record.fields).length === 0
+      };
+    });
 
     return {
       statusCode: 200,
@@ -123,13 +137,19 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Error fetching workouts:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      userId: userId
+    });
     
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: 'Failed to fetch workouts',
-        message: error.message
+        message: error.message,
+        details: error.stack?.split('\n')[0] || 'Unknown error'
       })
     };
   }
