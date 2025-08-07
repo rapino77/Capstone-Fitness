@@ -51,7 +51,7 @@ const WorkoutSummaries = () => {
 
       // Fetch body weight data
       try {
-        const weightResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weight-data`, {
+        const weightResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`, {
           params: { userId: 'default-user' }
         });
         
