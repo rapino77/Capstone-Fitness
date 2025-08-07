@@ -226,7 +226,7 @@ const WorkoutHistory = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Exercise
             </label>
             <input
@@ -240,7 +240,7 @@ const WorkoutHistory = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Sort By
             </label>
             <div className="flex space-x-2">
@@ -278,7 +278,7 @@ const WorkoutHistory = () => {
         <div className="space-y-6">
           {Object.entries(groupedWorkouts).map(([date, dateWorkouts]) => (
             <div key={date} className="border-b pb-4">
-              <h3 className="text-lg font-semibold mb-3 text-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">
                 {format(new Date(date), 'EEEE, MMMM d, yyyy')}
               </h3>
               <div className="space-y-2">

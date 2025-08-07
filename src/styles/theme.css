@@ -289,6 +289,16 @@ body {
 .bg-blue-gradient textarea {
   background-color: white !important;
   color: black !important;
+  border: 2px solid #1e40af !important;
+}
+
+/* Fix dropdown option text visibility */
+.bg-blue-primary select option,
+.bg-blue-secondary select option,
+.bg-blue-accent select option,
+.bg-blue-gradient select option {
+  background-color: white !important;
+  color: black !important;
 }
 
 /* Fix buttons and other interactive elements on blue backgrounds */
@@ -332,6 +342,163 @@ body {
 .bg-blue-accent span:not(.section-header):not(.fitness-title),
 .bg-blue-gradient span:not(.section-header):not(.fitness-title) {
   color: white !important;
+}
+
+/* Fix card backgrounds and text inside blue components */
+.bg-blue-primary .bg-blue-50,
+.bg-blue-secondary .bg-blue-50,
+.bg-blue-accent .bg-blue-50,
+.bg-blue-gradient .bg-blue-50,
+.bg-blue-primary .bg-green-50,
+.bg-blue-secondary .bg-green-50,
+.bg-blue-accent .bg-green-50,
+.bg-blue-gradient .bg-green-50,
+.bg-blue-primary .bg-purple-50,
+.bg-blue-secondary .bg-purple-50,
+.bg-blue-accent .bg-purple-50,
+.bg-blue-gradient .bg-purple-50,
+.bg-blue-primary .bg-yellow-50,
+.bg-blue-secondary .bg-yellow-50,
+.bg-blue-accent .bg-yellow-50,
+.bg-blue-gradient .bg-yellow-50,
+.bg-blue-primary .bg-white,
+.bg-blue-secondary .bg-white,
+.bg-blue-accent .bg-white,
+.bg-blue-gradient .bg-white,
+.bg-blue-primary .bg-orange-50,
+.bg-blue-secondary .bg-orange-50,
+.bg-blue-accent .bg-orange-50,
+.bg-blue-gradient .bg-orange-50 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  border-radius: 8px !important;
+}
+
+/* Fix text colors in cards within blue components */
+.bg-blue-primary .bg-blue-50 p,
+.bg-blue-secondary .bg-blue-50 p,
+.bg-blue-accent .bg-blue-50 p,
+.bg-blue-gradient .bg-blue-50 p,
+.bg-blue-primary .bg-green-50 p,
+.bg-blue-secondary .bg-green-50 p,
+.bg-blue-accent .bg-green-50 p,
+.bg-blue-gradient .bg-green-50 p,
+.bg-blue-primary .bg-purple-50 p,
+.bg-blue-secondary .bg-purple-50 p,
+.bg-blue-accent .bg-purple-50 p,
+.bg-blue-gradient .bg-purple-50 p,
+.bg-blue-primary .bg-yellow-50 p,
+.bg-blue-secondary .bg-yellow-50 p,
+.bg-blue-accent .bg-yellow-50 p,
+.bg-blue-gradient .bg-yellow-50 p,
+.bg-blue-primary .bg-white p,
+.bg-blue-secondary .bg-white p,
+.bg-blue-accent .bg-white p,
+.bg-blue-gradient .bg-white p,
+.bg-blue-primary .bg-gray-50 p,
+.bg-blue-secondary .bg-gray-50 p,
+.bg-blue-accent .bg-gray-50 p,
+.bg-blue-gradient .bg-gray-50 p,
+.bg-blue-primary .bg-orange-50 p,
+.bg-blue-secondary .bg-orange-50 p,
+.bg-blue-accent .bg-orange-50 p,
+.bg-blue-gradient .bg-orange-50 p,
+.bg-blue-primary .bg-blue-50 span,
+.bg-blue-secondary .bg-blue-50 span,
+.bg-blue-accent .bg-blue-50 span,
+.bg-blue-gradient .bg-blue-50 span,
+.bg-blue-primary .bg-green-50 span,
+.bg-blue-secondary .bg-green-50 span,
+.bg-blue-accent .bg-green-50 span,
+.bg-blue-gradient .bg-green-50 span,
+.bg-blue-primary .bg-purple-50 span,
+.bg-blue-secondary .bg-purple-50 span,
+.bg-blue-accent .bg-purple-50 span,
+.bg-blue-gradient .bg-purple-50 span,
+.bg-blue-primary .bg-yellow-50 span,
+.bg-blue-secondary .bg-yellow-50 span,
+.bg-blue-accent .bg-yellow-50 span,
+.bg-blue-gradient .bg-yellow-50 span,
+.bg-blue-primary .bg-white span,
+.bg-blue-secondary .bg-white span,
+.bg-blue-accent .bg-white span,
+.bg-blue-gradient .bg-white span,
+.bg-blue-primary .bg-gray-50 span,
+.bg-blue-secondary .bg-gray-50 span,
+.bg-blue-accent .bg-gray-50 span,
+.bg-blue-gradient .bg-gray-50 span,
+.bg-blue-primary .bg-orange-50 span,
+.bg-blue-secondary .bg-orange-50 span,
+.bg-blue-accent .bg-orange-50 span,
+.bg-blue-gradient .bg-orange-50 span {
+  color: #1f2937 !important; /* Dark gray text for readability */
+}
+
+/* Fix specific colored text on cards */
+.bg-blue-primary .text-blue-600,
+.bg-blue-secondary .text-blue-600,
+.bg-blue-accent .text-blue-600,
+.bg-blue-gradient .text-blue-600 {
+  color: #2563eb !important; /* Blue text for cards */
+}
+
+.bg-blue-primary .text-gray-600,
+.bg-blue-secondary .text-gray-600,
+.bg-blue-accent .text-gray-600,
+.bg-blue-gradient .text-gray-600 {
+  color: #4b5563 !important; /* Gray text for cards */
+}
+
+.bg-blue-primary .text-green-800,
+.bg-blue-secondary .text-green-800,
+.bg-blue-accent .text-green-800,
+.bg-blue-gradient .text-green-800 {
+  color: #166534 !important; /* Green text for cards */
+}
+
+.bg-blue-primary .text-green-600,
+.bg-blue-secondary .text-green-600,
+.bg-blue-accent .text-green-600,
+.bg-blue-gradient .text-green-600 {
+  color: #16a34a !important; /* Green text for cards */
+}
+
+.bg-blue-primary .text-orange-600,
+.bg-blue-secondary .text-orange-600,
+.bg-blue-accent .text-orange-600,
+.bg-blue-gradient .text-orange-600 {
+  color: #ea580c !important; /* Orange text for cards */
+}
+
+.bg-blue-primary .text-purple-600,
+.bg-blue-secondary .text-purple-600,
+.bg-blue-accent .text-purple-600,
+.bg-blue-gradient .text-purple-600 {
+  color: #9333ea !important; /* Purple text for cards */
+}
+
+/* Fix additional specific text classes inside cards */
+.bg-blue-primary .bg-blue-50 .text-sm,
+.bg-blue-secondary .bg-blue-50 .text-sm,
+.bg-blue-accent .bg-blue-50 .text-sm,
+.bg-blue-gradient .bg-blue-50 .text-sm,
+.bg-blue-primary .bg-green-50 .text-sm,
+.bg-blue-secondary .bg-green-50 .text-sm,
+.bg-blue-accent .bg-green-50 .text-sm,
+.bg-blue-gradient .bg-green-50 .text-sm,
+.bg-blue-primary .bg-purple-50 .text-sm,
+.bg-blue-secondary .bg-purple-50 .text-sm,
+.bg-blue-accent .bg-purple-50 .text-sm,
+.bg-blue-gradient .bg-purple-50 .text-sm,
+.bg-blue-primary .bg-orange-50 .text-sm,
+.bg-blue-secondary .bg-orange-50 .text-sm,
+.bg-blue-accent .bg-orange-50 .text-sm,
+.bg-blue-gradient .bg-orange-50 .text-sm,
+.bg-blue-primary .bg-gray-50 .text-sm,
+.bg-blue-secondary .bg-gray-50 .text-sm,
+.bg-blue-accent .bg-gray-50 .text-sm,
+.bg-blue-gradient .bg-gray-50 .text-sm {
+  color: #6b7280 !important; /* Gray text for small text in cards */
 }
 
 /* Animation classes */
