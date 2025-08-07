@@ -475,23 +475,36 @@ function analyzeStrengthProgression(workouts) {
   // Group workouts by exercise
   workouts.forEach(workout => {
     const exercise = workout.get('Exercise');
-    const date = workout.get('Date');
-    const weight = workout.get('Weight') || 0;
-    const sets = workout.get('Sets') || 0;
-    const reps = workout.get('Reps') || 0;
+    const rawDate = workout.get('Date');
+    const weight = parseFloat(workout.get('Weight')) || 0;
+    const sets = parseInt(workout.get('Sets')) || 0;
+    const reps = parseInt(workout.get('Reps')) || 0;
+
+    // Skip invalid data
+    if (!exercise || !rawDate || weight <= 0 || sets <= 0 || reps <= 0) {
+      console.log('Skipping invalid workout:', { exercise, rawDate, weight, sets, reps });
+      return;
+    }
+
+    // Validate date
+    const date = new Date(rawDate);
+    if (isNaN(date.getTime())) {
+      console.log('Skipping workout with invalid date:', rawDate);
+      return;
+    }
 
     if (!exerciseData[exercise]) {
       exerciseData[exercise] = [];
     }
 
     exerciseData[exercise].push({
-      date,
+      date: rawDate, // Keep as string for consistency
       weight,
       sets,
       reps,
       volume: sets * reps * weight,
       // Calculate estimated 1RM using Brzycki formula
-      estimatedOneRM: weight * (36 / (37 - reps))
+      estimatedOneRM: reps > 1 ? weight * (36 / (37 - reps)) : weight
     });
   });
 
@@ -523,6 +536,12 @@ function analyzeStrengthProgression(workouts) {
 
     sortedWorkouts.forEach(workout => {
       const dateKey = workout.date;
+      // Validate workout data before processing
+      if (!dateKey || workout.weight <= 0) {
+        console.log(`Skipping invalid workout for ${exercise}:`, workout);
+        return;
+      }
+
       if (!dateMap.has(dateKey)) {
         dateMap.set(dateKey, {
           date: dateKey,
@@ -541,13 +560,16 @@ function analyzeStrengthProgression(workouts) {
     });
 
     // Convert map to array and format for charts
-    const chartData = Array.from(dateMap.values()).map(entry => ({
-      date: entry.date,
-      weight: entry.maxWeight,
-      oneRM: Math.round(entry.maxOneRM * 10) / 10, // Round to 1 decimal
-      volume: entry.totalVolume,
-      workouts: entry.workoutCount
-    })).sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
+    const chartData = Array.from(dateMap.values())
+      .map(entry => ({
+        date: entry.date,
+        weight: Number(entry.maxWeight) || 0, // Ensure numeric
+        oneRM: Math.round((Number(entry.maxOneRM) || 0) * 10) / 10,
+        volume: Number(entry.totalVolume) || 0,
+        workouts: entry.workoutCount
+      }))
+      .filter(entry => entry.weight > 0) // Remove invalid entries
+      .sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
 
     console.log(`Chart data for ${exercise}:`, {
       rawWorkouts: workoutData.length,

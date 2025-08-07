@@ -401,7 +401,13 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
           {Object.entries(analytics.strengthProgression)
             .sort(([, a], [, b]) => b.metrics.totalSessions - a.metrics.totalSessions) // Sort by most trained exercises first
             .slice(0, 6) // Show top 6 exercises to avoid clutter
-            .map(([exercise, data]) => (
+            .map(([exercise, data]) => {
+              console.log(`Frontend chart data for ${exercise}:`, {
+                chartDataLength: data.chartData?.length || 0,
+                chartData: data.chartData,
+                metrics: data.metrics
+              });
+              return (
               <div key={exercise} className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-4">{exercise} Progress</h3>
                 <div className="mb-4">
@@ -420,17 +426,35 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                 </div>
                 
                 {/* Chart */}
-                {data.chartData && data.chartData.length > 1 ? (
+                {data.chartData && data.chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={data.chartData}>
+                    <LineChart 
+                      data={data.chartData.filter(point => point.weight > 0 && point.date)} // Filter valid data points
+                      margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+                        tickFormatter={(date) => {
+                          try {
+                            return format(new Date(date), 'MM/dd');
+                          } catch (e) {
+                            return date; // Fallback to raw date if formatting fails
+                          }
+                        }}
                       />
-                      <YAxis domain={['dataMin - 2', 'dataMax + 2']} />
+                      <YAxis 
+                        domain={['dataMin - 2', 'dataMax + 2']}
+                        tickFormatter={(value) => `${value}`}
+                      />
                       <Tooltip 
-                        labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                        labelFormatter={(date) => {
+                          try {
+                            return format(new Date(date), 'MMM dd, yyyy');
+                          } catch (e) {
+                            return date;
+                          }
+                        }}
                         formatter={(value) => [`${value} lbs`, 'Weight']}
                       />
                       <Line 
@@ -438,7 +462,8 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                         dataKey="weight" 
                         stroke="#3B82F6" 
                         strokeWidth={2}
-                        dot={{ fill: '#3B82F6' }}
+                        dot={{ fill: '#3B82F6', r: 4 }}
+                        connectNulls={false} // Don't connect null values
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -446,12 +471,21 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                   <div className="bg-gray-50 rounded-lg p-8 text-center">
                     <div className="text-gray-400 text-4xl mb-2">📈</div>
                     <div className="text-sm text-gray-600">
-                      Need more workouts to show progression
+                      {data.chartData && data.chartData.length === 1 
+                        ? 'Need one more workout to show progression'
+                        : 'Need workouts to show progression'
+                      }
                     </div>
+                    {data.chartData && data.chartData.length === 1 && (
+                      <div className="text-xs text-gray-500 mt-2">
+                        Current: {data.chartData[0].weight} lbs
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
         </div>
       )}
 
