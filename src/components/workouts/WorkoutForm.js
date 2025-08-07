@@ -51,67 +51,37 @@ const WorkoutForm = ({ onSuccess }) => {
   ];
 
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
-    console.log('🔄 Enhanced progression suggestion called for:', exercise);
+    console.log('🔄 Fetching progression suggestion for:', exercise);
     setLoadingSuggestion(true);
     
-    // Set a maximum timeout to prevent infinite loading
-    const maxTimeout = setTimeout(() => {
-      console.warn('⏰ Progression suggestion timed out, stopping loading');
-      setLoadingSuggestion(false);
-      setProgressionSuggestion(null);
-    }, 8000);
-    
     try {
-      // Try enhanced API endpoint first with shorter timeout
-      const response = await axios.get(`/.netlify/functions/get-enhanced-progression`, {
+      // Use the actual working endpoint
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-progression-suggestion`, {
         params: {
           exercise: exercise,
-          userId: 'default-user'
-        },
-        timeout: 4000 // Short timeout for faster fallback
+          userId: 'default-user',
+          workoutsToAnalyze: '5'
+        }
       });
       
       if (response.data.success && response.data.progression) {
-        console.log('💡 Enhanced API suggestion received:', response.data.progression);
+        console.log('💡 API suggestion received:', response.data.progression);
         setProgressionSuggestion(response.data.progression);
-        clearTimeout(maxTimeout);
-        setLoadingSuggestion(false);
-        return;
       }
-    } catch (apiError) {
-      console.warn('⚠️ Enhanced API failed, falling back to local calculation:', apiError.message);
-    }
-    
-    // Fallback to local enhanced calculation
-    try {
-      const params = getProgressionParams(exercise);
-      
-      // Use mock data in demo mode to show progressive overload in action
-      let workoutHistory = [];
-      if (demoMode) {
-        workoutHistory = createMockWorkoutHistory(exercise, 6); // 6 weeks of progression
-        console.log('🎭 Demo mode: Using mock workout history', workoutHistory);
-      }
-      
-      const suggestion = calculateNextWorkout(workoutHistory, exercise, params);
-      console.log('💡 Local enhanced suggestion generated:', suggestion);
-      setProgressionSuggestion(suggestion);
     } catch (error) {
-      console.error('❌ All progression methods failed:', error);
+      console.error('❌ Failed to fetch progression suggestion:', error);
       // Provide a basic fallback suggestion
       setProgressionSuggestion({
         suggestion: { sets: 3, reps: 10, weight: 0 },
-        reason: 'Basic starting suggestion (calculation unavailable)',
+        reason: 'Start with a comfortable weight and focus on form',
         confidence: 'low',
         isFirstWorkout: true,
         exerciseType: 'general'
       });
     }
     
-    // Always stop loading and clear timeout
-    clearTimeout(maxTimeout);
     setLoadingSuggestion(false);
-  }, [demoMode]);
+  }, []);
 
   // Fetch progression suggestion when exercise changes
   useEffect(() => {
@@ -191,6 +161,13 @@ const WorkoutForm = ({ onSuccess }) => {
         reset();
         setProgressionSuggestion(null);
         if (onSuccess) onSuccess(response.data);
+        
+        // Refresh suggestion for next workout after successful submission
+        if (selectedExercise && selectedExercise !== 'Other' && progressiveOverloadEnabled) {
+          setTimeout(() => {
+            fetchProgressionSuggestion(selectedExercise);
+          }, 1000);
+        }
       }
     } catch (error) {
       setSubmitMessage({ 
@@ -261,13 +238,23 @@ const WorkoutForm = ({ onSuccess }) => {
               <div>
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-sm font-semibold text-blue-900">Progressive Overload Suggestion:</h3>
-                  <button
-                    type="button"
-                    onClick={applyProgressionSuggestion}
-                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Apply
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => fetchProgressionSuggestion(selectedExercise)}
+                      className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300 transition-colors"
+                      title="Refresh suggestion"
+                    >
+                      🔄
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyProgressionSuggestion}
+                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-blue-800">
@@ -281,6 +268,11 @@ const WorkoutForm = ({ onSuccess }) => {
                     <p className="text-xs text-blue-600 mt-2">
                       Last workout: {progressionSuggestion.lastWorkout.sets}×{progressionSuggestion.lastWorkout.reps} @ {progressionSuggestion.lastWorkout.weight}lbs
                     </p>
+                  )}
+                  {progressionSuggestion.formatted && progressionSuggestion.formatted.changes?.length > 0 && (
+                    <div className="text-xs text-green-700 mt-1 font-medium">
+                      Changes: {progressionSuggestion.formatted.changes.join(', ')}
+                    </div>
                   )}
                   <div className="flex items-center mt-2">
                     <span className="text-xs text-blue-700 mr-2">Confidence:</span>

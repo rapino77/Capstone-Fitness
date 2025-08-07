@@ -149,8 +149,8 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
       const goalData = {
         userId: 'default-user',
         goalType: data.goalType,
-        targetValue: data.targetValue,
-        currentValue: data.currentValue || 0,
+        targetValue: parseFloat(data.targetValue) || 0,
+        currentValue: parseFloat(data.currentValue) || 0,
         targetDate: data.targetDate,
         exerciseName: data.exerciseName || ''
       };
