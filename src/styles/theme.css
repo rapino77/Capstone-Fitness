@@ -183,13 +183,30 @@ body {
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
   animation: gradientShift 3s ease-in-out infinite;
+}
+
+/* Ensure fitness title works in all modes */
+.light .fitness-title,
+.dark .fitness-title {
+  background: linear-gradient(45deg, #3b82f6, #06b6d4, #8b5cf6);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .section-header {
   font-family: 'Exo 2', sans-serif;
   font-weight: 700;
   letter-spacing: 1px;
+  color: white !important;
+}
+
+/* Ensure section headers always show white text in both light and dark modes */
+.light .section-header,
+.dark .section-header {
   color: white !important;
 }
 
@@ -232,6 +249,89 @@ body {
 
 .dark .bg-blue-accent {
   background: linear-gradient(135deg, #0e7490 0%, #164e63 50%, #155e75 100%);
+}
+
+/* Override theme text colors for blue background components */
+.bg-blue-primary,
+.bg-blue-secondary,
+.bg-blue-accent,
+.bg-blue-gradient {
+  color: white !important;
+}
+
+.bg-blue-primary *:not(.section-header):not(.fitness-title),
+.bg-blue-secondary *:not(.section-header):not(.fitness-title),
+.bg-blue-accent *:not(.section-header):not(.fitness-title),
+.bg-blue-gradient *:not(.section-header):not(.fitness-title) {
+  color: inherit !important;
+}
+
+/* Ensure white labels and text in blue components */
+.bg-blue-primary label,
+.bg-blue-secondary label,
+.bg-blue-accent label,
+.bg-blue-gradient label {
+  color: white !important;
+}
+
+/* Fix form inputs on blue backgrounds */
+.bg-blue-primary input,
+.bg-blue-secondary input,
+.bg-blue-accent input,
+.bg-blue-gradient input,
+.bg-blue-primary select,
+.bg-blue-secondary select,
+.bg-blue-accent select,
+.bg-blue-gradient select,
+.bg-blue-primary textarea,
+.bg-blue-secondary textarea,
+.bg-blue-accent textarea,
+.bg-blue-gradient textarea {
+  background-color: white !important;
+  color: black !important;
+}
+
+/* Fix buttons and other interactive elements on blue backgrounds */
+.bg-blue-primary button:not(.section-header),
+.bg-blue-secondary button:not(.section-header),
+.bg-blue-accent button:not(.section-header),
+.bg-blue-gradient button:not(.section-header) {
+  color: white !important;
+}
+
+/* Fix chart text elements that might use theme colors */
+.bg-blue-primary .recharts-text,
+.bg-blue-secondary .recharts-text,
+.bg-blue-accent .recharts-text,
+.bg-blue-gradient .recharts-text {
+  fill: white !important;
+}
+
+/* Handle error and validation text */
+.bg-blue-primary .text-red-600,
+.bg-blue-secondary .text-red-600,
+.bg-blue-accent .text-red-600,
+.bg-blue-gradient .text-red-600 {
+  color: #fca5a5 !important; /* Light red for visibility on dark backgrounds */
+}
+
+.bg-blue-primary .text-green-600,
+.bg-blue-secondary .text-green-600,
+.bg-blue-accent .text-green-600,
+.bg-blue-gradient .text-green-600 {
+  color: #86efac !important; /* Light green for visibility on dark backgrounds */
+}
+
+/* Fix any remaining paragraphs and spans */
+.bg-blue-primary p,
+.bg-blue-secondary p,
+.bg-blue-accent p,
+.bg-blue-gradient p,
+.bg-blue-primary span:not(.section-header):not(.fitness-title),
+.bg-blue-secondary span:not(.section-header):not(.fitness-title),
+.bg-blue-accent span:not(.section-header):not(.fitness-title),
+.bg-blue-gradient span:not(.section-header):not(.fitness-title) {
+  color: white !important;
 }
 
 /* Animation classes */

@@ -249,7 +249,7 @@ const WeeklyReport = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-blue-secondary rounded-lg shadow-md p-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
@@ -264,7 +264,7 @@ const WeeklyReport = () => {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-blue-secondary rounded-lg shadow-md p-6">
         <p className="text-red-600">{error}</p>
       </div>
     );
@@ -275,11 +275,11 @@ const WeeklyReport = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg">
+    <div className="bg-blue-secondary rounded-lg shadow-lg">
       {/* Header with Week Navigation */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-lg">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl font-bold">Weekly Fitness Report</h2>
+          <h2 className="text-2xl section-header">Weekly Fitness Report</h2>
           {isCurrentWeek && (
             <span className="bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-medium">
               Current Week
@@ -323,7 +323,7 @@ const WeeklyReport = () => {
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 text-white">
         {/* Summary Section */}
         <div>
           <button
