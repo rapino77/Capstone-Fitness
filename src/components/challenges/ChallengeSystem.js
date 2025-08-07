@@ -96,12 +96,37 @@ const ChallengeSystem = ({ onSuccess }) => {
     fetchData();
   }, []);
 
+  // Add effect to reload challenges when component becomes visible again
   useEffect(() => {
-    if (workoutData.length > 0 || bodyWeightData.length > 0) {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 Tab became visible, reloading challenges...');
+        // Reload challenges from localStorage when tab becomes visible
+        const savedChallenges = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
+        const savedCompleted = JSON.parse(localStorage.getItem('completedChallenges') || '[]');
+        
+        console.log('🔄 Reloading from localStorage:', savedChallenges.length, 'active challenges');
+        
+        setActiveChallenges(savedChallenges);
+        setCompletedChallenges(savedCompleted);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Only update progress if we have challenges AND workout/weight data
+    if (activeChallenges.length > 0 && (workoutData.length > 0 || bodyWeightData.length > 0)) {
+      console.log('🔄 Updating challenge progress with', activeChallenges.length, 'active challenges');
       updateChallengeProgress();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workoutData, bodyWeightData]);
+  }, [workoutData, bodyWeightData, activeChallenges.length]);
 
   const fetchData = async () => {
     try {
@@ -333,6 +358,14 @@ const ChallengeSystem = ({ onSuccess }) => {
   };
 
   const updateChallengeProgress = () => {
+    // Safety check: don't update if activeChallenges is empty
+    if (!activeChallenges || activeChallenges.length === 0) {
+      console.log('⚠️ Skipping challenge progress update - no active challenges');
+      return;
+    }
+
+    console.log('🔄 Updating progress for', activeChallenges.length, 'challenges');
+    
     const updatedChallenges = activeChallenges.map(challenge => {
       const progress = calculateChallengeProgress(challenge);
       return { ...challenge, ...progress };
@@ -341,6 +374,12 @@ const ChallengeSystem = ({ onSuccess }) => {
     // Move completed challenges
     const stillActive = updatedChallenges.filter(challenge => !challenge.isComplete);
     const newlyCompleted = updatedChallenges.filter(challenge => challenge.isComplete);
+    
+    console.log('📊 Progress update results:', {
+      original: activeChallenges.length,
+      stillActive: stillActive.length,
+      newlyCompleted: newlyCompleted.length
+    });
     
     if (newlyCompleted.length > 0) {
       const updatedCompleted = [...completedChallenges, ...newlyCompleted];
