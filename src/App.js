@@ -172,7 +172,7 @@ const AppContent = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="cool-slide-transition relative">
+        <div className="tab-content smooth-transition relative">
             {activeTab === 'dashboard' && (
               <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
             )}
