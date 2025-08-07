@@ -259,19 +259,28 @@ body {
   color: white !important;
 }
 
-.bg-blue-primary *:not(.section-header):not(.fitness-title),
-.bg-blue-secondary *:not(.section-header):not(.fitness-title),
-.bg-blue-accent *:not(.section-header):not(.fitness-title),
-.bg-blue-gradient *:not(.section-header):not(.fitness-title) {
+.bg-blue-primary *:not(.section-header):not(.fitness-title):not(select):not(option),
+.bg-blue-secondary *:not(.section-header):not(.fitness-title):not(select):not(option),
+.bg-blue-accent *:not(.section-header):not(.fitness-title):not(select):not(option),
+.bg-blue-gradient *:not(.section-header):not(.fitness-title):not(select):not(option) {
   color: inherit !important;
 }
 
-/* Ensure white labels and text in blue components */
-.bg-blue-primary label,
-.bg-blue-secondary label,
-.bg-blue-accent label,
-.bg-blue-gradient label {
+/* Ensure white labels and text in blue components (but not select elements) */
+.bg-blue-primary label:not(select),
+.bg-blue-secondary label:not(select),
+.bg-blue-accent label:not(select),
+.bg-blue-gradient label:not(select) {
   color: white !important;
+}
+
+/* Ensure select elements inside labels also have black text */
+.bg-blue-primary label select,
+.bg-blue-secondary label select,
+.bg-blue-accent label select,
+.bg-blue-gradient label select {
+  color: black !important;
+  background-color: white !important;
 }
 
 /* Fix form inputs on blue backgrounds */
@@ -302,16 +311,38 @@ select option,
   color: black !important;
 }
 
-/* Ensure all select elements have proper styling */
-select {
+/* Ensure all select elements have proper styling with highest specificity */
+select,
+select:focus,
+select:active {
   color: black !important;
+  background-color: white !important;
 }
 
 /* Override any inherited white text from blue backgrounds for select elements */
 .bg-blue-primary select,
 .bg-blue-secondary select,
 .bg-blue-accent select,
-.bg-blue-gradient select {
+.bg-blue-gradient select,
+.bg-blue-primary select:focus,
+.bg-blue-secondary select:focus,
+.bg-blue-accent select:focus,
+.bg-blue-gradient select:focus,
+.bg-blue-primary select:active,
+.bg-blue-secondary select:active,
+.bg-blue-accent select:active,
+.bg-blue-gradient select:active {
+  color: black !important;
+  background-color: white !important;
+}
+
+/* Force black text on all dropdown elements regardless of parent */
+body select,
+body select option,
+div select,
+div select option,
+form select,
+form select option {
   color: black !important;
   background-color: white !important;
 }
