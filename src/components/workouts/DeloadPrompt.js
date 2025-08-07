@@ -137,17 +137,17 @@ const DeloadPrompt = ({
           {/* Simple Action Buttons */}
           <div className="flex space-x-3">
             <button
-              onClick={handleNoDeload}
-              className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-            >
-              No, Deload
-            </button>
-            
-            <button
               onClick={handleYesDeload}
               className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
             >
               Yes, Deload
+            </button>
+            
+            <button
+              onClick={handleNoDeload}
+              className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              No, Keep Current Weight
             </button>
           </div>
 
