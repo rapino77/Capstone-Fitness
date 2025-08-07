@@ -86,7 +86,7 @@ const AppContent = () => {
 
       {/* Main Application */}
       <div 
-        className={`min-h-screen transition-all duration-500 ${
+        className={`min-h-screen transition-all duration-500 fitness-bg-pattern ${
           isAppReady ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
         }`}
         style={{ backgroundColor: theme.colors.backgroundSecondary }}
@@ -123,7 +123,7 @@ const AppContent = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fitness-equipment-pattern">
         {/* Tab Navigation */}
         <div 
           className="rounded-lg shadow-sm mb-6 border transition-colors duration-200"
