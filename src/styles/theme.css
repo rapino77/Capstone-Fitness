@@ -789,13 +789,7 @@ form select option {
   color: #ea580c !important;
 }
 
-/* Fix Weekly Summary card labels to black */
-.bg-blue-secondary .bg-blue-50 .text-sm.text-gray-600,
-.bg-blue-secondary .bg-green-50 .text-sm.text-gray-600,
-.bg-blue-secondary .bg-purple-50 .text-sm.text-gray-600,
-.bg-blue-secondary .bg-orange-50 .text-sm.text-gray-600 {
-  color: #111827 !important; /* Black text for labels */
-}
+/* Delete conflicting rules - handled at end of file */
 
 /* Animation classes */
 .fade-in {
@@ -840,4 +834,39 @@ form select option {
   .themed-card:first-child {
     border-top: none;
   }
+}
+
+/* FINAL OVERRIDES - Fix Weekly Summary Cards Text */
+/* Fix text in weekly summary cards */
+.bg-blue-50 p.text-sm.text-gray-600 {
+  color: #000000 !important;
+}
+
+.bg-green-50 p.text-sm.text-gray-600 {
+  color: #000000 !important;
+}
+
+.bg-purple-50 p.text-sm.text-gray-600 {
+  color: #000000 !important;
+}
+
+.bg-orange-50 p.text-sm.text-gray-600 {
+  color: #000000 !important;
+}
+
+/* Keep the numbers in their original colors */
+.bg-blue-50 .text-2xl.text-blue-600 {
+  color: #2563eb !important;
+}
+
+.bg-green-50 .text-2xl.text-green-600 {
+  color: #16a34a !important;
+}
+
+.bg-purple-50 .text-2xl.text-purple-600 {
+  color: #9333ea !important;
+}
+
+.bg-orange-50 .text-2xl.text-orange-600 {
+  color: #ea580c !important;
 }
