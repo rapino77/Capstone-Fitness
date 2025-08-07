@@ -81,13 +81,43 @@ const WorkoutForm = ({ onSuccess }) => {
           .sort((a, b) => {
             const dateA = new Date(a.date || a.Date || '1900-01-01');
             const dateB = new Date(b.date || b.Date || '1900-01-01');
+            
+            // If dates are equal, sort by createdTime or record ID
+            if (dateA.getTime() === dateB.getTime()) {
+              // Try created time first
+              const createdA = a.createdTime ? new Date(a.createdTime) : null;
+              const createdB = b.createdTime ? new Date(b.createdTime) : null;
+              
+              if (createdA && createdB && !isNaN(createdA.getTime()) && !isNaN(createdB.getTime())) {
+                return createdB - createdA; // Newer created time first
+              }
+              
+              // Fallback to record ID comparison (newer IDs are typically later)
+              return (b.id || '').localeCompare(a.id || '');
+            }
+            
             return dateB - dateA;
           });
+
+        console.log('📊 Workouts after sorting:', exerciseWorkouts.map(w => ({
+          id: w.id,
+          date: w.date,
+          weight: w.weight,
+          createdTime: w.createdTime,
+          isFirst: exerciseWorkouts.indexOf(w) === 0
+        })));
         
         console.log(`📊 Found ${exerciseWorkouts.length} workouts for ${exercise}`);
         
         if (exerciseWorkouts.length > 0) {
           const lastW = exerciseWorkouts[0];
+          console.log('📊 SELECTED WORKOUT (first after sorting):', {
+            id: lastW.id,
+            date: lastW.date,
+            weight: lastW.weight,
+            createdTime: lastW.createdTime
+          });
+          
           const workoutDate = lastW.date || lastW.Date;
           
           // Validate date before setting
@@ -100,7 +130,7 @@ const WorkoutForm = ({ onSuccess }) => {
             weight: lastW.weight || lastW.Weight
           };
           
-          console.log('📊 Setting last workout:', lastWorkoutData);
+          console.log('📊 Setting last workout data:', lastWorkoutData);
           setLastWorkout(lastWorkoutData);
         } else {
           console.log('📊 No workouts found for exercise, clearing last workout');
@@ -380,7 +410,9 @@ const WorkoutForm = ({ onSuccess }) => {
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-gray-700">📊 Last Workout</h4>
               <span className="text-xs text-gray-500">
-                {lastWorkout.date ? format(new Date(lastWorkout.date), 'MMM d, yyyy') : 'Unknown date'}
+                {lastWorkout.date && !isNaN(new Date(lastWorkout.date).getTime()) 
+                  ? format(new Date(lastWorkout.date), 'MMM d, yyyy') 
+                  : 'Unknown date'}
               </span>
             </div>
             <div className="mt-1 text-sm text-gray-900">

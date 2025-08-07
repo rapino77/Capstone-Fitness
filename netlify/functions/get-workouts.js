@@ -58,7 +58,10 @@ exports.handler = async (event, context) => {
     const queryConfig = {
       pageSize: Math.min(parseInt(limit), 100),
       filterByFormula: `{User ID} = '${userId}'`,
-      sort: [{ field: 'Date', direction: 'desc' }]
+      sort: [
+        { field: 'Date', direction: 'desc' },
+        { field: 'Created Time', direction: 'desc' }  // Secondary sort by creation time
+      ]
     };
 
     // Fetch records
@@ -99,7 +102,7 @@ exports.handler = async (event, context) => {
       weight: record.get('Weight') || 0,
       date: record.get('Date') || new Date().toISOString().split('T')[0],
       notes: record.get('Notes') || 'Empty record - add fields to Workouts table',
-      createdAt: record.get('CreatedAt') || 'Unknown',
+      createdTime: record.get('Created Time') || record._rawJson?.createdTime || 'Unknown',
       isEmpty: Object.keys(record.fields).length === 0
     }));
 
