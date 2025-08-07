@@ -21,6 +21,20 @@ const DeloadPrompt = ({
   const handleYesDeload = () => {
     if (suggestedDeload) {
       onAccept(suggestedDeload);
+    } else if (deloadData.options && deloadData.options.length > 0) {
+      // Fallback to first available option if no moderate deload found
+      onAccept(deloadData.options[0]);
+    } else {
+      // If no options available, create a basic 15% deload
+      const basicDeload = {
+        type: 'moderate',
+        weight: Math.round((deloadData.currentWorkout?.weight * 0.85) * 2) / 2,
+        sets: deloadData.currentWorkout?.sets || 3,
+        reps: deloadData.currentWorkout?.reps || 10,
+        percentage: 15,
+        description: 'Basic deload - 15% weight reduction'
+      };
+      onAccept(basicDeload);
     }
   };
 
@@ -75,30 +89,28 @@ const DeloadPrompt = ({
           </div>
 
           {/* Deload Suggestion - Simplified */}
-          {suggestedDeload && (
-            <div className="mb-6">
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-center mb-3">
-                  <span className="text-blue-500 text-xl mr-3">🔄</span>
-                  <div>
-                    <div className="font-medium text-blue-800">Suggested Deload</div>
-                    <div className="text-sm text-blue-600 mt-1">
-                      Reduce weight to promote recovery and prevent overreaching
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-lg p-3 border border-blue-200">
-                  <div className="font-mono text-lg text-blue-700 mb-2">
-                    {suggestedDeload.preview}
-                  </div>
-                  <div className="text-sm text-blue-600">
-                    {suggestedDeload.description} • Benefits: Recovery, technique focus, long-term gains
+          <div className="mb-6">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="flex items-center mb-3">
+                <span className="text-blue-500 text-xl mr-3">🔄</span>
+                <div>
+                  <div className="font-medium text-blue-800">Suggested Deload</div>
+                  <div className="text-sm text-blue-600 mt-1">
+                    Reduce weight to promote recovery and prevent overreaching
                   </div>
                 </div>
               </div>
+              
+              <div className="bg-white rounded-lg p-3 border border-blue-200">
+                <div className="font-mono text-lg text-blue-700 mb-2">
+                  {suggestedDeload?.preview || `${deloadData.currentWorkout?.sets || 3} sets × ${deloadData.currentWorkout?.reps || 10} reps @ ${Math.round((deloadData.currentWorkout?.weight * 0.85) * 2) / 2 || 0} lbs`}
+                </div>
+                <div className="text-sm text-blue-600">
+                  {suggestedDeload?.description || 'Basic deload - 15% weight reduction'} • Benefits: Recovery, technique focus, long-term gains
+                </div>
+              </div>
             </div>
-          )}
+          </div>
 
           {/* Explanation */}
           <div className="mb-6">
@@ -131,14 +143,12 @@ const DeloadPrompt = ({
               No, Deload
             </button>
             
-            {suggestedDeload && (
-              <button
-                onClick={handleYesDeload}
-                className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
-              >
-                Yes, Deload
-              </button>
-            )}
+            <button
+              onClick={handleYesDeload}
+              className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+            >
+              Yes, Deload
+            </button>
           </div>
 
           {/* Help Text */}
