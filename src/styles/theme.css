@@ -312,6 +312,47 @@ body {
   border: 2px solid #1e40af !important;
 }
 
+/* Ensure all input types have black text */
+.bg-blue-primary input[type="date"],
+.bg-blue-secondary input[type="date"],
+.bg-blue-accent input[type="date"],
+.bg-blue-gradient input[type="date"],
+.bg-blue-primary input[type="number"],
+.bg-blue-secondary input[type="number"],
+.bg-blue-accent input[type="number"],
+.bg-blue-gradient input[type="number"],
+.bg-blue-primary input[type="text"],
+.bg-blue-secondary input[type="text"],
+.bg-blue-accent input[type="text"],
+.bg-blue-gradient input[type="text"] {
+  color: black !important;
+  background-color: white !important;
+}
+
+/* Fix placeholder text color */
+.bg-blue-primary input::placeholder,
+.bg-blue-secondary input::placeholder,
+.bg-blue-accent input::placeholder,
+.bg-blue-gradient input::placeholder {
+  color: #9ca3af !important; /* Light gray for placeholders */
+}
+
+/* Fix date input calendar icon and text */
+.bg-blue-primary input[type="date"]::-webkit-calendar-picker-indicator,
+.bg-blue-secondary input[type="date"]::-webkit-calendar-picker-indicator,
+.bg-blue-accent input[type="date"]::-webkit-calendar-picker-indicator,
+.bg-blue-gradient input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8); /* Make calendar icon darker */
+}
+
+/* Additional specificity for input elements */
+input[type="date"],
+input[type="number"],
+input[type="text"],
+textarea {
+  color: black !important;
+}
+
 /* Fix dropdown option text visibility - make all dropdown options have black text */
 select option,
 .bg-blue-primary select option,
