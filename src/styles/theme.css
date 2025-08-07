@@ -353,6 +353,32 @@ textarea {
   color: black !important;
 }
 
+/* Ensure all form inputs in blue backgrounds have black text */
+.bg-blue-primary input:not([type="submit"]):not([type="button"]),
+.bg-blue-secondary input:not([type="submit"]):not([type="button"]),
+.bg-blue-accent input:not([type="submit"]):not([type="button"]),
+.bg-blue-gradient input:not([type="submit"]):not([type="button"]),
+.bg-blue-primary textarea,
+.bg-blue-secondary textarea,
+.bg-blue-accent textarea,
+.bg-blue-gradient textarea {
+  color: black !important;
+  background-color: white !important;
+}
+
+/* Fix focus state for inputs */
+.bg-blue-primary input:focus,
+.bg-blue-secondary input:focus,
+.bg-blue-accent input:focus,
+.bg-blue-gradient input:focus,
+.bg-blue-primary textarea:focus,
+.bg-blue-secondary textarea:focus,
+.bg-blue-accent textarea:focus,
+.bg-blue-gradient textarea:focus {
+  color: black !important;
+  background-color: white !important;
+}
+
 /* Fix dropdown option text visibility - make all dropdown options have black text */
 select option,
 .bg-blue-primary select option,
@@ -726,6 +752,41 @@ form select option {
 .bg-blue-primary .bg-gray-100 .text-gray-600,
 .bg-blue-primary .bg-gray-100 .text-gray-500 {
   color: #111827 !important;
+}
+
+/* Fix Current Week badge text */
+.bg-gradient-to-r .bg-white {
+  color: #2563eb !important; /* Keep blue text on white background */
+}
+
+/* Fix Weekly Report summary cards */
+.bg-blue-secondary .bg-blue-50 *,
+.bg-blue-secondary .bg-green-50 *,
+.bg-blue-secondary .bg-purple-50 *,
+.bg-blue-secondary .bg-orange-50 *,
+.bg-blue-secondary .bg-gray-50 * {
+  color: inherit !important;
+}
+
+/* Ensure proper text colors for weekly report cards */
+.bg-blue-secondary .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.bg-blue-secondary .text-blue-600 {
+  color: #2563eb !important;
+}
+
+.bg-blue-secondary .text-green-600 {
+  color: #16a34a !important;
+}
+
+.bg-blue-secondary .text-purple-600 {
+  color: #9333ea !important;
+}
+
+.bg-blue-secondary .text-orange-600 {
+  color: #ea580c !important;
 }
 
 /* Animation classes */
