@@ -281,7 +281,7 @@ const WeeklyReport = () => {
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl section-header">Weekly Fitness Report</h2>
           {isCurrentWeek && (
-            <span className="bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-medium">
+            <span className="bg-white text-black px-3 py-1 rounded-full text-sm font-medium">
               Current Week
             </span>
           )}
