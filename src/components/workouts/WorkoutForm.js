@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import axios from 'axios';
 import { calculateNextWorkout, getProgressionParams, createMockWorkoutHistory } from '../../utils/progressiveOverload';
+import { detectPR, formatPRForCelebration, logPRAchievement } from '../../utils/prDetection';
+import { useCelebration } from '../../context/CelebrationContext';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,6 +13,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [progressiveOverloadEnabled, setProgressiveOverloadEnabled] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
+  const { celebratePR } = useCelebration();
   // const [recentWorkouts, setRecentWorkouts] = useState([]); // Commented out for debugging
   
   const {
@@ -155,10 +158,36 @@ const WorkoutForm = ({ onSuccess }) => {
           data.weight === progressionSuggestion.suggestion.weight
       };
 
+      // Check for PR before submitting
+      console.log('🔍 Checking for PR...', submissionData);
+      const prResult = await detectPR(submissionData);
+      console.log('🎯 PR Detection Result:', prResult);
+
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, submissionData);
       
       if (response.data.success) {
         setSubmitMessage({ type: 'success', text: 'Workout logged successfully!' });
+        
+        // Handle PR celebration
+        if (prResult.isPR) {
+          const celebrationData = formatPRForCelebration(prResult);
+          if (celebrationData) {
+            console.log('🎉 Triggering PR celebration:', celebrationData);
+            
+            // Log the PR achievement
+            await logPRAchievement(celebrationData);
+            
+            // Show celebration modal
+            celebratePR(celebrationData);
+            
+            // Update success message to include PR
+            const prMessage = celebrationData.isNewPR 
+              ? `Workout logged successfully! 🎉 First time doing ${celebrationData.exercise}!`
+              : `Workout logged successfully! 🔥 NEW PR: +${celebrationData.improvement} lbs improvement!`;
+            setSubmitMessage({ type: 'success', text: prMessage });
+          }
+        }
+        
         reset();
         setProgressionSuggestion(null);
         if (onSuccess) onSuccess(response.data);
