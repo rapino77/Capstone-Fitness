@@ -164,11 +164,11 @@ const WorkoutHistory = () => {
   const groupedWorkouts = groupWorkoutsByDate(sortedWorkouts);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-blue-primary rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Workout History</h2>
+        <h2 className="text-2xl section-header">Workout History</h2>
         <div className="flex items-center space-x-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-white">
             Showing {sortedWorkouts.length} of {workouts.length} workouts
           </p>
           {workouts.length > 0 && (
@@ -200,7 +200,7 @@ const WorkoutHistory = () => {
       <div className="mb-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Start Date
             </label>
             <input
@@ -213,7 +213,7 @@ const WorkoutHistory = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               End Date
             </label>
             <input

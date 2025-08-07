@@ -261,10 +261,10 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-blue-gradient rounded-lg shadow-md p-6">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl section-header">
             {showArchived ? 'Archived Goals' : 'Goal Tracker'}
           </h2>
           

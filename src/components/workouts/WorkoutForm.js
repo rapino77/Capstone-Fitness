@@ -174,9 +174,9 @@ const WorkoutForm = ({ onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-blue-primary rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Log Workout</h2>
+        <h2 className="text-2xl section-header">Log Workout</h2>
         <div className="flex flex-col space-y-2">
           <label className="flex items-center cursor-pointer">
             <input
@@ -185,8 +185,8 @@ const WorkoutForm = ({ onSuccess }) => {
               onChange={(e) => setProgressiveOverloadEnabled(e.target.checked)}
               className="mr-2"
             />
-            <span className="text-sm text-gray-600">Progressive Overload</span>
-            <span className="ml-1 text-xs text-blue-600 font-medium">(ON by default)</span>
+            <span className="text-sm text-white">Progressive Overload</span>
+            <span className="ml-1 text-xs text-blue-200 font-medium">(ON by default)</span>
           </label>
           <label className="flex items-center cursor-pointer">
             <input
@@ -195,15 +195,15 @@ const WorkoutForm = ({ onSuccess }) => {
               onChange={(e) => setDemoMode(e.target.checked)}
               className="mr-2"
             />
-            <span className="text-sm text-orange-600">🎭 Demo Mode</span>
-            <span className="ml-1 text-xs text-orange-500">(simulate workout history)</span>
+            <span className="text-sm text-white">🎭 Demo Mode</span>
+            <span className="ml-1 text-xs text-blue-200">(simulate workout history)</span>
           </label>
         </div>
       </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white mb-1">
             Exercise
           </label>
           <select
@@ -333,7 +333,7 @@ const WorkoutForm = ({ onSuccess }) => {
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Sets
             </label>
             <input
@@ -351,7 +351,7 @@ const WorkoutForm = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Reps
             </label>
             <input
@@ -369,7 +369,7 @@ const WorkoutForm = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Weight (lbs)
             </label>
             <input
@@ -389,7 +389,7 @@ const WorkoutForm = ({ onSuccess }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white mb-1">
             Date
           </label>
           <input
@@ -406,7 +406,7 @@ const WorkoutForm = ({ onSuccess }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white mb-1">
             Notes (optional)
           </label>
           <textarea

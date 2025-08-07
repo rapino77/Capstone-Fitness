@@ -404,14 +404,14 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+    <div className="bg-blue-accent rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Create New Goal</h2>
+          <h2 className="text-2xl section-header">Create New Goal</h2>
           {onCancel && (
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-white hover:text-gray-200"
             >
               ✕
             </button>

@@ -92,7 +92,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
     <div className="space-y-6">
       {/* Header with Timeframe Selector */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+        <h1 className="text-3xl section-header">Dashboard Overview</h1>
         <div className="flex space-x-2">
           {[7, 30, 90].map((days) => (
             <button

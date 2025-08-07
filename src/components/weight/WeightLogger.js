@@ -324,26 +324,19 @@ const WeightLogger = () => {
   return (
     <div className="space-y-6">
       <div 
-        className="rounded-lg shadow-sm p-6 border transition-colors duration-200"
+        className="rounded-lg shadow-sm p-6 border transition-colors duration-200 bg-blue-secondary"
         style={{
-          backgroundColor: theme.colors.background,
           borderColor: theme.colors.border
         }}
       >
-        <h2 
-          className="text-2xl font-bold mb-6 transition-colors duration-200"
-          style={{ color: theme.colors.text }}
-        >
+        <h2 className="text-2xl section-header mb-6">
           Log Body Weight
         </h2>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label 
-                className="block text-sm font-medium mb-1 transition-colors duration-200"
-                style={{ color: theme.colors.text }}
-              >
+              <label className="block text-sm font-medium mb-1 text-white">
                 Weight
               </label>
               <input
@@ -369,7 +362,7 @@ const WeightLogger = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white mb-1">
                 Unit
               </label>
               <select
@@ -383,7 +376,7 @@ const WeightLogger = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Date
             </label>
             <input
