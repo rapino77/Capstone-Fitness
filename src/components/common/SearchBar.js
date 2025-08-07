@@ -108,7 +108,9 @@ const SearchBar = ({ onNavigate }) => {
           className="search-input w-64 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           style={{
             backgroundColor: theme.colors.background,
-            borderColor: theme.colors.border
+            borderColor: theme.colors.border,
+            color: '#ffffff !important',
+            WebkitTextFillColor: '#ffffff !important'
           }}
           onFocus={() => {
             if (filteredResults.length > 0) setIsOpen(true);
