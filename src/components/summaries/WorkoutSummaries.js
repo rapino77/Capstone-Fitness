@@ -335,7 +335,7 @@ const WorkoutSummaries = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-              className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors"
+              className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors"
             >
               <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -352,7 +352,7 @@ const WorkoutSummaries = () => {
             <button
               onClick={() => setSelectedDate(new Date(Math.min(new Date(selectedDate).getTime() + 86400000, Date.now())))}
               disabled={format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')}
-              className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors disabled:opacity-50"
+              className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
               <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -366,6 +366,15 @@ const WorkoutSummaries = () => {
             className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
           >
             Today
+          </button>
+          
+          {/* Refresh Button */}
+          <button
+            onClick={fetchWorkoutData}
+            className="px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors text-sm flex items-center space-x-1"
+          >
+            <span>🔄</span>
+            <span>Refresh</span>
           </button>
         </div>
       </div>

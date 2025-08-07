@@ -83,6 +83,8 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
         
         // Check for milestone achievements
         console.log('Progress:', oldProgressPercentage.toFixed(1), '% →', newProgressPercentage.toFixed(1), '%');
+        console.log('Goal status:', response.data.data.status);
+        console.log('Is completed?', isCompleted);
         
         const milestones = [25, 50, 75, 100];
         const passedMilestone = milestones.find(milestone => 
@@ -94,14 +96,25 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
           
           if (passedMilestone === 100 || isCompleted) {
             // Goal completed celebration
-            celebrateGoalCompletion(
-              updatedGoal.goalTitle, 
-              Math.abs(new Date(updatedGoal.targetDate) - new Date(updatedGoal.createdDate)) / (1000 * 60 * 60 * 24)
-            );
+            const goalTitle = updatedGoal.goalTitle || `${updatedGoal.goalType} Goal`;
+            const daysToComplete = Math.abs(new Date(updatedGoal.targetDate) - new Date()) / (1000 * 60 * 60 * 24);
+            
+            console.log('Triggering goal completion celebration for:', goalTitle);
+            celebrateGoalCompletion(goalTitle, Math.round(daysToComplete));
           } else {
             // Milestone celebration
-            celebrateMilestone(updatedGoal.goalTitle, passedMilestone, newProgressPercentage);
+            const goalTitle = updatedGoal.goalTitle || `${updatedGoal.goalType} Goal`;
+            console.log('Triggering milestone celebration for:', goalTitle, 'at', passedMilestone, '%');
+            celebrateMilestone(goalTitle, passedMilestone, newProgressPercentage);
           }
+        }
+        
+        // If goal is completed, refresh the goals list to ensure proper filtering
+        if (isCompleted) {
+          console.log('Goal completed, refreshing goals list...');
+          setTimeout(() => {
+            fetchGoals();
+          }, 1500); // Wait for celebration to show
         }
         
 

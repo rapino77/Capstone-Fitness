@@ -115,7 +115,7 @@ function getProgressionLogic() {
 
   const PROGRESSION_PARAMS = {
     minWorkoutsForAnalysis: 3,
-    weightIncrement: 2.5,
+    weightIncrement: 5,  // Changed from 2.5 to 5 pounds
     repIncrement: 1,
     setIncrement: 1,
     plateauThreshold: 3,
@@ -291,9 +291,11 @@ function getProgressionLogic() {
           reason = `Increase reps to ${suggestion.reps} (double progression method)`;
           confidence = 'high';
         } else {
-          suggestion.weight = weight + params.weightIncrement;
+          // Add weight based on exercise type (5 lbs default, 2.5 lbs for isolation)
+          const increment = params.weightIncrement || 5;
+          suggestion.weight = weight + increment;
           suggestion.reps = params.maxRepRange.low;
-          reason = `Increase weight to ${suggestion.weight}lbs and reset reps to ${suggestion.reps}`;
+          reason = `Increase weight by ${increment} lbs to ${suggestion.weight}lbs and reset reps to ${suggestion.reps}`;
           confidence = 'high';
         }
       } else if (status === 'plateau') {
@@ -312,8 +314,9 @@ function getProgressionLogic() {
       }
     } else if (strategy === PROGRESSION_STRATEGIES.LINEAR) {
       if (status !== 'regressing') {
-        suggestion.weight = weight + params.weightIncrement;
-        reason = `Linear progression: increase weight by ${params.weightIncrement}lbs`;
+        // Always add 5 pounds for linear progression
+        suggestion.weight = weight + 5;
+        reason = `Linear progression: increase weight by 5 lbs to ${suggestion.weight}lbs`;
         confidence = status === 'progressing_well' ? 'high' : 'medium';
       } else {
         suggestion.weight = Math.round(weight * params.deloadPercentage);
@@ -348,7 +351,7 @@ function getProgressionLogic() {
     if (exerciseLower.includes('curl') || exerciseLower.includes('extension') || 
         exerciseLower.includes('fly') || exerciseLower.includes('raise')) {
       return {
-        weightIncrement: 2.5,
+        weightIncrement: 2.5,  // Keep smaller increments for isolation exercises
         maxRepRange: { low: 10, high: 15 },
         strategy: PROGRESSION_STRATEGIES.DOUBLE_PROGRESSION
       };
