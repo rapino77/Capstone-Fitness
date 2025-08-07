@@ -9,7 +9,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  BarChart,
   Bar,
   ComposedChart
 } from 'recharts';
@@ -46,6 +45,7 @@ const StrengthProgression = () => {
         setSelectedExercises(topExercises);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workoutData]);
 
   useEffect(() => {
