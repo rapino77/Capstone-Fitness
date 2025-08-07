@@ -83,8 +83,8 @@ const WeeklyReport = () => {
       
       console.log('💪 Workouts API response:', workoutsResponse.data);
       
-      if (workoutsResponse.data.success && workoutsResponse.data.workouts) {
-        allWorkouts = workoutsResponse.data.workouts;
+      if (workoutsResponse.data.success && (workoutsResponse.data.workouts || workoutsResponse.data.data)) {
+        allWorkouts = workoutsResponse.data.workouts || workoutsResponse.data.data;
         
         // Filter workouts for this week
         const weekWorkouts = allWorkouts.filter(workout => {
@@ -132,8 +132,8 @@ const WeeklyReport = () => {
       
       console.log('⚖️ Weights API response:', weightsResponse.data);
       
-      if (weightsResponse.data.success && weightsResponse.data.weights) {
-        const allWeights = weightsResponse.data.weights;
+      if (weightsResponse.data.success && (weightsResponse.data.weights || weightsResponse.data.data)) {
+        const allWeights = weightsResponse.data.weights || weightsResponse.data.data;
         
         // Filter weights for this week
         const weekWeights = allWeights.filter(weight => {
