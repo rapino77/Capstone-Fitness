@@ -171,9 +171,9 @@ const WeeklyReport = () => {
             return completionDate >= start && completionDate <= end;
           });
 
-          // Process all active/paused goals for review
+          // Process only active goals for review
           const activeGoals = allGoals.filter(goal => 
-            ['Active', 'Paused'].includes(goal.status || goal.Status)
+            (goal.status || goal.Status) === 'Active'
           ).map(goal => {
             const currentValue = goal.currentValue || goal['Current Value'] || 0;
             const targetValue = goal.targetValue || goal['Target Value'] || 1;
@@ -283,13 +283,6 @@ const WeeklyReport = () => {
   };
 
   // Helper functions for goal analysis and recommendations
-  const getGoalStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'Paused': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getProgressColor = (percentage) => {
     if (percentage >= 100) return 'bg-green-500';
@@ -347,15 +340,7 @@ const WeeklyReport = () => {
       }
     }
 
-    // Status-based recommendations
-    if (goal.status === 'Paused') {
-      recommendations.push({
-        type: 'info',
-        icon: '▶️',
-        message: 'Goal is paused. Consider resuming if circumstances have improved.',
-        priority: 'medium'
-      });
-    }
+    // Since we only show active goals, no status-based recommendations needed
 
     // Default encouragement
     if (recommendations.length === 0) {
@@ -664,8 +649,8 @@ const WeeklyReport = () => {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-1">
                                 <h5 className="font-medium text-white">{goal.name}</h5>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGoalStatusColor(goal.status)}`}>
-                                  {goal.status}
+                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                  Active
                                 </span>
                               </div>
                               <div className="text-sm text-gray-200 space-x-4">
