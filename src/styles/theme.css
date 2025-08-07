@@ -931,9 +931,12 @@ div[class*="bg-"][class*="-200"] p {
   -webkit-text-fill-color: #000000 !important;
 }
 
-/* Force black text on Current Week badge */
+/* Force black text on Current Week badge with maximum specificity */
 .bg-white span,
-.bg-white .text-black {
+.bg-white .text-black,
+span.bg-white,
+span.bg-white.text-black,
+.bg-gradient-to-r span.bg-white {
   color: #000000 !important;
   -webkit-text-fill-color: #000000 !important;
 }
