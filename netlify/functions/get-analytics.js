@@ -83,6 +83,12 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - timeframeDays);
   const dateFilter = startDate.toISOString().split('T')[0];
+  
+  console.log('=== ANALYTICS DATE CALCULATION ===');
+  console.log('Today:', new Date().toISOString().split('T')[0]);
+  console.log('Timeframe days:', timeframeDays);
+  console.log('Start date (inclusive):', dateFilter);
+  console.log('Will include workouts AFTER:', dateFilter);
 
   const analytics = {
     summary: {},
@@ -95,12 +101,29 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
 
   // Workout Analytics
   if (includeWorkouts) {
+    console.log('=== ANALYTICS WORKOUT FETCH ===');
+    console.log('User ID:', userId);
+    console.log('Date filter (after):', dateFilter);
+    
     const workouts = await fetchRecords(base, 'Workouts', {
       filterByFormula: `AND({User ID} = '${userId}', IS_AFTER({Date}, '${dateFilter}'))`,
       sort: [{ field: 'Date', direction: 'asc' }]
     });
 
+    console.log('Found workouts for analytics:', workouts.length);
+    if (workouts.length > 0) {
+      console.log('First workout:', {
+        exercise: workouts[0].get('Exercise'),
+        date: workouts[0].get('Date'),
+        userId: workouts[0].get('User ID')
+      });
+    }
+
     analytics.workoutAnalytics = analyzeWorkouts(workouts, timeframeDays);
+    console.log('Analytics result:', {
+      totalWorkouts: analytics.workoutAnalytics.totalWorkouts,
+      totalVolume: analytics.workoutAnalytics.totalVolume
+    });
   }
 
   // Weight Analytics
@@ -144,14 +167,19 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
 async function fetchRecords(base, tableName, options) {
   const records = [];
   try {
+    console.log(`Fetching ${tableName} with options:`, JSON.stringify(options, null, 2));
+    
     await base(tableName)
       .select(options)
       .eachPage((pageRecords, fetchNextPage) => {
         records.push(...pageRecords);
         fetchNextPage();
       });
+      
+    console.log(`Successfully fetched ${records.length} records from ${tableName}`);
   } catch (error) {
     console.error(`Error fetching ${tableName}:`, error);
+    console.error('Query options that failed:', JSON.stringify(options, null, 2));
   }
   return records;
 }
