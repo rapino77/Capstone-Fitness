@@ -186,7 +186,7 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
 
                 {validChartData.length > 0 ? (
                   currentViewMode === 'chart' ? (
-                    <div className="overflow-x-auto overflow-y-hidden border border-gray-200 rounded-lg bg-gray-50 strength-chart-scroll">
+                    <div className="overflow-x-auto overflow-y-hidden border border-gray-200 rounded-lg bg-gray-50 strength-chart-scroll" style={{ color: '#000000' }}>
                       <div style={{ 
                         minWidth: Math.max(600, validChartData.length * 60) + 'px',
                         color: '#000000'
@@ -204,16 +204,22 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
                               textAnchor="end"
                               height={60}
                               interval={0}
-                              tick={{ fill: '#000000', fontSize: 12 }}
+                              tick={{ fill: '#000000', fontSize: 12, color: '#000000' }}
+                              stroke="#000000"
+                              axisLine={{ stroke: '#000000' }}
+                              tickLine={{ stroke: '#000000' }}
                             />
                             <YAxis 
                               domain={validChartData.length === 1 ? [0, 'dataMax + 10'] : ['dataMin - 5', 'dataMax + 5']}
-                              tick={{ fill: '#000000', fontSize: 12 }}
+                              tick={{ fill: '#000000', fontSize: 12, color: '#000000' }}
+                              stroke="#000000"
+                              axisLine={{ stroke: '#000000' }}
+                              tickLine={{ stroke: '#000000' }}
                               label={{ 
                                 value: 'Weight (lbs)', 
                                 angle: -90, 
                                 position: 'insideLeft',
-                                style: { textAnchor: 'middle', fill: '#000000' }
+                                style: { textAnchor: 'middle', fill: '#000000', color: '#000000' }
                               }}
                             />
                             <Tooltip 

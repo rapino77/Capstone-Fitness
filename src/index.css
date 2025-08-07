@@ -22,26 +22,35 @@ code {
   scrollbar-color: #9CA3AF #E5E7EB;
 }
 
-/* Force all text in strength charts to be black */
-.strength-chart-scroll text {
+/* Force ALL text in strength charts to be black - AGGRESSIVE OVERRIDE */
+.strength-chart-scroll * {
+  color: #000000 !important;
+}
+
+.strength-chart-scroll text,
+.strength-chart-scroll tspan {
   fill: #000000 !important;
   color: #000000 !important;
 }
 
-.strength-chart-scroll .recharts-text {
+.strength-chart-scroll .recharts-text,
+.strength-chart-scroll .recharts-cartesian-axis-tick-value,
+.strength-chart-scroll .recharts-label,
+.strength-chart-scroll .recharts-legend-item-text,
+.strength-chart-scroll .recharts-cartesian-axis-tick,
+.strength-chart-scroll .recharts-cartesian-axis-tick text,
+.strength-chart-scroll .recharts-xAxis .recharts-cartesian-axis-tick-value,
+.strength-chart-scroll .recharts-yAxis .recharts-cartesian-axis-tick-value {
   fill: #000000 !important;
-}
-
-.strength-chart-scroll .recharts-cartesian-axis-tick-value {
-  fill: #000000 !important;
-}
-
-.strength-chart-scroll .recharts-label {
-  fill: #000000 !important;
-}
-
-.strength-chart-scroll .recharts-legend-item-text {
   color: #000000 !important;
+}
+
+/* Target SVG elements specifically */
+.strength-chart-scroll svg text {
+  fill: #000000 !important;
+}
+
+.strength-chart-scroll svg tspan {
   fill: #000000 !important;
 }
 
