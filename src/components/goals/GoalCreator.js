@@ -167,13 +167,17 @@ const GoalCreator = ({ onGoalCreated, onCancel }) => {
       }
     } catch (error) {
       console.error('Goal creation error:', error.response?.data || error);
-      console.error('Full error response:', error.response);
+      console.error('Full error response:', JSON.stringify(error.response?.data, null, 2));
       console.error('Error status:', error.response?.status);
-      console.error('Error details:', {
-        data: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers
-      });
+      console.error('Error message:', error.response?.data?.error);
+      console.error('Missing fields:', error.response?.data?.missingFields);
+      console.error('Received fields:', error.response?.data?.receivedFields);
+      
+      // Also show the error in an alert for easier debugging
+      if (error.response?.data?.error) {
+        alert(`Goal creation failed: ${error.response.data.error}\n\nDetails: ${JSON.stringify(error.response.data, null, 2)}`);
+      }
+      
       setSubmitMessage({ 
         type: 'error', 
         text: error.response?.data?.error || 'Failed to create goal' 
