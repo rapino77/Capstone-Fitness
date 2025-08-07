@@ -272,3 +272,19 @@
     width: 100%;
   }
 }
+
+/* Search bar text color override */
+.search-input {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.search-input::placeholder {
+  color: #d1d5db !important;
+  opacity: 1 !important;
+}
+
+.search-input:focus {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
