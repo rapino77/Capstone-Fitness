@@ -15,3 +15,27 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Custom scrollbar styles for strength progression charts */
+.strength-chart-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #9CA3AF #E5E7EB;
+}
+
+.strength-chart-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.strength-chart-scroll::-webkit-scrollbar-track {
+  background: #E5E7EB;
+  border-radius: 4px;
+}
+
+.strength-chart-scroll::-webkit-scrollbar-thumb {
+  background: #9CA3AF;
+  border-radius: 4px;
+}
+
+.strength-chart-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}

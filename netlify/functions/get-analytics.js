@@ -558,10 +558,17 @@ function analyzeStrengthProgression(workouts) {
           maxWeight: workout.weight,
           maxOneRM: workout.estimatedOneRM,
           totalVolume: workout.volume,
-          workoutCount: 1
+          workoutCount: 1,
+          sets: workout.sets,
+          reps: workout.reps
         });
       } else {
         const existing = dateMap.get(dateKey);
+        // Keep the sets/reps from the workout with highest weight for this date
+        if (workout.weight > existing.maxWeight) {
+          existing.sets = workout.sets;
+          existing.reps = workout.reps;
+        }
         existing.maxWeight = Math.max(existing.maxWeight, workout.weight);
         existing.maxOneRM = Math.max(existing.maxOneRM, workout.estimatedOneRM);
         existing.totalVolume += workout.volume;
@@ -576,7 +583,9 @@ function analyzeStrengthProgression(workouts) {
         weight: Number(entry.maxWeight) || 0, // Ensure numeric
         oneRM: Math.round((Number(entry.maxOneRM) || 0) * 10) / 10,
         volume: Number(entry.totalVolume) || 0,
-        workouts: entry.workoutCount
+        workouts: entry.workoutCount,
+        sets: entry.sets || 1,
+        reps: entry.reps || 1
       }))
       .filter(entry => entry.weight > 0 && entry.date) // Remove invalid entries
       .sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
