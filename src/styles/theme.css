@@ -874,6 +874,15 @@ form select option {
   color: #000000 !important;
 }
 
+/* Force black text for Week Summary cards */
+.bg-blue-secondary .bg-blue-50 p.text-sm,
+.bg-blue-secondary .bg-green-50 p.text-sm,
+.bg-blue-secondary .bg-purple-50 p.text-sm,
+.bg-blue-secondary .bg-orange-50 p.text-sm,
+.bg-blue-secondary .bg-gray-50 p {
+  color: black !important;
+}
+
 /* Keep the numbers in their original colors */
 .bg-blue-50 .text-2xl.text-blue-600 {
   color: #2563eb !important;

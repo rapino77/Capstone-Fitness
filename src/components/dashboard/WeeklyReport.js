@@ -347,26 +347,26 @@ const WeeklyReport = () => {
               {reportData.summary.totalWorkouts > 0 ? (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Workouts</p>
+                    <p className="text-sm text-black">Workouts</p>
                     <p className="text-2xl font-bold text-blue-600">{reportData.summary.totalWorkouts}</p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Total Exercises</p>
+                    <p className="text-sm text-black">Total Exercises</p>
                     <p className="text-2xl font-bold text-green-600">{reportData.summary.totalExercises}</p>
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Total Weight</p>
+                    <p className="text-sm text-black">Total Weight</p>
                     <p className="text-2xl font-bold text-purple-600">{reportData.summary.totalWeight.toLocaleString()} lbs</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Week Streak</p>
+                    <p className="text-sm text-black">Week Streak</p>
                     <p className="text-2xl font-bold text-orange-600">{reportData.summary.streak} weeks</p>
                   </div>
                 </div>
               ) : (
                 <div className="mt-4 bg-gray-50 p-6 rounded-lg text-center">
-                  <p className="text-gray-500 mb-2">No workouts logged this week</p>
-                  <p className="text-sm text-gray-400">Start logging workouts to see your weekly summary!</p>
+                  <p className="text-black mb-2">No workouts logged this week</p>
+                  <p className="text-sm text-gray-600">Start logging workouts to see your weekly summary!</p>
                 </div>
               )}
             </>
