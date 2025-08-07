@@ -204,7 +204,83 @@
 
 /* Tab transition effects */
 .tab-content {
-  animation: fadeIn 0.3s ease-out;
+  animation: slideInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-content-exit {
+  animation: slideOutToLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.98);
+  }
+}
+
+/* Enhanced tab content animation */
+.tab-slide-enter {
+  animation: slideInFromRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.tab-slide-exit {
+  animation: slideOutToLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Cool slide transition with blur effect */
+@keyframes coolSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(50px) rotateY(10deg);
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateX(-5px) rotateY(-2deg);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotateY(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes coolSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) rotateY(0deg);
+    filter: blur(0);
+  }
+  40% {
+    opacity: 0.6;
+    transform: translateX(5px) rotateY(2deg);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50px) rotateY(-10deg);
+    filter: blur(3px);
+  }
+}
+
+.cool-slide-transition {
+  animation: coolSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Smooth instant transitions */
