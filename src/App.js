@@ -10,7 +10,9 @@ import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
+import { PageTransition } from './components/common/LoadingAnimation';
 import './styles/theme.css';
+import './styles/animations.css';
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -20,6 +22,7 @@ const AppContent = () => {
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
@@ -35,7 +38,24 @@ const AppContent = () => {
     setRefreshGoals(prev => prev + 1);
   };
 
-  const handleSearchNavigation = (item) => {
+  const handleTabChange = async (tabId) => {
+    if (tabId === activeTab) return; // Don't load if already active
+    
+    setIsLoading(true);
+    
+    // Simulate loading time for smooth animation
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    setActiveTab(tabId);
+    setIsLoading(false);
+  };
+
+  const handleSearchNavigation = async (item) => {
+    setIsLoading(true);
+    
+    // Simulate loading time for smooth animation
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Navigate to the main tab
     setActiveTab(item.path);
     
@@ -52,6 +72,8 @@ const AppContent = () => {
     if (item.path === 'goals') {
       setShowGoalCreator(false); // Ensure we show the goal tracker, not creator
     }
+    
+    setIsLoading(false);
   };
 
   const tabs = [
@@ -115,7 +137,7 @@ const AppContent = () => {
             {tabs.map((tab, index) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex-1 py-4 px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header ${
                   index !== tabs.length - 1 ? 'border-r' : ''
                 }`}
@@ -149,79 +171,81 @@ const AppContent = () => {
         </div>
 
         {/* Tab Content */}
-        <div>
-          {activeTab === 'dashboard' && (
-            <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
-          )}
-          
-          {activeTab === 'workout' && (
-            <WorkoutDashboard 
-              onSuccess={handleWorkoutSuccess} 
-              initialSection={activeWorkoutSection}
-              onSectionChange={setActiveWorkoutSection}
-            />
-          )}
-          
-          {activeTab === 'tracking' && (
-            <TrackingDashboard 
-              initialSection={activeTrackingSection}
-              onSectionChange={setActiveTrackingSection}
-            />
-          )}
-          
-          {activeTab === 'badges' && (
-            <BadgeDisplay />
-          )}
-          
-          {activeTab === 'goals' && (
-            <div className="space-y-6">
-              {!showGoalCreator ? (
-                <>
-                  <div className="flex justify-between items-center">
-                    <h2 
-                      className="text-2xl font-bold transition-colors duration-200"
-                      style={{ color: theme.colors.text }}
-                    >
-                      Goals Management
-                    </h2>
-                    <button
-                      onClick={() => setShowGoalCreator(true)}
-                      className="px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                      style={{
-                        backgroundColor: theme.colors.primary,
-                        color: theme.colors.background,
-                        ':hover': {
-                          backgroundColor: theme.colors.primaryHover
-                        }
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = theme.colors.primaryHover;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = theme.colors.primary;
-                      }}
-                    >
-                      + Create New Goal
-                    </button>
-                  </div>
-                  <GoalTracker 
-                    onUpdateGoal={handleGoalUpdated}
-                    refreshTrigger={refreshGoals}
+        <PageTransition isLoading={isLoading} loadingType="fitness">
+          <div className="tab-content">
+            {activeTab === 'dashboard' && (
+              <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
+            )}
+            
+            {activeTab === 'workout' && (
+              <WorkoutDashboard 
+                onSuccess={handleWorkoutSuccess} 
+                initialSection={activeWorkoutSection}
+                onSectionChange={setActiveWorkoutSection}
+              />
+            )}
+            
+            {activeTab === 'tracking' && (
+              <TrackingDashboard 
+                initialSection={activeTrackingSection}
+                onSectionChange={setActiveTrackingSection}
+              />
+            )}
+            
+            {activeTab === 'badges' && (
+              <BadgeDisplay />
+            )}
+            
+            {activeTab === 'goals' && (
+              <div className="space-y-6">
+                {!showGoalCreator ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <h2 
+                        className="text-2xl font-bold transition-colors duration-200"
+                        style={{ color: theme.colors.text }}
+                      >
+                        Goals Management
+                      </h2>
+                      <button
+                        onClick={() => setShowGoalCreator(true)}
+                        className="px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          color: theme.colors.background,
+                          ':hover': {
+                            backgroundColor: theme.colors.primaryHover
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = theme.colors.primaryHover;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = theme.colors.primary;
+                        }}
+                      >
+                        + Create New Goal
+                      </button>
+                    </div>
+                    <GoalTracker 
+                      onUpdateGoal={handleGoalUpdated}
+                      refreshTrigger={refreshGoals}
+                    />
+                  </>
+                ) : (
+                  <GoalCreator 
+                    onGoalCreated={handleGoalCreated}
+                    onCancel={() => setShowGoalCreator(false)}
                   />
-                </>
-              ) : (
-                <GoalCreator 
-                  onGoalCreated={handleGoalCreated}
-                  onCancel={() => setShowGoalCreator(false)}
-                />
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'history' && (
-            <WorkoutHistory key={refreshHistory} />
-          )}
-        </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'history' && (
+              <WorkoutHistory key={refreshHistory} />
+            )}
+          </div>
+        </PageTransition>
       </main>
     </div>
   );
