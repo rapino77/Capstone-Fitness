@@ -395,6 +395,149 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
         </div>
       )}
 
+      {/* Strength Progression Charts */}
+      {analytics?.strengthProgression && Object.keys(analytics.strengthProgression).length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">📈 Strength Progression</h3>
+          <p className="text-sm text-gray-600 mb-6">Track your strength gains over time for each exercise</p>
+          
+          <div className="space-y-8">
+            {Object.entries(analytics.strengthProgression)
+              .sort(([, a], [, b]) => b.metrics.totalSessions - a.metrics.totalSessions) // Sort by most trained exercises first
+              .slice(0, 6) // Show top 6 exercises to avoid clutter
+              .map(([exercise, data]) => (
+                <div key={exercise} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h4 className="font-medium text-gray-900 text-lg">{exercise}</h4>
+                      <div className="flex space-x-4 text-sm text-gray-600 mt-1">
+                        <span>{data.metrics.totalSessions} sessions</span>
+                        <span>{data.metrics.timespan} days</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Weight Progress</div>
+                      <div className="font-medium text-lg">
+                        {data.metrics.startWeight} → {data.metrics.currentWeight} lbs
+                      </div>
+                      <div className={`text-sm font-medium ${
+                        data.metrics.weightIncrease > 0 ? 'text-green-600' : 
+                        data.metrics.weightIncrease < 0 ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {data.metrics.weightIncrease > 0 ? '+' : ''}{data.metrics.weightIncrease} lbs ({data.metrics.progressPercentage}%)
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <div className="text-xs text-blue-600 font-medium">Est. 1RM</div>
+                      <div className="text-lg font-bold text-blue-700">{data.metrics.currentOneRM} lbs</div>
+                      <div className="text-xs text-blue-600">
+                        {data.metrics.oneRMIncrease > 0 ? '+' : ''}{data.metrics.oneRMIncrease} lbs
+                      </div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <div className="text-xs text-green-600 font-medium">Weekly Gain</div>
+                      <div className="text-lg font-bold text-green-700">
+                        {data.metrics.averageWeeklyIncrease > 0 ? '+' : ''}{data.metrics.averageWeeklyIncrease} lbs
+                      </div>
+                      <div className="text-xs text-green-600">per week</div>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <div className="text-xs text-purple-600 font-medium">Sessions</div>
+                      <div className="text-lg font-bold text-purple-700">{data.metrics.totalSessions}</div>
+                      <div className="text-xs text-purple-600">workouts</div>
+                    </div>
+                    <div className="bg-orange-50 rounded-lg p-3">
+                      <div className="text-xs text-orange-600 font-medium">Progress</div>
+                      <div className="text-lg font-bold text-orange-700">{data.metrics.progressPercentage}%</div>
+                      <div className="text-xs text-orange-600">increase</div>
+                    </div>
+                  </div>
+
+                  {/* Weight Progression Chart */}
+                  {data.chartData.length > 1 && (
+                    <div className="mb-4">
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">Weight Progression</h5>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={data.chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+                            fontSize={12}
+                          />
+                          <YAxis 
+                            domain={['dataMin - 5', 'dataMax + 5']}
+                            fontSize={12}
+                          />
+                          <Tooltip 
+                            labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                            formatter={[
+                              (value, name) => name === 'weight' ? [`${value} lbs`, 'Weight'] : 
+                                              name === 'oneRM' ? [`${value} lbs`, 'Est. 1RM'] : 
+                                              [`${value}`, name]
+                            ]}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="weight" 
+                            stroke="#3B82F6" 
+                            strokeWidth={3}
+                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                            name="weight"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="oneRM" 
+                            stroke="#10B981" 
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            dot={{ fill: '#10B981', strokeWidth: 2, r: 3 }}
+                            name="oneRM"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <div className="flex justify-center space-x-6 text-xs text-gray-600 mt-2">
+                        <div className="flex items-center">
+                          <div className="w-4 h-0.5 bg-blue-500 mr-2"></div>
+                          Actual Weight
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-0.5 bg-green-500 border-dashed mr-2" style={{borderTop: '2px dashed #10B981', backgroundColor: 'transparent'}}></div>
+                          Estimated 1RM
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Single data point message */}
+                  {data.chartData.length === 1 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                      <div className="text-sm text-yellow-800">
+                        📊 Need more workout data to show progression chart
+                      </div>
+                      <div className="text-xs text-yellow-600 mt-1">
+                        Log more {exercise} workouts to see your strength progression over time!
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+          
+          {Object.keys(analytics.strengthProgression).length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">📈</div>
+              <div className="font-medium">No strength progression data yet</div>
+              <div className="text-sm mt-1">Start logging workouts to track your strength gains over time!</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Insights & Recommendations */}
       {analytics.insights.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">

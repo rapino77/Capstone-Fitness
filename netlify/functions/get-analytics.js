@@ -120,9 +120,11 @@ async function generateComprehensiveAnalytics(base, userId, timeframeDays, inclu
     }
 
     analytics.workoutAnalytics = analyzeWorkouts(workouts, timeframeDays);
+    analytics.strengthProgression = analyzeStrengthProgression(workouts);
     console.log('Analytics result:', {
       totalWorkouts: analytics.workoutAnalytics.totalWorkouts,
-      totalVolume: analytics.workoutAnalytics.totalVolume
+      totalVolume: analytics.workoutAnalytics.totalVolume,
+      strengthProgressionExercises: Object.keys(analytics.strengthProgression).length
     });
   }
 
@@ -460,4 +462,106 @@ function generateInsights(analytics, timeframeDays) {
   }
 
   return insights;
+}
+
+// Analyze strength progression for each exercise
+function analyzeStrengthProgression(workouts) {
+  if (workouts.length === 0) {
+    return {};
+  }
+
+  const exerciseData = {};
+
+  // Group workouts by exercise
+  workouts.forEach(workout => {
+    const exercise = workout.get('Exercise');
+    const date = workout.get('Date');
+    const weight = workout.get('Weight') || 0;
+    const sets = workout.get('Sets') || 0;
+    const reps = workout.get('Reps') || 0;
+
+    if (!exerciseData[exercise]) {
+      exerciseData[exercise] = [];
+    }
+
+    exerciseData[exercise].push({
+      date,
+      weight,
+      sets,
+      reps,
+      volume: sets * reps * weight,
+      // Calculate estimated 1RM using Brzycki formula
+      estimatedOneRM: weight * (36 / (37 - reps))
+    });
+  });
+
+  // Process each exercise's data
+  const progressionData = {};
+  Object.entries(exerciseData).forEach(([exercise, workoutData]) => {
+    // Sort by date
+    const sortedWorkouts = workoutData.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Calculate progression metrics
+    const firstWorkout = sortedWorkouts[0];
+    const lastWorkout = sortedWorkouts[sortedWorkouts.length - 1];
+    
+    const weightIncrease = lastWorkout.weight - firstWorkout.weight;
+    const oneRMIncrease = lastWorkout.estimatedOneRM - firstWorkout.estimatedOneRM;
+    const totalSessions = sortedWorkouts.length;
+    
+    // Calculate average weekly progression
+    const daysBetween = (new Date(lastWorkout.date) - new Date(firstWorkout.date)) / (1000 * 60 * 60 * 24);
+    const weeksBetween = Math.max(daysBetween / 7, 1); // Minimum 1 week to avoid division by zero
+    const averageWeeklyIncrease = weightIncrease / weeksBetween;
+
+    // Create chart data points (aggregate by date to handle multiple workouts per day)
+    const chartData = [];
+    const dateMap = new Map();
+
+    sortedWorkouts.forEach(workout => {
+      const dateKey = workout.date;
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, {
+          date: dateKey,
+          maxWeight: workout.weight,
+          maxOneRM: workout.estimatedOneRM,
+          totalVolume: workout.volume,
+          workoutCount: 1
+        });
+      } else {
+        const existing = dateMap.get(dateKey);
+        existing.maxWeight = Math.max(existing.maxWeight, workout.weight);
+        existing.maxOneRM = Math.max(existing.maxOneRM, workout.estimatedOneRM);
+        existing.totalVolume += workout.volume;
+        existing.workoutCount += 1;
+      }
+    });
+
+    // Convert map to array and format for charts
+    chartData.push(...Array.from(dateMap.values()).map(entry => ({
+      date: entry.date,
+      weight: entry.maxWeight,
+      oneRM: Math.round(entry.maxOneRM * 10) / 10, // Round to 1 decimal
+      volume: entry.totalVolume,
+      workouts: entry.workoutCount
+    })));
+
+    progressionData[exercise] = {
+      chartData: chartData,
+      metrics: {
+        totalSessions,
+        weightIncrease,
+        oneRMIncrease: Math.round(oneRMIncrease * 10) / 10,
+        averageWeeklyIncrease: Math.round(averageWeeklyIncrease * 10) / 10,
+        startWeight: firstWorkout.weight,
+        currentWeight: lastWorkout.weight,
+        startOneRM: Math.round(firstWorkout.estimatedOneRM * 10) / 10,
+        currentOneRM: Math.round(lastWorkout.estimatedOneRM * 10) / 10,
+        timespan: Math.round(daysBetween),
+        progressPercentage: firstWorkout.weight > 0 ? Math.round((weightIncrease / firstWorkout.weight) * 100) : 0
+      }
+    };
+  });
+
+  return progressionData;
 }
