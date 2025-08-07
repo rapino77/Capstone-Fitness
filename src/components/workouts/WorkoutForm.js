@@ -64,12 +64,21 @@ const WorkoutForm = ({ onSuccess }) => {
         // Find the most recent workout for this exercise
         const exerciseWorkouts = workouts
           .filter(w => w.exercise === exercise || w.Exercise === exercise)
-          .sort((a, b) => new Date(b.date || b.Date) - new Date(a.date || a.Date));
+          .sort((a, b) => {
+            const dateA = new Date(a.date || a.Date || '1900-01-01');
+            const dateB = new Date(b.date || b.Date || '1900-01-01');
+            return dateB - dateA;
+          });
         
         if (exerciseWorkouts.length > 0) {
           const lastW = exerciseWorkouts[0];
+          const workoutDate = lastW.date || lastW.Date;
+          
+          // Validate date before setting
+          const isValidDate = workoutDate && !isNaN(new Date(workoutDate).getTime());
+          
           setLastWorkout({
-            date: lastW.date || lastW.Date,
+            date: isValidDate ? workoutDate : new Date().toISOString().split('T')[0],
             sets: lastW.sets || lastW.Sets,
             reps: lastW.reps || lastW.Reps,
             weight: lastW.weight || lastW.Weight
@@ -287,7 +296,9 @@ const WorkoutForm = ({ onSuccess }) => {
           <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-gray-700">📊 Last Workout</h4>
-              <span className="text-xs text-gray-500">{format(new Date(lastWorkout.date), 'MMM d, yyyy')}</span>
+              <span className="text-xs text-gray-500">
+                {lastWorkout.date ? format(new Date(lastWorkout.date), 'MMM d, yyyy') : 'Unknown date'}
+              </span>
             </div>
             <div className="mt-1 text-sm text-gray-900">
               <span className="font-semibold">{lastWorkout.sets}</span> sets × 
