@@ -12,6 +12,7 @@ const WeeklyReport = () => {
     workouts: true,
     weight: true,
     goals: true,
+    challenges: true,
     summary: true
   });
 
@@ -378,6 +379,106 @@ const WeeklyReport = () => {
     );
   }
 
+  // Challenge progress calculation
+  const getChallengeProgress = () => {
+    try {
+      // Get active challenges from localStorage
+      const activeChallenges = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
+      
+      if (activeChallenges.length === 0) return [];
+
+      // Calculate current progress and weekly contribution for each challenge
+      return activeChallenges.map(challenge => {
+        // Calculate current progress based on challenge type
+        let currentProgress = 0;
+        let weeklyContribution = 0;
+        let status = 'in_progress';
+        let daysRemaining = null;
+
+        // Calculate progress based on challenge type
+        switch (challenge.type) {
+          case 'consecutive_workouts':
+            currentProgress = calculateConsecutiveWorkouts(challenge);
+            weeklyContribution = calculateWeeklyWorkouts();
+            daysRemaining = challenge.target - currentProgress;
+            break;
+          
+          case 'total_workouts':
+            currentProgress = reportData.workouts.length; // This week's workouts
+            weeklyContribution = reportData.workouts.length;
+            break;
+          
+          case 'weight_moved':
+            currentProgress = reportData.summary.totalWeight; // This week's total weight
+            weeklyContribution = reportData.summary.totalWeight;
+            break;
+          
+          case 'workout_frequency':
+            currentProgress = reportData.summary.totalWorkouts;
+            weeklyContribution = reportData.summary.totalWorkouts;
+            status = currentProgress >= challenge.target ? 'completed' : 'in_progress';
+            break;
+          
+          default:
+            currentProgress = challenge.progress || 0;
+            break;
+        }
+
+        const progressPercentage = challenge.target > 0 ? (currentProgress / challenge.target) * 100 : 0;
+
+        // Determine status
+        if (progressPercentage >= 100) {
+          status = 'completed';
+        } else if (progressPercentage >= 75) {
+          status = 'on_track';
+        } else if (daysRemaining !== null && daysRemaining < 7) {
+          status = 'at_risk';
+        }
+
+        return {
+          id: challenge.id,
+          name: challenge.name,
+          description: challenge.description,
+          icon: challenge.icon,
+          progress: Math.floor(currentProgress),
+          target: challenge.target,
+          progressPercentage: Math.min(progressPercentage, 100),
+          status: status,
+          startDate: challenge.startDate,
+          weeklyContribution: Math.floor(weeklyContribution),
+          daysRemaining: daysRemaining,
+          points: challenge.points || 0
+        };
+      });
+    } catch (error) {
+      console.error('Error calculating challenge progress:', error);
+      return [];
+    }
+  };
+
+  // Helper function to calculate consecutive workout days
+  const calculateConsecutiveWorkouts = (challenge) => {
+    if (!reportData.workouts || reportData.workouts.length === 0) return 0;
+    
+    // Simple calculation for this week - would need more complex logic for full streak
+    const uniqueDays = new Set(
+      reportData.workouts.map(workout => format(new Date(workout.date || workout.Date), 'yyyy-MM-dd'))
+    );
+    
+    return uniqueDays.size;
+  };
+
+  // Helper function to calculate weekly workouts
+  const calculateWeeklyWorkouts = () => {
+    if (!reportData.workouts) return 0;
+    
+    const uniqueDays = new Set(
+      reportData.workouts.map(workout => format(new Date(workout.date || workout.Date), 'yyyy-MM-dd'))
+    );
+    
+    return uniqueDays.size;
+  };
+
   if (!reportData) {
     return null;
   }
@@ -705,6 +806,103 @@ const WeeklyReport = () => {
                     <p className="text-sm text-gray-400">Visit the Goals tab to set and track your fitness goals!</p>
                   </div>
                 )
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Challenges Section */}
+        <div>
+          <button
+            onClick={() => toggleSection('challenges')}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h3 className="text-lg font-semibold flex items-center">
+              <svg className="h-5 w-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Weekly Challenge Progress
+            </h3>
+            <svg className={`h-5 w-5 transform transition-transform ${expandedSections.challenges ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          
+          {expandedSections.challenges && (
+            <div className="mt-4">
+              {getChallengeProgress().length > 0 ? (
+                <div className="space-y-4">
+                  {getChallengeProgress().map((challenge, index) => (
+                    <div key={index} className="bg-white bg-opacity-10 rounded-lg p-4 border border-gray-300">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">{challenge.icon}</span>
+                          <div>
+                            <h5 className="font-medium text-white">{challenge.name}</h5>
+                            <p className="text-sm text-gray-300">{challenge.description}</p>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium mt-1 inline-block ${
+                              challenge.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              challenge.status === 'at_risk' ? 'bg-red-100 text-red-800' :
+                              challenge.status === 'on_track' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {challenge.status === 'completed' ? '✅ Completed' :
+                               challenge.status === 'at_risk' ? '⚠️ At Risk' :
+                               challenge.status === 'on_track' ? '🎯 On Track' : 
+                               '⏳ In Progress'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-white">{challenge.progress}</div>
+                          <div className="text-sm text-gray-300">/ {challenge.target}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-3">
+                        <div className="w-full bg-gray-600 rounded-full h-3">
+                          <div
+                            className={`h-3 rounded-full transition-all duration-500 ${
+                              challenge.progressPercentage >= 100 ? 'bg-green-500' :
+                              challenge.progressPercentage >= 75 ? 'bg-yellow-500' :
+                              challenge.progressPercentage >= 50 ? 'bg-blue-500' : 'bg-gray-400'
+                            }`}
+                            style={{ width: `${Math.min(challenge.progressPercentage, 100)}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {challenge.progressPercentage.toFixed(0)}% complete
+                        </div>
+                      </div>
+
+                      {/* Challenge Details */}
+                      <div className="text-sm text-gray-200">
+                        <div className="flex justify-between items-center">
+                          <span>Started: {format(new Date(challenge.startDate), 'MMM d')}</span>
+                          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                            {challenge.points} pts
+                          </span>
+                        </div>
+                        {challenge.weeklyContribution > 0 && (
+                          <div className="mt-2 text-green-300">
+                            📈 +{challenge.weeklyContribution} progress this week
+                          </div>
+                        )}
+                        {challenge.daysRemaining && (
+                          <div className="mt-1">
+                            ⏰ {challenge.daysRemaining > 0 ? `${challenge.daysRemaining} days remaining` : 'Challenge expired'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 p-6 rounded-lg text-center">
+                  <p className="text-gray-500 mb-2">No active challenges</p>
+                  <p className="text-sm text-gray-400">Visit the Challenge System in Log Workout to create your first challenge!</p>
+                </div>
               )}
             </div>
           )}
