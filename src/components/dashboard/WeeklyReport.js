@@ -43,101 +43,48 @@ const WeeklyReport = () => {
         });
         
         if (response.data.success && response.data.data) {
-          // If API returns empty data, use mock data for demonstration
-          const apiData = response.data.data;
-          if (apiData.workouts.length === 0 && apiData.weight.measurements.length === 0) {
-            const mockData = generateMockWeeklyReport(weekStart, weekEnd);
-            setReportData(mockData);
-          } else {
-            setReportData(apiData);
-          }
+          // Use actual API data
+          setReportData(response.data.data);
           return;
         }
       }
       
-      // Fallback to mock data if API is not available
-      const mockData = generateMockWeeklyReport(weekStart, weekEnd);
-      setReportData(mockData);
+      // Fallback to empty data if API is not available
+      const emptyData = generateEmptyWeeklyReport(weekStart, weekEnd);
+      setReportData(emptyData);
     } catch (err) {
       console.error('Failed to fetch weekly report:', err);
-      // Use mock data on error
-      const mockData = generateMockWeeklyReport(weekStart, weekEnd);
-      setReportData(mockData);
+      // Use empty data on error
+      const emptyData = generateEmptyWeeklyReport(weekStart, weekEnd);
+      setReportData(emptyData);
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate mock data for testing
-  const generateMockWeeklyReport = (start, end) => {
+  // Return empty data structure when no real data exists
+  const generateEmptyWeeklyReport = (start, end) => {
     return {
       weekStart: start,
       weekEnd: end,
       summary: {
-        totalWorkouts: 4,
-        totalExercises: 12,
-        totalSets: 48,
-        totalReps: 432,
-        totalWeight: 15600, // lbs
-        avgWorkoutDuration: 45, // minutes
-        streak: 3 // consecutive weeks
+        totalWorkouts: 0,
+        totalExercises: 0,
+        totalSets: 0,
+        totalReps: 0,
+        totalWeight: 0,
+        avgWorkoutDuration: 0,
+        streak: 0
       },
-      workouts: [
-        {
-          date: new Date(start.getTime() + 1 * 24 * 60 * 60 * 1000),
-          exercises: [
-            { name: 'Bench Press', sets: 4, reps: 8, weight: 185, isPR: true },
-            { name: 'Incline Dumbbell Press', sets: 3, reps: 10, weight: 70 },
-            { name: 'Cable Flyes', sets: 3, reps: 12, weight: 30 }
-          ]
-        },
-        {
-          date: new Date(start.getTime() + 3 * 24 * 60 * 60 * 1000),
-          exercises: [
-            { name: 'Squat', sets: 4, reps: 6, weight: 275 },
-            { name: 'Leg Press', sets: 4, reps: 12, weight: 360 },
-            { name: 'Leg Curls', sets: 3, reps: 15, weight: 80 }
-          ]
-        },
-        {
-          date: new Date(start.getTime() + 5 * 24 * 60 * 60 * 1000),
-          exercises: [
-            { name: 'Deadlift', sets: 3, reps: 5, weight: 315, isPR: true },
-            { name: 'Bent Over Row', sets: 4, reps: 8, weight: 135 },
-            { name: 'Pull-ups', sets: 3, reps: 10, weight: 0 }
-          ]
-        }
-      ],
+      workouts: [],
       weight: {
-        startWeight: 180.5,
-        endWeight: 179.2,
-        change: -1.3,
-        measurements: [
-          { date: start, weight: 180.5 },
-          { date: new Date(start.getTime() + 3 * 24 * 60 * 60 * 1000), weight: 179.8 },
-          { date: new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000), weight: 179.2 }
-        ]
+        startWeight: null,
+        endWeight: null,
+        change: 0,
+        measurements: []
       },
-      goalsAchieved: [
-        {
-          name: 'Bench Press 185 lbs',
-          type: 'exercise_pr',
-          achievedDate: new Date(start.getTime() + 1 * 24 * 60 * 60 * 1000),
-          targetValue: 185,
-          achievedValue: 185
-        },
-        {
-          name: 'Lose 1 lb this week',
-          type: 'weight_loss',
-          achievedDate: end,
-          targetValue: 1,
-          achievedValue: 1.3
-        }
-      ],
-      personalRecords: [
-        { exercise: 'Bench Press', weight: 185, reps: 8, date: new Date(start.getTime() + 1 * 24 * 60 * 60 * 1000) },
-        { exercise: 'Deadlift', weight: 315, reps: 5, date: new Date(start.getTime() + 5 * 24 * 60 * 60 * 1000) }
-      ]
+      goalsAchieved: [],
+      personalRecords: []
     };
   };
 
@@ -254,24 +201,33 @@ const WeeklyReport = () => {
           </button>
           
           {expandedSections.summary && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Workouts</p>
-                <p className="text-2xl font-bold text-blue-600">{reportData.summary.totalWorkouts}</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Total Exercises</p>
-                <p className="text-2xl font-bold text-green-600">{reportData.summary.totalExercises}</p>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Total Weight</p>
-                <p className="text-2xl font-bold text-purple-600">{reportData.summary.totalWeight.toLocaleString()} lbs</p>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Week Streak</p>
-                <p className="text-2xl font-bold text-orange-600">{reportData.summary.streak} weeks</p>
-              </div>
-            </div>
+            <>
+              {reportData.summary.totalWorkouts > 0 ? (
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Workouts</p>
+                    <p className="text-2xl font-bold text-blue-600">{reportData.summary.totalWorkouts}</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Total Exercises</p>
+                    <p className="text-2xl font-bold text-green-600">{reportData.summary.totalExercises}</p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Total Weight</p>
+                    <p className="text-2xl font-bold text-purple-600">{reportData.summary.totalWeight.toLocaleString()} lbs</p>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Week Streak</p>
+                    <p className="text-2xl font-bold text-orange-600">{reportData.summary.streak} weeks</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 bg-gray-50 p-6 rounded-lg text-center">
+                  <p className="text-gray-500 mb-2">No workouts logged this week</p>
+                  <p className="text-sm text-gray-400">Start logging workouts to see your weekly summary!</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -293,32 +249,41 @@ const WeeklyReport = () => {
           </button>
           
           {expandedSections.workouts && (
-            <div className="mt-4 space-y-4">
-              {reportData.workouts.map((workout, index) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <h4 className="font-medium text-gray-700 mb-2">
-                    {format(workout.date, 'EEEE, MMM d')}
-                  </h4>
-                  <div className="space-y-2">
-                    {workout.exercises.map((exercise, exIndex) => (
-                      <div key={exIndex} className="flex items-center justify-between text-sm">
-                        <span className="flex items-center">
-                          {exercise.name}
-                          {exercise.isPR && (
-                            <svg className="h-4 w-4 ml-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
-                              <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
-                            </svg>
-                          )}
-                        </span>
-                        <span className="text-gray-600">
-                          {exercise.sets} × {exercise.reps} @ {exercise.weight} lbs
-                        </span>
+            <div className="mt-4">
+              {reportData.workouts.length > 0 ? (
+                <div className="space-y-4">
+                  {reportData.workouts.map((workout, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-700 mb-2">
+                        {format(workout.date, 'EEEE, MMM d')}
+                      </h4>
+                      <div className="space-y-2">
+                        {workout.exercises.map((exercise, exIndex) => (
+                          <div key={exIndex} className="flex items-center justify-between text-sm">
+                            <span className="flex items-center">
+                              {exercise.name}
+                              {exercise.isPR && (
+                                <svg className="h-4 w-4 ml-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
+                                  <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className="text-gray-600">
+                              {exercise.sets} × {exercise.reps} @ {exercise.weight} lbs
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="bg-gray-50 p-6 rounded-lg text-center">
+                  <p className="text-gray-500 mb-2">No workouts recorded this week</p>
+                  <p className="text-sm text-gray-400">Visit the Workout tab to start logging your exercises!</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -342,24 +307,31 @@ const WeeklyReport = () => {
           
           {expandedSections.weight && (
             <div className="mt-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-3">
-                  <div>
-                    <p className="text-sm text-gray-600">Start of Week</p>
-                    <p className="text-xl font-semibold">{reportData.weight.startWeight} lbs</p>
+              {reportData.weight.measurements.length > 0 ? (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Start of Week</p>
+                      <p className="text-xl font-semibold">{reportData.weight.startWeight} lbs</p>
+                    </div>
+                    <div className={`text-2xl font-bold ${reportData.weight.change < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {reportData.weight.change > 0 ? '+' : ''}{reportData.weight.change} lbs
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">End of Week</p>
+                      <p className="text-xl font-semibold">{reportData.weight.endWeight} lbs</p>
+                    </div>
                   </div>
-                  <div className={`text-2xl font-bold ${reportData.weight.change < 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {reportData.weight.change > 0 ? '+' : ''}{reportData.weight.change} lbs
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">End of Week</p>
-                    <p className="text-xl font-semibold">{reportData.weight.endWeight} lbs</p>
+                  <div className="text-xs text-gray-500 mt-2">
+                    {reportData.weight.measurements.length} measurements recorded this week
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  {reportData.weight.measurements.length} measurements recorded this week
+              ) : (
+                <div className="bg-gray-50 p-6 rounded-lg text-center">
+                  <p className="text-gray-500 mb-2">No weight measurements this week</p>
+                  <p className="text-sm text-gray-400">Visit the Weight tab to start tracking your body weight!</p>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -382,26 +354,31 @@ const WeeklyReport = () => {
           </button>
           
           {expandedSections.goals && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4">
               {reportData.goalsAchieved.length > 0 ? (
-                reportData.goalsAchieved.map((goal, index) => (
-                  <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-green-800">{goal.name}</h4>
-                        <p className="text-sm text-green-600">
-                          Achieved on {format(goal.achievedDate, 'MMM d')}
-                        </p>
+                <div className="space-y-3">
+                  {reportData.goalsAchieved.map((goal, index) => (
+                    <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-green-800">{goal.name}</h4>
+                          <p className="text-sm text-green-600">
+                            Achieved on {format(goal.achievedDate, 'MMM d')}
+                          </p>
+                        </div>
+                        <svg className="h-8 w-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
+                          <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+                        </svg>
                       </div>
-                      <svg className="h-8 w-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
-                        <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
-                      </svg>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">No goals completed this week</p>
+                <div className="bg-gray-50 p-6 rounded-lg text-center">
+                  <p className="text-gray-500 mb-2">No goals completed this week</p>
+                  <p className="text-sm text-gray-400">Visit the Goals tab to set and track your fitness goals!</p>
+                </div>
               )}
             </div>
           )}
