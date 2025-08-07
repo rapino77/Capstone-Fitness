@@ -27,7 +27,8 @@
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
       "Bash(netlify functions:list:*)",
-      "Bash(del test-airtable-connection.js)"
+      "Bash(del test-airtable-connection.js)",
+      "Bash(del test-progressive-overload.js)"
     ],
     "deny": []
   }

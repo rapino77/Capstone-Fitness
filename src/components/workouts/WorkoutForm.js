@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import axios from 'axios';
-import { calculateNextWorkout, getProgressionParams } from '../../utils/progressiveOverload';
+import { calculateNextWorkout, getProgressionParams, createMockWorkoutHistory } from '../../utils/progressiveOverload';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -10,6 +10,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [progressionSuggestion, setProgressionSuggestion] = useState(null);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [progressiveOverloadEnabled, setProgressiveOverloadEnabled] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
   // const [recentWorkouts, setRecentWorkouts] = useState([]); // Commented out for debugging
   
   const {
@@ -81,7 +82,15 @@ const WorkoutForm = ({ onSuccess }) => {
     // Fallback to local enhanced calculation
     try {
       const params = getProgressionParams(exercise);
-      const suggestion = calculateNextWorkout([], exercise, params);
+      
+      // Use mock data in demo mode to show progressive overload in action
+      let workoutHistory = [];
+      if (demoMode) {
+        workoutHistory = createMockWorkoutHistory(exercise, 6); // 6 weeks of progression
+        console.log('🎭 Demo mode: Using mock workout history', workoutHistory);
+      }
+      
+      const suggestion = calculateNextWorkout(workoutHistory, exercise, params);
       console.log('💡 Local enhanced suggestion generated:', suggestion);
       setProgressionSuggestion(suggestion);
     } catch (error) {
@@ -99,7 +108,7 @@ const WorkoutForm = ({ onSuccess }) => {
     // Always stop loading and clear timeout
     clearTimeout(maxTimeout);
     setLoadingSuggestion(false);
-  }, []);
+  }, [demoMode]);
 
   // Fetch progression suggestion when exercise changes
   useEffect(() => {
@@ -168,16 +177,28 @@ const WorkoutForm = ({ onSuccess }) => {
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Log Workout</h2>
-        <label className="flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={progressiveOverloadEnabled}
-            onChange={(e) => setProgressiveOverloadEnabled(e.target.checked)}
-            className="mr-2"
-          />
-          <span className="text-sm text-gray-600">Progressive Overload</span>
-          <span className="ml-1 text-xs text-blue-600 font-medium">(ON by default)</span>
-        </label>
+        <div className="flex flex-col space-y-2">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={progressiveOverloadEnabled}
+              onChange={(e) => setProgressiveOverloadEnabled(e.target.checked)}
+              className="mr-2"
+            />
+            <span className="text-sm text-gray-600">Progressive Overload</span>
+            <span className="ml-1 text-xs text-blue-600 font-medium">(ON by default)</span>
+          </label>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={demoMode}
+              onChange={(e) => setDemoMode(e.target.checked)}
+              className="mr-2"
+            />
+            <span className="text-sm text-orange-600">🎭 Demo Mode</span>
+            <span className="ml-1 text-xs text-orange-500">(simulate workout history)</span>
+          </label>
+        </div>
       </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -287,8 +308,22 @@ const WorkoutForm = ({ onSuccess }) => {
                     {progressionSuggestion.suggestion?.weight} lbs
                   </p>
                   <p className="text-xs text-green-700">{progressionSuggestion.reason}</p>
+                  {progressionSuggestion.nextWeekSuggestion && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                      <div className="font-medium text-blue-800 mb-1">📈 Progressive Overload Plan:</div>
+                      <div className="text-blue-700">
+                        <strong>This Week:</strong> {progressionSuggestion.suggestion.sets} sets × {progressionSuggestion.suggestion.reps} reps @ {progressionSuggestion.suggestion.weight}lbs
+                      </div>
+                      <div className="text-blue-700 mt-1">
+                        <strong>Next Week:</strong> {progressionSuggestion.nextWeekSuggestion.sets} sets × {progressionSuggestion.nextWeekSuggestion.reps} reps @ {progressionSuggestion.nextWeekSuggestion.weight}lbs
+                      </div>
+                      <div className="text-blue-600 text-xs mt-1 italic">
+                        {progressionSuggestion.nextWeekSuggestion.reason}
+                      </div>
+                    </div>
+                  )}
                   <div className="mt-2 p-2 bg-green-100 rounded text-xs text-green-800">
-                    💡 <strong>Beginner Tip:</strong> Start conservative and focus on proper form. You can always increase the weight next session!
+                    💡 <strong>Beginner Tip:</strong> Start conservative and focus on proper form. Progressive overload comes with consistency!
                   </div>
                 </div>
               </div>

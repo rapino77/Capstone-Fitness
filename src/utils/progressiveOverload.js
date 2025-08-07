@@ -26,15 +26,16 @@ export function calculateNextWorkout(recentWorkouts, exerciseName, customParams 
   const exerciseParams = getProgressionParams(exerciseName);
   const mergedParams = { ...params, ...exerciseParams };
   
+  // If no workout history, provide intelligent progressive starting suggestions
   if (!recentWorkouts || recentWorkouts.length === 0) {
-    // Provide beginner-friendly starting suggestions
     const starterSuggestion = getStarterSuggestion(exerciseName);
     return {
       suggestion: starterSuggestion.suggestion,
       reason: starterSuggestion.reason,
       confidence: 'medium',
       isFirstWorkout: true,
-      exerciseType: starterSuggestion.exerciseType
+      exerciseType: starterSuggestion.exerciseType,
+      nextWeekSuggestion: getProgressiveStarterSuggestion(exerciseName, starterSuggestion.suggestion)
     };
   }
 
@@ -219,6 +220,90 @@ export function getProgressionParams(exerciseName) {
     basePercentageIncrease: 0.025, // 2.5% weekly increase
     volumeTargetMultiplier: 1.1
   };
+}
+
+// Get progressive starter suggestion for next week
+function getProgressiveStarterSuggestion(exerciseName, currentSuggestion) {
+  const exerciseParams = getProgressionParams(exerciseName);
+  
+  if (exerciseParams.hypertrophyFocus && currentSuggestion.reps < exerciseParams.maxRepRange.high) {
+    // For hypertrophy, progress reps first
+    return {
+      sets: currentSuggestion.sets,
+      reps: Math.min(currentSuggestion.reps + 1, exerciseParams.maxRepRange.high),
+      weight: currentSuggestion.weight,
+      reason: "Next week: Add 1 rep (hypertrophy progression)"
+    };
+  } else {
+    // Progress weight
+    const weightIncrease = exerciseParams.weightIncrement || 2.5;
+    return {
+      sets: currentSuggestion.sets,
+      reps: exerciseParams.maxRepRange.low,
+      weight: currentSuggestion.weight + weightIncrease,
+      reason: `Next week: Add ${weightIncrease}lbs, reset to ${exerciseParams.maxRepRange.low} reps`
+    };
+  }
+}
+
+// Create mock workout data for testing progressive overload
+export function createMockWorkoutHistory(exerciseName, weeks = 4) {
+  const mockData = [];
+  const startDate = new Date();
+  const exerciseParams = getProgressionParams(exerciseName);
+  const baseStart = getStarterSuggestion(exerciseName).suggestion;
+  
+  let currentWeight = baseStart.weight;
+  let currentReps = baseStart.reps;
+  let currentSets = baseStart.sets;
+  
+  for (let week = weeks - 1; week >= 0; week--) {
+    const workoutDate = new Date(startDate);
+    workoutDate.setDate(startDate.getDate() - (week * 7));
+    
+    // Add some realistic progression patterns
+    const weeklyData = [];
+    
+    // 2-3 workouts per week for this exercise
+    const workoutsPerWeek = Math.random() > 0.5 ? 2 : 3;
+    
+    for (let workout = 0; workout < workoutsPerWeek; workout++) {
+      const workoutDate2 = new Date(workoutDate);
+      workoutDate2.setDate(workoutDate.getDate() + (workout * 2));
+      
+      // Simulate progressive overload with some variation
+      let workoutReps = currentReps;
+      let workoutWeight = currentWeight;
+      let workoutSets = currentSets;
+      
+      // Add some realistic variation (not every workout is perfect)
+      if (Math.random() > 0.8) {
+        workoutReps = Math.max(exerciseParams.maxRepRange.low, workoutReps - 1);
+      }
+      
+      weeklyData.push({
+        date: workoutDate2.toISOString().split('T')[0],
+        sets: workoutSets,
+        reps: workoutReps,
+        weight: workoutWeight,
+        volume: workoutSets * workoutReps * workoutWeight
+      });
+    }
+    
+    mockData.push(...weeklyData);
+    
+    // Progress for next week
+    if (week > 0) {
+      if (exerciseParams.hypertrophyFocus && currentReps < exerciseParams.maxRepRange.high) {
+        currentReps += 1;
+      } else {
+        currentWeight += exerciseParams.weightIncrement || 2.5;
+        currentReps = exerciseParams.maxRepRange.low;
+      }
+    }
+  }
+  
+  return mockData.sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 // Analyze week-over-week progression patterns
