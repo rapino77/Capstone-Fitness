@@ -65,6 +65,13 @@ exports.handler = async (event, context) => {
       }));
 
       console.log(`Fetched ${workouts.length} workouts for ${exercise} analysis`);
+      if (workouts.length > 0) {
+        console.log('Most recent workout:', workouts[0]);
+        console.log('Most recent weight:', workouts[0].weight);
+      } else {
+        console.log('No workouts found for exercise:', exercise);
+        console.log('Query used:', `AND({User ID} = '${userId}', {Exercise} = '${exercise}')`);
+      }
     } else {
       console.log('Airtable credentials not configured, using empty workout history');
     }
@@ -128,19 +135,27 @@ function getProgressionLogic() {
     const params = { ...PROGRESSION_PARAMS, ...customParams };
     
     if (!recentWorkouts || recentWorkouts.length === 0) {
+      console.log('No workout history found for exercise:', exerciseName);
       // Provide beginner-friendly starting suggestions - inline function for scoping
       const starterSuggestion = getStarterSuggestionInline(exerciseName);
       return {
         suggestion: starterSuggestion.suggestion,
-        reason: starterSuggestion.reason,
+        reason: starterSuggestion.reason + ' (No previous workouts found - log a workout to get personalized suggestions)',
         confidence: 'medium',
         isFirstWorkout: true,
-        exerciseType: starterSuggestion.exerciseType
+        exerciseType: starterSuggestion.exerciseType,
+        formatted: {
+          summary: `Starting recommendation based on no workout history`,
+          changes: [`First time tracking ${exerciseName}`],
+          reason: starterSuggestion.reason
+        }
       };
     }
 
     function getStarterSuggestionInline(exerciseName) {
       const exerciseLower = exerciseName.toLowerCase();
+      
+      console.log('Getting starter suggestion for:', exerciseName, '(lowercase:', exerciseLower, ')');
       
       // Compound movements
       if (exerciseLower.includes('bench press')) {

@@ -13,6 +13,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [progressiveOverloadEnabled, setProgressiveOverloadEnabled] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
+  const [lastWorkout, setLastWorkout] = useState(null);
   const { celebratePR } = useCelebration();
   // const [recentWorkouts, setRecentWorkouts] = useState([]); // Commented out for debugging
   
@@ -50,6 +51,39 @@ const WorkoutForm = ({ onSuccess }) => {
     'Other'
   ];
 
+  const fetchLastWorkout = useCallback(async (exercise) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
+        params: {
+          userId: 'default-user'
+        }
+      });
+      
+      if (response.data.success && response.data.data) {
+        const workouts = response.data.data || response.data.workouts || [];
+        // Find the most recent workout for this exercise
+        const exerciseWorkouts = workouts
+          .filter(w => w.exercise === exercise || w.Exercise === exercise)
+          .sort((a, b) => new Date(b.date || b.Date) - new Date(a.date || a.Date));
+        
+        if (exerciseWorkouts.length > 0) {
+          const lastW = exerciseWorkouts[0];
+          setLastWorkout({
+            date: lastW.date || lastW.Date,
+            sets: lastW.sets || lastW.Sets,
+            reps: lastW.reps || lastW.Reps,
+            weight: lastW.weight || lastW.Weight
+          });
+        } else {
+          setLastWorkout(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch last workout:', error);
+      setLastWorkout(null);
+    }
+  }, []);
+
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
     console.log('🔄 Fetching progression suggestion for:', exercise);
     setLoadingSuggestion(true);
@@ -67,6 +101,11 @@ const WorkoutForm = ({ onSuccess }) => {
       if (response.data.success && response.data.progression) {
         console.log('💡 API suggestion received:', response.data.progression);
         setProgressionSuggestion(response.data.progression);
+        
+        // Also extract last workout from the response if available
+        if (response.data.progression.lastWorkout) {
+          setLastWorkout(response.data.progression.lastWorkout);
+        }
       }
     } catch (error) {
       console.error('❌ Failed to fetch progression suggestion:', error);
@@ -87,19 +126,23 @@ const WorkoutForm = ({ onSuccess }) => {
   useEffect(() => {
     console.log('🎯 useEffect triggered - selectedExercise:', selectedExercise, 'progressiveOverloadEnabled:', progressiveOverloadEnabled);
     
-    if (selectedExercise && selectedExercise !== 'Other' && progressiveOverloadEnabled) {
-      console.log('🚀 Triggering fetchProgressionSuggestion for:', selectedExercise);
-      fetchProgressionSuggestion(selectedExercise);
+    if (selectedExercise && selectedExercise !== 'Other') {
+      console.log('🚀 Fetching data for:', selectedExercise);
+      fetchLastWorkout(selectedExercise);
+      
+      if (progressiveOverloadEnabled) {
+        fetchProgressionSuggestion(selectedExercise);
+      }
     } else {
-      console.log('❌ Not fetching suggestion - conditions not met', {
+      console.log('❌ Not fetching data - conditions not met', {
         selectedExercise: selectedExercise,
-        isOther: selectedExercise === 'Other',
-        progressiveOverloadEnabled: progressiveOverloadEnabled
+        isOther: selectedExercise === 'Other'
       });
       setProgressionSuggestion(null);
+      setLastWorkout(null);
       setLoadingSuggestion(false);
     }
-  }, [selectedExercise, progressiveOverloadEnabled, fetchProgressionSuggestion]);
+  }, [selectedExercise, progressiveOverloadEnabled, fetchProgressionSuggestion, fetchLastWorkout]);
 
   const applyProgressionSuggestion = () => {
     if (progressionSuggestion?.suggestion) {
@@ -225,6 +268,34 @@ const WorkoutForm = ({ onSuccess }) => {
             <p className="mt-1 text-sm text-red-600">{errors.exercise.message}</p>
           )}
         </div>
+
+        {/* Last Workout Info */}
+        {lastWorkout && selectedExercise && selectedExercise !== 'Other' && (
+          <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-gray-700">📊 Last Workout</h4>
+              <span className="text-xs text-gray-500">{format(new Date(lastWorkout.date), 'MMM d, yyyy')}</span>
+            </div>
+            <div className="mt-1 text-sm text-gray-900">
+              <span className="font-semibold">{lastWorkout.sets}</span> sets × 
+              <span className="font-semibold"> {lastWorkout.reps}</span> reps @ 
+              <span className="font-semibold text-blue-600"> {lastWorkout.weight}</span> lbs
+            </div>
+          </div>
+        )}
+
+        {/* No Workout History Message */}
+        {!lastWorkout && selectedExercise && selectedExercise !== 'Other' && !loadingSuggestion && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2">
+            <div className="flex items-start">
+              <span className="text-yellow-600 mr-2">⚠️</span>
+              <div className="text-sm text-yellow-800">
+                <p className="font-medium">No workout history found for {selectedExercise}</p>
+                <p className="text-xs mt-1">Log your first workout to get personalized progression suggestions!</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Progressive Overload Suggestion */}
         {progressiveOverloadEnabled && selectedExercise && selectedExercise !== 'Other' && (
