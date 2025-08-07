@@ -74,14 +74,34 @@ const WeightLogger = () => {
                  !isNaN(new Date(entry.date).getTime());
         });
         
-        console.log('Filtered weight data:', validData);
+        // Deduplicate entries by date - use the most recent entry for each date
+        const dateMap = new Map();
+        validData.forEach(entry => {
+          const dateKey = entry.date;
+          if (!dateMap.has(dateKey)) {
+            dateMap.set(dateKey, entry);
+          } else {
+            // If we already have an entry for this date, keep the one with higher weight
+            // (assuming later entries are more accurate or recent)
+            const existing = dateMap.get(dateKey);
+            if (entry.weight !== existing.weight) {
+              console.log(`Multiple entries found for date ${dateKey}: ${existing.weight} vs ${entry.weight}`);
+              // Keep the entry with the higher weight as it might be more recent
+              if (entry.weight > existing.weight) {
+                dateMap.set(dateKey, entry);
+              }
+            }
+          }
+        });
+        
+        const deduplicatedData = Array.from(dateMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        console.log('Original data entries:', validData.length);
+        console.log('After deduplication:', deduplicatedData.length);
+        console.log('Deduplicated weight data:', deduplicatedData);
         console.log('Received stats:', chartResponse.data.stats);
-        console.log('=== FRONTEND DEBUGGING ===');
-        console.log('Stats highest value:', chartResponse.data.stats?.highest);
-        console.log('Stats lowest value:', chartResponse.data.stats?.lowest);
-        console.log('All weights in frontend data:', validData.map(d => d.weight).sort((a, b) => b - a));
-        console.log('=== END FRONTEND DEBUGGING ===');
-        setWeightData(validData);
+        
+        setWeightData(deduplicatedData);
         setStats(chartResponse.data.stats || {});
       }
 

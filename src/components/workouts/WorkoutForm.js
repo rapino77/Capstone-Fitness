@@ -30,6 +30,7 @@ const WorkoutForm = ({ onSuccess }) => {
     formState: { errors }
   } = useForm({
     defaultValues: {
+      exercise: '', // Add default exercise value
       date: format(new Date(), 'yyyy-MM-dd'),
       sets: 3,
       reps: 10,
@@ -212,8 +213,11 @@ const WorkoutForm = ({ onSuccess }) => {
   // Fetch progression suggestion when exercise changes
   useEffect(() => {
     console.log('🎯 useEffect triggered - selectedExercise:', selectedExercise, 'progressiveOverloadEnabled:', progressiveOverloadEnabled);
+    console.log('selectedExercise type:', typeof selectedExercise, 'length:', selectedExercise?.length);
+    console.log('Is it empty?:', !selectedExercise || selectedExercise.trim() === '');
     
-    if (selectedExercise && selectedExercise !== 'Other') {
+    // Improve condition check - ensure we have a valid, non-empty exercise that's not "Other"
+    if (selectedExercise && selectedExercise.trim() !== '' && selectedExercise !== 'Other') {
       console.log('✅ Conditions met! Fetching data for:', selectedExercise);
       console.log('Progressive overload enabled?', progressiveOverloadEnabled);
       
@@ -229,7 +233,7 @@ const WorkoutForm = ({ onSuccess }) => {
       console.log('❌ Not fetching data - conditions not met');
       console.log('selectedExercise:', selectedExercise);
       console.log('Is it "Other"?:', selectedExercise === 'Other');
-      console.log('Is it empty?:', !selectedExercise);
+      console.log('Is it empty or undefined?:', !selectedExercise || selectedExercise.trim() === '');
       setProgressionSuggestion(null);
       setLastWorkout(null);
       setLoadingSuggestion(false);
