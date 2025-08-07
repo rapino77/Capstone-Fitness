@@ -10,7 +10,6 @@ import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
-import { PageTransition } from './components/common/LoadingAnimation';
 import './styles/theme.css';
 import './styles/animations.css';
 
@@ -22,7 +21,6 @@ const AppContent = () => {
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
@@ -38,24 +36,12 @@ const AppContent = () => {
     setRefreshGoals(prev => prev + 1);
   };
 
-  const handleTabChange = async (tabId) => {
-    if (tabId === activeTab) return; // Don't load if already active
-    
-    setIsLoading(true);
-    
-    // Simulate loading time for smooth animation
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
+  const handleTabChange = (tabId) => {
+    if (tabId === activeTab) return; // Don't change if already active
     setActiveTab(tabId);
-    setIsLoading(false);
   };
 
-  const handleSearchNavigation = async (item) => {
-    setIsLoading(true);
-    
-    // Simulate loading time for smooth animation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+  const handleSearchNavigation = (item) => {
     // Navigate to the main tab
     setActiveTab(item.path);
     
@@ -72,8 +58,6 @@ const AppContent = () => {
     if (item.path === 'goals') {
       setShowGoalCreator(false); // Ensure we show the goal tracker, not creator
     }
-    
-    setIsLoading(false);
   };
 
   const tabs = [
@@ -171,8 +155,7 @@ const AppContent = () => {
         </div>
 
         {/* Tab Content */}
-        <PageTransition isLoading={isLoading} loadingType="fitness">
-          <div className="tab-content">
+        <div className="tab-content smooth-transition">
             {activeTab === 'dashboard' && (
               <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
             )}
@@ -244,8 +227,7 @@ const AppContent = () => {
             {activeTab === 'history' && (
               <WorkoutHistory key={refreshHistory} />
             )}
-          </div>
-        </PageTransition>
+        </div>
       </main>
     </div>
   );

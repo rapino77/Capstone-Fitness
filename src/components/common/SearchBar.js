@@ -109,7 +109,8 @@ const SearchBar = ({ onNavigate }) => {
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
-            color: '#ffffff'
+            color: '#ffffff !important',
+            WebkitTextFillColor: '#ffffff !important'
           }}
           onFocus={() => {
             if (filteredResults.length > 0) setIsOpen(true);

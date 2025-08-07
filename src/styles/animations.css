@@ -204,9 +204,71 @@
 
 /* Tab transition effects */
 .tab-content {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.tab-loading {
-  animation: pulse 1s ease-in-out infinite;
+/* Smooth instant transitions */
+.smooth-fade-transition {
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.smooth-fade-transition.entering {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.smooth-fade-transition.entered {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced section transitions */
+.section-content {
+  animation: slideInSmooth 0.25s ease-out;
+}
+
+@keyframes slideInSmooth {
+  from {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Button hover enhancements */
+.sidebar-button {
+  transition: all 0.15s ease-in-out;
+}
+
+.sidebar-button:hover {
+  transform: translateX(2px);
+}
+
+/* Tab button enhancements */
+.tab-button {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: currentColor;
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
