@@ -52,6 +52,7 @@ const WorkoutForm = ({ onSuccess }) => {
   ];
 
   const fetchLastWorkout = useCallback(async (exercise) => {
+    console.log(`📊 fetchLastWorkout called for: ${exercise}`);
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
         params: {
@@ -60,16 +61,30 @@ const WorkoutForm = ({ onSuccess }) => {
         }
       });
       
+      console.log('📊 API Response:', {
+        success: response.data.success,
+        totalWorkouts: response.data.data?.length || 0,
+        firstFewWorkouts: response.data.data?.slice(0, 3)
+      });
+      
       if (response.data.success && response.data.data) {
         const workouts = response.data.data || response.data.workouts || [];
+        console.log(`📊 Looking for ${exercise} in ${workouts.length} total workouts`);
+        
         // Find the most recent workout for this exercise
         const exerciseWorkouts = workouts
-          .filter(w => w.exercise === exercise || w.Exercise === exercise)
+          .filter(w => {
+            const match = (w.exercise === exercise || w.Exercise === exercise);
+            if (match) console.log('📊 Found matching workout:', w);
+            return match;
+          })
           .sort((a, b) => {
             const dateA = new Date(a.date || a.Date || '1900-01-01');
             const dateB = new Date(b.date || b.Date || '1900-01-01');
             return dateB - dateA;
           });
+        
+        console.log(`📊 Found ${exerciseWorkouts.length} workouts for ${exercise}`);
         
         if (exerciseWorkouts.length > 0) {
           const lastW = exerciseWorkouts[0];
@@ -78,24 +93,31 @@ const WorkoutForm = ({ onSuccess }) => {
           // Validate date before setting
           const isValidDate = workoutDate && !isNaN(new Date(workoutDate).getTime());
           
-          setLastWorkout({
+          const lastWorkoutData = {
             date: isValidDate ? workoutDate : new Date().toISOString().split('T')[0],
             sets: lastW.sets || lastW.Sets,
             reps: lastW.reps || lastW.Reps,
             weight: lastW.weight || lastW.Weight
-          });
+          };
+          
+          console.log('📊 Setting last workout:', lastWorkoutData);
+          setLastWorkout(lastWorkoutData);
         } else {
+          console.log('📊 No workouts found for exercise, clearing last workout');
           setLastWorkout(null);
         }
+      } else {
+        console.log('📊 API call unsuccessful or no data');
+        setLastWorkout(null);
       }
     } catch (error) {
-      console.error('Failed to fetch last workout:', error);
+      console.error('❌ Failed to fetch last workout:', error);
       setLastWorkout(null);
     }
   }, []);
 
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
-    console.log('🔄 Fetching progression suggestion for:', exercise);
+    console.log('💡 fetchProgressionSuggestion called for:', exercise);
     setLoadingSuggestion(true);
     
     try {
@@ -109,14 +131,25 @@ const WorkoutForm = ({ onSuccess }) => {
         }
       });
       
+      console.log('💡 Progression API Response:', {
+        success: response.data.success,
+        hasProgression: !!response.data.progression,
+        workoutHistoryCount: response.data.workoutHistory?.length || 0,
+        suggestion: response.data.progression?.suggestion
+      });
+      
       if (response.data.success && response.data.progression) {
         console.log('💡 API suggestion received:', response.data.progression);
         setProgressionSuggestion(response.data.progression);
         
         // Also extract last workout from the response if available
         if (response.data.progression.lastWorkout) {
+          console.log('💡 Using last workout from progression API:', response.data.progression.lastWorkout);
           setLastWorkout(response.data.progression.lastWorkout);
         }
+      } else {
+        console.log('💡 No progression data received from API');
+        setProgressionSuggestion(null);
       }
     } catch (error) {
       console.error('❌ Failed to fetch progression suggestion:', error);
@@ -188,12 +221,19 @@ const WorkoutForm = ({ onSuccess }) => {
           data.weight === progressionSuggestion.suggestion.weight
       };
 
+      console.log('💾 Submitting workout data:', submissionData);
+
       // Check for PR before submitting
       console.log('🔍 Checking for PR...', submissionData);
       const prResult = await detectPR(submissionData);
       console.log('🎯 PR Detection Result:', prResult);
 
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, submissionData);
+      console.log('💾 Workout logging response:', {
+        success: response.data.success,
+        recordId: response.data.recordId,
+        message: response.data.message
+      });
       
       if (response.data.success) {
         setSubmitMessage({ 
@@ -230,22 +270,31 @@ const WorkoutForm = ({ onSuccess }) => {
         
         // Re-select the exercise and refresh suggestion for next workout
         if (exerciseToKeep && exerciseToKeep !== 'Other') {
+          console.log('🎯 Starting post-workout refresh for:', exerciseToKeep);
+          
           // Give more time for database to update and prevent caching
           setTimeout(() => {
-            console.log('🔄 Refreshing data after workout submission...');
+            console.log('🔄 Phase 1: Re-selecting exercise and clearing old data...');
             setValue('exercise', exerciseToKeep);
+            
             if (progressiveOverloadEnabled) {
               // Clear current suggestions to show loading state
               setProgressionSuggestion(null);
               setLastWorkout(null);
+              console.log('🧹 Cleared old data, fetching fresh data in 1 second...');
               
-              // Fetch fresh data with a small delay between calls
+              // Fetch fresh data with a longer delay between calls
               setTimeout(() => {
+                console.log('🔄 Phase 2: Fetching fresh workout history...');
                 fetchLastWorkout(exerciseToKeep);
-                fetchProgressionSuggestion(exerciseToKeep);
-              }, 200);
+                
+                setTimeout(() => {
+                  console.log('🔄 Phase 3: Fetching fresh progression suggestion...');
+                  fetchProgressionSuggestion(exerciseToKeep);
+                }, 500);
+              }, 1000);
             }
-          }, 1500); // Increased delay to allow database propagation
+          }, 2000); // Even longer delay to ensure database propagation
         }
       }
     } catch (error) {
@@ -283,6 +332,26 @@ const WorkoutForm = ({ onSuccess }) => {
             <span className="text-sm text-white">🎭 Demo Mode</span>
             <span className="ml-1 text-xs text-blue-200">(simulate workout history)</span>
           </label>
+          
+          {/* Debug Button */}
+          {selectedExercise && selectedExercise !== 'Other' && (
+            <button
+              type="button"
+              onClick={() => {
+                console.log('🔧 Debug button clicked - force refresh for:', selectedExercise);
+                setProgressionSuggestion(null);
+                setLastWorkout(null);
+                fetchLastWorkout(selectedExercise);
+                setTimeout(() => {
+                  fetchProgressionSuggestion(selectedExercise);
+                }, 1000);
+              }}
+              className="px-2 py-1 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700 transition-colors"
+              title="Force refresh data for debugging"
+            >
+              🔧 Debug Refresh
+            </button>
+          )}
         </div>
       </div>
       
