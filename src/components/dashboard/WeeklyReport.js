@@ -385,7 +385,13 @@ const WeeklyReport = () => {
       // Get active challenges from localStorage
       const activeChallenges = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
       
-      if (activeChallenges.length === 0) return [];
+      console.log('🔍 WeeklyReport - Loading challenges from localStorage:', activeChallenges);
+      console.log('📊 WeeklyReport - Found', activeChallenges.length, 'active challenges');
+      
+      if (activeChallenges.length === 0) {
+        console.log('ℹ️ WeeklyReport - No active challenges found');
+        return [];
+      }
 
       // Calculate current progress and weekly contribution for each challenge
       return activeChallenges.map(challenge => {

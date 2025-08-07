@@ -132,8 +132,14 @@ const ChallengeSystem = ({ onSuccess }) => {
       // Load challenges from localStorage for now
       const savedChallenges = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
       const savedCompleted = JSON.parse(localStorage.getItem('completedChallenges') || '[]');
+      
+      console.log('🔄 ChallengeSystem - Loading saved challenges:', savedChallenges);
+      console.log('🏆 ChallengeSystem - Loading completed challenges:', savedCompleted);
+      
       setActiveChallenges(savedChallenges);
       setCompletedChallenges(savedCompleted);
+      
+      console.log('✅ ChallengeSystem - State updated with', savedChallenges.length, 'active challenges');
 
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -386,9 +392,28 @@ const ChallengeSystem = ({ onSuccess }) => {
       })
     };
     
+    console.log('🎯 Creating new challenge:', newChallenge);
+    
     const updatedActive = [...activeChallenges, newChallenge];
     setActiveChallenges(updatedActive);
-    localStorage.setItem('activeChallenges', JSON.stringify(updatedActive));
+    
+    try {
+      localStorage.setItem('activeChallenges', JSON.stringify(updatedActive));
+      console.log('✅ Challenge saved to localStorage successfully');
+      console.log('📦 Updated active challenges:', updatedActive);
+      
+      // Verify the save worked
+      const saved = JSON.parse(localStorage.getItem('activeChallenges') || '[]');
+      console.log('🔍 Verification - challenges in localStorage:', saved);
+      
+    } catch (error) {
+      console.error('❌ Failed to save challenge to localStorage:', error);
+      alert('⚠️ Failed to save challenge. Please try again.');
+      return;
+    }
+    
+    // Show success message
+    alert(`🎉 Challenge Created Successfully!\n\n${newChallenge.name}\nTarget: ${newChallenge.target}\nReward: ${newChallenge.points} points`);
     
     setShowCreateModal(false);
     setSelectedChallengeType('');
@@ -619,7 +644,12 @@ const ChallengeSystem = ({ onSuccess }) => {
                     {challengeTemplates[selectedChallengeType].variants.map((variant, index) => (
                       <button
                         key={index}
-                        onClick={() => createChallenge(challengeTemplates[selectedChallengeType], variant)}
+                        onClick={() => {
+                          console.log('🎯 Button clicked for challenge variant:', variant);
+                          console.log('📋 Selected challenge type:', selectedChallengeType);
+                          console.log('🏗️ Template:', challengeTemplates[selectedChallengeType]);
+                          createChallenge(challengeTemplates[selectedChallengeType], variant);
+                        }}
                         className="text-left p-4 border-2 border-gray-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all"
                       >
                         <div className="flex justify-between items-start mb-2">
