@@ -575,7 +575,7 @@ const BadgeDisplay = () => {
             className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
               selectedCategory === category.id
                 ? 'bg-blue-600 text-white'
-                : 'bg-white bg-opacity-20 text-gray-200 hover:bg-opacity-30'
+                : 'bg-white bg-opacity-90 text-black hover:bg-opacity-100'
             }`}
           >
             {category.icon} {category.name}
