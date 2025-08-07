@@ -22,36 +22,27 @@ code {
   scrollbar-color: #9CA3AF #E5E7EB;
 }
 
-/* Force ALL text in strength charts to be black - AGGRESSIVE OVERRIDE */
-.strength-chart-scroll * {
-  color: #000000 !important;
+/* Force ALL text in strength charts to be black - NUCLEAR OPTION */
+.strength-progression-chart,
+.strength-progression-chart *,
+.strength-progression-chart text,
+.strength-progression-chart tspan,
+.strength-progression-chart svg text,
+.strength-progression-chart svg tspan {
+  fill: black !important;
+  color: black !important;
 }
 
-.strength-chart-scroll text,
-.strength-chart-scroll tspan {
-  fill: #000000 !important;
-  color: #000000 !important;
-}
-
-.strength-chart-scroll .recharts-text,
-.strength-chart-scroll .recharts-cartesian-axis-tick-value,
-.strength-chart-scroll .recharts-label,
-.strength-chart-scroll .recharts-legend-item-text,
-.strength-chart-scroll .recharts-cartesian-axis-tick,
-.strength-chart-scroll .recharts-cartesian-axis-tick text,
-.strength-chart-scroll .recharts-xAxis .recharts-cartesian-axis-tick-value,
-.strength-chart-scroll .recharts-yAxis .recharts-cartesian-axis-tick-value {
-  fill: #000000 !important;
-  color: #000000 !important;
-}
-
-/* Target SVG elements specifically */
-.strength-chart-scroll svg text {
-  fill: #000000 !important;
-}
-
-.strength-chart-scroll svg tspan {
-  fill: #000000 !important;
+.strength-progression-chart .recharts-text,
+.strength-progression-chart .recharts-cartesian-axis-tick-value,
+.strength-progression-chart .recharts-label,
+.strength-progression-chart .recharts-legend-item-text,
+.strength-progression-chart .recharts-cartesian-axis-tick,
+.strength-progression-chart .recharts-cartesian-axis-tick text,
+.strength-progression-chart .recharts-xAxis .recharts-cartesian-axis-tick-value,
+.strength-progression-chart .recharts-yAxis .recharts-cartesian-axis-tick-value {
+  fill: black !important;
+  color: black !important;
 }
 
 .strength-chart-scroll::-webkit-scrollbar {

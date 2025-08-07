@@ -61,6 +61,44 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
     }
   };
 
+  // Custom tick components to force black text
+  const CustomXAxisTick = (props) => {
+    const { x, y, payload } = props;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="end"
+          fill="black"
+          transform="rotate(-45)"
+          fontSize="12"
+        >
+          {formatXAxis(payload.value)}
+        </text>
+      </g>
+    );
+  };
+
+  const CustomYAxisTick = (props) => {
+    const { x, y, payload } = props;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={4}
+          textAnchor="end"
+          fill="black"
+          fontSize="12"
+        >
+          {Math.round(payload.value)}
+        </text>
+      </g>
+    );
+  };
+
   // Create table component for strength data
   const StrengthTable = ({ data, exercise }) => (
     <div className="overflow-x-auto">
@@ -186,40 +224,38 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
 
                 {validChartData.length > 0 ? (
                   currentViewMode === 'chart' ? (
-                    <div className="overflow-x-auto overflow-y-hidden border border-gray-200 rounded-lg bg-gray-50 strength-chart-scroll" style={{ color: '#000000' }}>
+                    <div className="overflow-x-auto overflow-y-hidden border border-gray-200 rounded-lg strength-chart-scroll strength-progression-chart" style={{ color: 'black', backgroundColor: 'white' }}>
                       <div style={{ 
                         minWidth: Math.max(600, validChartData.length * 60) + 'px',
-                        color: '#000000'
+                        color: 'black'
                       }}>
                         <ResponsiveContainer width="100%" height={300}>
                           <LineChart 
                             data={dataWithAllMA}
                             margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                            style={{ color: '#000000' }}
                           >
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis 
                               dataKey="date" 
-                              tickFormatter={formatXAxis}
-                              angle={-45}
-                              textAnchor="end"
                               height={60}
                               interval={0}
-                              tick={{ fill: '#000000', fontSize: 12, color: '#000000' }}
-                              stroke="#000000"
-                              axisLine={{ stroke: '#000000' }}
-                              tickLine={{ stroke: '#000000' }}
+                              tick={<CustomXAxisTick />}
+                              stroke="black"
+                              axisLine={{ stroke: 'black' }}
+                              tickLine={{ stroke: 'black' }}
                             />
                             <YAxis 
                               domain={validChartData.length === 1 ? [0, 'dataMax + 10'] : ['dataMin - 5', 'dataMax + 5']}
-                              tick={{ fill: '#000000', fontSize: 12, color: '#000000' }}
-                              stroke="#000000"
-                              axisLine={{ stroke: '#000000' }}
-                              tickLine={{ stroke: '#000000' }}
+                              tick={<CustomYAxisTick />}
+                              stroke="black"
+                              axisLine={{ stroke: 'black' }}
+                              tickLine={{ stroke: 'black' }}
                               label={{ 
                                 value: 'Weight (lbs)', 
                                 angle: -90, 
                                 position: 'insideLeft',
-                                style: { textAnchor: 'middle', fill: '#000000', color: '#000000' }
+                                style: { textAnchor: 'middle', fill: 'black', color: 'black' }
                               }}
                             />
                             <Tooltip 
@@ -234,17 +270,17 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
                                 backgroundColor: '#ffffff',
                                 border: '1px solid #e5e7eb',
                                 borderRadius: '8px',
-                                color: '#000000'
+                                color: 'black'
                               }}
                               labelStyle={{ 
-                                color: '#000000',
+                                color: 'black',
                                 fontWeight: 'bold'
                               }}
                               itemStyle={{ 
-                                color: '#000000'
+                                color: 'black'
                               }}
                             />
-                            <Legend wrapperStyle={{ color: '#000000' }} />
+                            <Legend wrapperStyle={{ color: 'black' }} />
                             
                             {/* Main weight line */}
                             <Line 
