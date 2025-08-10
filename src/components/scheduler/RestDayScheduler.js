@@ -379,6 +379,64 @@ const RestDayScheduler = () => {
           </div>
         )}
 
+        {/* Smart Rest Day Suggestions */}
+        {analysis && (
+          <div className="mb-6 bg-white bg-opacity-10 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+              <span className="mr-2">🤖</span>
+              Smart Rest Day Suggestions
+            </h3>
+            <div className="space-y-3">
+              {analysis.frequency < 3 && (
+                <div className="text-white text-sm">
+                  <p className="mb-2">Based on your current frequency of <strong>{analysis.frequency} workouts/week</strong>, we recommend:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Schedule rest days on: <strong>Tuesday, Thursday, Saturday, Sunday</strong></li>
+                    <li>This allows for 3 workout days (Mon, Wed, Fri) with proper recovery</li>
+                  </ul>
+                </div>
+              )}
+              {analysis.frequency >= 3 && analysis.frequency < 5 && (
+                <div className="text-white text-sm">
+                  <p className="mb-2">Based on your current frequency of <strong>{analysis.frequency} workouts/week</strong>, we recommend:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Schedule rest days on: <strong>Wednesday, Sunday</strong></li>
+                    <li>This creates a balanced weekly split with adequate recovery</li>
+                  </ul>
+                </div>
+              )}
+              {analysis.frequency >= 5 && (
+                <div className="text-white text-sm">
+                  <p className="mb-2">Based on your high frequency of <strong>{analysis.frequency} workouts/week</strong>, we recommend:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Schedule at least one full rest day on: <strong>Sunday</strong></li>
+                    <li>Consider active recovery on one additional day</li>
+                    <li>Monitor for signs of overtraining</li>
+                  </ul>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  // Apply smart suggestions
+                  let smartRestDays = [];
+                  if (analysis.frequency < 3) {
+                    smartRestDays = [1, 3, 5, 6]; // Tue, Thu, Sat, Sun
+                  } else if (analysis.frequency >= 3 && analysis.frequency < 5) {
+                    smartRestDays = [2, 6]; // Wed, Sun
+                  } else {
+                    smartRestDays = [6]; // Sun
+                  }
+                  setScheduledRestDays(smartRestDays);
+                  localStorage.setItem('scheduledRestDays', JSON.stringify(smartRestDays));
+                }}
+                className="mt-3 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm"
+              >
+                Apply Smart Suggestions
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Suggested Template */}
         {suggestedTemplate && (
           <div className="bg-white bg-opacity-10 rounded-lg p-4">

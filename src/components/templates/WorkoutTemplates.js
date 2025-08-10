@@ -6,9 +6,21 @@ const WorkoutTemplates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('pushPullLegs');
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState({});
 
-  const currentTemplate = workoutTemplates[selectedTemplate];
-  const schedule = getWorkoutSchedule(selectedTemplate);
+  // Load custom templates from localStorage on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('customWorkoutTemplates');
+    if (saved) {
+      setCustomTemplates(JSON.parse(saved));
+    }
+  }, []);
+
+  // Combine default and custom templates
+  const allTemplates = { ...workoutTemplates, ...customTemplates };
+  const currentTemplate = allTemplates[selectedTemplate];
+  const schedule = selectedTemplate in workoutTemplates ? getWorkoutSchedule(selectedTemplate) : null;
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -35,8 +47,17 @@ const WorkoutTemplates = () => {
         
         {/* Template Selection */}
         <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">Available Templates</h3>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm"
+            >
+              + Create Custom Template
+            </button>
+          </div>
           <div className="flex flex-wrap gap-4">
-            {Object.entries(workoutTemplates).map(([key, template]) => (
+            {Object.entries(allTemplates).map(([key, template]) => (
               <button
                 key={key}
                 onClick={() => {
@@ -52,6 +73,9 @@ const WorkoutTemplates = () => {
                 <div className="text-left">
                   <div className="font-semibold">{template.name}</div>
                   <div className="text-xs opacity-75">{template.frequency}x per week</div>
+                  {key.startsWith('custom_') && (
+                    <div className="text-xs text-blue-600 font-medium mt-1">Custom</div>
+                  )}
                 </div>
               </button>
             ))}
@@ -243,6 +267,383 @@ const WorkoutTemplates = () => {
             <div className="w-4 h-4 bg-blue-500 rounded"></div>
             <span className="text-gray-200"><strong>Accessory:</strong> Isolation movements</span>
           </div>
+        </div>
+      </div>
+
+      {/* Custom Template Creation Modal */}
+      {showCreateModal && (
+        <CustomTemplateCreator
+          onClose={() => setShowCreateModal(false)}
+          onSave={(template) => {
+            const customKey = `custom_${Date.now()}`;
+            const updatedCustom = { ...customTemplates, [customKey]: template };
+            setCustomTemplates(updatedCustom);
+            localStorage.setItem('customWorkoutTemplates', JSON.stringify(updatedCustom));
+            setSelectedTemplate(customKey);
+            setShowCreateModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Custom Template Creator Component
+const CustomTemplateCreator = ({ onClose, onSave }) => {
+  const [templateName, setTemplateName] = useState('');
+  const [description, setDescription] = useState('');
+  const [frequency, setFrequency] = useState(3);
+  const [workouts, setWorkouts] = useState([]);
+  const [currentWorkout, setCurrentWorkout] = useState({
+    name: '',
+    description: '',
+    primaryMuscles: [],
+    exercises: []
+  });
+  const [showWorkoutEditor, setShowWorkoutEditor] = useState(false);
+
+  const muscleGroups = [
+    'Chest', 'Back', 'Shoulders', 'Arms', 'Biceps', 'Triceps',
+    'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'
+  ];
+
+  const exerciseCategories = ['compound', 'isolation', 'core'];
+  const exercisePriorities = ['primary', 'secondary', 'accessory'];
+
+  const addExercise = () => {
+    const newExercise = {
+      name: '',
+      sets: 3,
+      reps: '8-12',
+      category: 'compound',
+      priority: 'primary'
+    };
+    setCurrentWorkout({
+      ...currentWorkout,
+      exercises: [...currentWorkout.exercises, newExercise]
+    });
+  };
+
+  const updateExercise = (index, field, value) => {
+    const updatedExercises = [...currentWorkout.exercises];
+    updatedExercises[index][field] = value;
+    setCurrentWorkout({
+      ...currentWorkout,
+      exercises: updatedExercises
+    });
+  };
+
+  const removeExercise = (index) => {
+    const updatedExercises = currentWorkout.exercises.filter((_, i) => i !== index);
+    setCurrentWorkout({
+      ...currentWorkout,
+      exercises: updatedExercises
+    });
+  };
+
+  const saveWorkout = () => {
+    if (currentWorkout.name && currentWorkout.exercises.length > 0) {
+      const workoutKey = currentWorkout.name.toLowerCase().replace(/\s+/g, '');
+      setWorkouts([...workouts, { key: workoutKey, ...currentWorkout }]);
+      setCurrentWorkout({
+        name: '',
+        description: '',
+        primaryMuscles: [],
+        exercises: []
+      });
+      setShowWorkoutEditor(false);
+    }
+  };
+
+  const saveTemplate = () => {
+    if (templateName && workouts.length > 0) {
+      const templatesObject = {};
+      workouts.forEach(workout => {
+        templatesObject[workout.key] = {
+          name: workout.name,
+          description: workout.description,
+          primaryMuscles: workout.primaryMuscles,
+          exercises: workout.exercises
+        };
+      });
+
+      const template = {
+        name: templateName,
+        description: description,
+        frequency: frequency,
+        restDays: 1,
+        templates: templatesObject
+      };
+
+      onSave(template);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-2xl font-bold">Create Custom Workout Template</h3>
+            <button onClick={onClose} className="text-white hover:text-gray-200 text-3xl">×</button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {!showWorkoutEditor ? (
+            <>
+              {/* Template Info */}
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold mb-4">Template Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Template Name</label>
+                    <input
+                      type="text"
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., My Custom Split"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Frequency (workouts/week)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={frequency}
+                      onChange={(e) => setFrequency(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-20"
+                    placeholder="Describe your workout template..."
+                  />
+                </div>
+              </div>
+
+              {/* Workouts List */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-semibold">Workouts ({workouts.length})</h4>
+                  <button
+                    onClick={() => setShowWorkoutEditor(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    + Add Workout
+                  </button>
+                </div>
+
+                {workouts.length > 0 ? (
+                  <div className="space-y-3">
+                    {workouts.map((workout, index) => (
+                      <div key={index} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h5 className="font-medium">{workout.name}</h5>
+                            <p className="text-sm text-gray-600">{workout.description}</p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {workout.primaryMuscles.map((muscle, i) => (
+                                <span key={i} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                  {muscle}
+                                </span>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{workout.exercises.length} exercises</p>
+                          </div>
+                          <button
+                            onClick={() => setWorkouts(workouts.filter((_, i) => i !== index))}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
+                    <p className="text-gray-500">No workouts added yet. Click "Add Workout" to get started.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveTemplate}
+                  disabled={!templateName || workouts.length === 0}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Save Template
+                </button>
+              </div>
+            </>
+          ) : (
+            /* Workout Editor */
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-lg font-semibold">Add Workout</h4>
+                <button
+                  onClick={() => setShowWorkoutEditor(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Template
+                </button>
+              </div>
+
+              {/* Workout Info */}
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Workout Name</label>
+                    <input
+                      type="text"
+                      value={currentWorkout.name}
+                      onChange={(e) => setCurrentWorkout({...currentWorkout, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Push Day, Upper Body"
+                    />
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Description</label>
+                  <input
+                    type="text"
+                    value={currentWorkout.description}
+                    onChange={(e) => setCurrentWorkout({...currentWorkout, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Chest, Shoulders, Triceps"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Primary Muscle Groups</label>
+                  <div className="flex flex-wrap gap-2">
+                    {muscleGroups.map(muscle => (
+                      <button
+                        key={muscle}
+                        onClick={() => {
+                          const muscles = currentWorkout.primaryMuscles.includes(muscle)
+                            ? currentWorkout.primaryMuscles.filter(m => m !== muscle)
+                            : [...currentWorkout.primaryMuscles, muscle];
+                          setCurrentWorkout({...currentWorkout, primaryMuscles: muscles});
+                        }}
+                        className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                          currentWorkout.primaryMuscles.includes(muscle)
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {muscle}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Exercises */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h5 className="font-medium">Exercises ({currentWorkout.exercises.length})</h5>
+                  <button
+                    onClick={addExercise}
+                    className="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition-colors text-sm"
+                  >
+                    + Add Exercise
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {currentWorkout.exercises.map((exercise, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                        <input
+                          type="text"
+                          placeholder="Exercise name"
+                          value={exercise.name}
+                          onChange={(e) => updateExercise(index, 'name', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="number"
+                            placeholder="Sets"
+                            min="1"
+                            value={exercise.sets}
+                            onChange={(e) => updateExercise(index, 'sets', Number(e.target.value))}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Reps"
+                            value={exercise.reps}
+                            onChange={(e) => updateExercise(index, 'reps', e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <button
+                          onClick={() => removeExercise(index)}
+                          className="text-red-500 hover:text-red-700 justify-self-end"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <select
+                          value={exercise.category}
+                          onChange={(e) => updateExercise(index, 'category', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {exerciseCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={exercise.priority}
+                          onChange={(e) => updateExercise(index, 'priority', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {exercisePriorities.map(pri => (
+                            <option key={pri} value={pri}>{pri}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Save Workout */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowWorkoutEditor(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveWorkout}
+                  disabled={!currentWorkout.name || currentWorkout.exercises.length === 0}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Save Workout
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
