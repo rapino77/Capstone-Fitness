@@ -97,8 +97,135 @@ exports.handler = async (event, context) => {
 
     console.log(`Retrieved ${workouts.length} workouts with duration data for analytics`);
 
-    // Import analytics functions
-    const { calculateWorkoutMetrics, generateDurationRecommendations, formatDuration } = require('../src/utils/workoutTimer.js');
+    // Analytics functions (server-side implementations)
+    const calculateWorkoutMetrics = (workouts) => {
+      if (!workouts || workouts.length === 0) {
+        return {
+          totalWorkouts: 0,
+          totalDuration: 0,
+          averageDuration: 0,
+          shortestWorkout: 0,
+          longestWorkout: 0,
+          totalWorkTime: 0,
+          totalRestTime: 0,
+          averageRestTime: 0,
+          workoutFrequency: 0,
+          efficiencyTrend: [],
+          averageEfficiency: 0
+        };
+      }
+
+      const durations = workouts.map(w => w.totalDuration || 0).filter(d => d > 0);
+      const workTimes = workouts.map(w => w.workTime || 0).filter(d => d > 0);
+      const restTimes = workouts.map(w => w.restTime || 0).filter(d => d > 0);
+      
+      const totalDuration = durations.reduce((sum, d) => sum + d, 0);
+      const totalWorkTime = workTimes.reduce((sum, d) => sum + d, 0);
+      const totalRestTime = restTimes.reduce((sum, d) => sum + d, 0);
+      
+      // Calculate workout frequency (workouts per week)
+      const sortedWorkouts = workouts.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const firstWorkout = sortedWorkouts[0];
+      const lastWorkout = sortedWorkouts[sortedWorkouts.length - 1];
+      const daySpan = Math.max(1, Math.floor((new Date(lastWorkout.date) - new Date(firstWorkout.date)) / (1000 * 60 * 60 * 24)));
+      const workoutFrequency = (workouts.length / daySpan) * 7;
+      
+      // Calculate efficiency trend (last 10 workouts)
+      const recentWorkouts = workouts.slice(-10);
+      const efficiencyTrend = recentWorkouts.map(w => ({
+        date: w.date,
+        efficiency: w.efficiency || (w.totalDuration > 0 ? Math.round(((w.workTime || 0) / w.totalDuration) * 100) : 0)
+      }));
+      
+      return {
+        totalWorkouts: workouts.length,
+        totalDuration,
+        averageDuration: durations.length > 0 ? Math.round(totalDuration / durations.length) : 0,
+        shortestWorkout: durations.length > 0 ? Math.min(...durations) : 0,
+        longestWorkout: durations.length > 0 ? Math.max(...durations) : 0,
+        totalWorkTime,
+        totalRestTime,
+        averageRestTime: restTimes.length > 0 ? Math.round(totalRestTime / restTimes.length) : 0,
+        workoutFrequency: Math.round(workoutFrequency * 10) / 10,
+        efficiencyTrend,
+        averageEfficiency: efficiencyTrend.length > 0 ? Math.round(efficiencyTrend.reduce((sum, e) => sum + e.efficiency, 0) / efficiencyTrend.length) : 0
+      };
+    };
+
+    const generateDurationRecommendations = (metrics, currentWorkout = null) => {
+      const recommendations = [];
+      
+      if (metrics.totalWorkouts === 0) {
+        return [{
+          type: 'info',
+          title: 'Welcome to Workout Tracking!',
+          message: 'Start timing your workouts to get personalized insights and recommendations.',
+          priority: 'low'
+        }];
+      }
+      
+      // Workout duration recommendations
+      if (metrics.averageDuration > 0) {
+        if (metrics.averageDuration > 5400) { // > 90 minutes
+          recommendations.push({
+            type: 'warning',
+            title: 'Long Workout Duration',
+            message: `Your average workout is ${formatDuration(metrics.averageDuration)}. Consider shortening sessions to maintain intensity.`,
+            priority: 'medium'
+          });
+        } else if (metrics.averageDuration < 1800) { // < 30 minutes
+          recommendations.push({
+            type: 'info',
+            title: 'Short Workout Duration',
+            message: `Your average workout is ${formatDuration(metrics.averageDuration)}. You might benefit from longer sessions.`,
+            priority: 'low'
+          });
+        }
+      }
+      
+      // Efficiency recommendations
+      if (metrics.averageEfficiency > 0) {
+        if (metrics.averageEfficiency < 30) {
+          recommendations.push({
+            type: 'tip',
+            title: 'Improve Workout Efficiency',
+            message: `Your workouts are ${metrics.averageEfficiency}% efficient. Try reducing rest times or eliminating distractions.`,
+            priority: 'medium'
+          });
+        } else if (metrics.averageEfficiency > 70) {
+          recommendations.push({
+            type: 'success',
+            title: 'Great Workout Efficiency!',
+            message: `Your workouts are ${metrics.averageEfficiency}% efficient. You're making great use of your time.`,
+            priority: 'low'
+          });
+        }
+      }
+      
+      // Frequency recommendations
+      if (metrics.workoutFrequency > 0) {
+        if (metrics.workoutFrequency < 2) {
+          recommendations.push({
+            type: 'info',
+            title: 'Increase Workout Frequency',
+            message: `You're averaging ${metrics.workoutFrequency} workouts per week. Aim for 3-4 sessions for optimal results.`,
+            priority: 'medium'
+          });
+        } else if (metrics.workoutFrequency > 6) {
+          recommendations.push({
+            type: 'warning',
+            title: 'High Workout Frequency',
+            message: `You're averaging ${metrics.workoutFrequency} workouts per week. Make sure to include rest days for recovery.`,
+            priority: 'high'
+          });
+        }
+      }
+      
+      return recommendations.sort((a, b) => {
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        return priorityOrder[b.priority] - priorityOrder[a.priority];
+      });
+    };
 
     let response = {};
 

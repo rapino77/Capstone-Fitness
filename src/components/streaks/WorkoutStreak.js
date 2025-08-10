@@ -50,7 +50,6 @@ const WorkoutStreak = ({ userId = 'default-user', refreshTrigger = 0 }) => {
     let currentDate = new Date(isActiveToday ? todayStr : yesterdayStr);
     
     for (const dateStr of uniqueDates) {
-      const workoutDate = new Date(dateStr);
       const expectedDateStr = currentDate.toISOString().split('T')[0];
       
       if (dateStr === expectedDateStr) {
