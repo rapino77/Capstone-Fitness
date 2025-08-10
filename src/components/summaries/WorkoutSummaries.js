@@ -422,21 +422,86 @@ const WorkoutSummaries = () => {
             <span>Refresh</span>
           </button>
           
+          {/* Test Workout Button */}
+          <button
+            onClick={async () => {
+              console.log('🧪 Creating test workout...');
+              try {
+                const testWorkout = {
+                  userId: 'default-user',
+                  exercise: 'Test Bench Press',
+                  sets: 3,
+                  reps: 10,
+                  weight: 135,
+                  date: format(selectedDate, 'yyyy-MM-dd'),
+                  notes: 'Test workout for debugging'
+                };
+                
+                console.log('🧪 Test workout data:', testWorkout);
+                
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/log-workout`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(testWorkout)
+                });
+                
+                const result = await response.json();
+                console.log('🧪 Test workout result:', result);
+                
+                if (response.ok) {
+                  alert('Test workout created! Check the summaries now.');
+                  // Refresh the data
+                  setTimeout(() => {
+                    fetchWorkoutData();
+                  }, 1000);
+                } else {
+                  alert('Failed to create test workout: ' + result.error);
+                }
+                
+              } catch (error) {
+                console.error('❌ Test workout failed:', error);
+                alert('Failed to create test workout: ' + error.message);
+              }
+            }}
+            className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+          >
+            🧪 Create Test Workout
+          </button>
+
           {/* Debug Button */}
           <button
-            onClick={() => {
+            onClick={async () => {
               console.log('🔍 Debug Info:');
               console.log('Selected Date:', selectedDate);
               console.log('Formatted Date:', format(selectedDate, 'yyyy-MM-dd'));
               console.log('Workout Data Count:', workoutData.length);
               console.log('Workout Data:', workoutData);
               console.log('Summary Data:', summaryData);
+              
+              // Test the API directly
+              console.log('🔬 Testing API directly...');
+              try {
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/get-workouts?userId=default-user`);
+                const apiData = await response.json();
+                console.log('📡 Raw API Response:', apiData);
+                console.log('📡 API Status:', response.status);
+                console.log('📡 API Response Keys:', Object.keys(apiData));
+                if (apiData.data) {
+                  console.log('📡 API Data Length:', apiData.data.length);
+                  console.log('📡 First workout:', apiData.data[0]);
+                }
+              } catch (apiError) {
+                console.error('❌ API Test Failed:', apiError);
+              }
+              
               // Force a refresh to get latest data
               fetchWorkoutData();
             }}
             className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm"
           >
-            🐛 Debug & Refresh
+            🐛 Debug & Test API
           </button>
         </div>
       </div>
