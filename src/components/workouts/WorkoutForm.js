@@ -7,6 +7,7 @@ import { detectPR, formatPRForCelebration, logPRAchievement } from '../../utils/
 import { detectImmediateDeload, formatDeloadPrompt } from '../../utils/deloadDetection';
 import { useCelebration } from '../../context/CelebrationContext';
 import DeloadPrompt from './DeloadPrompt';
+import PeriodizationPanel from '../rotation/PeriodizationPanel';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +20,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [deloadPromptData, setDeloadPromptData] = useState(null);
   const [showDeloadPrompt, setShowDeloadPrompt] = useState(false);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
+  const [periodizationEnabled, setPeriodizationEnabled] = useState(true);
   const { celebratePR } = useCelebration();
   
   const {
@@ -250,6 +252,24 @@ const WorkoutForm = ({ onSuccess }) => {
       const currentNotes = watch('notes') || '';
       const progressionNote = `Applied progressive overload: ${progressionSuggestion.reason}`;
       setValue('notes', currentNotes ? `${currentNotes}\n${progressionNote}` : progressionNote);
+    }
+  };
+
+  // Periodization panel handlers
+  const handleExerciseChange = (newExercise) => {
+    setValue('exercise', newExercise);
+  };
+
+  const handlePeriodizedWorkoutApply = (periodizedWorkout) => {
+    if (periodizedWorkout) {
+      setValue('sets', periodizedWorkout.sets);
+      setValue('reps', periodizedWorkout.reps);
+      setValue('weight', periodizedWorkout.weight);
+      
+      // Add note about applying periodization
+      const currentNotes = watch('notes') || '';
+      const periodizationNote = `Applied periodization: ${periodizedWorkout.reasoning}`;
+      setValue('notes', currentNotes ? `${currentNotes}\n${periodizationNote}` : periodizationNote);
     }
   };
 
@@ -562,6 +582,16 @@ const WorkoutForm = ({ onSuccess }) => {
             <span className="text-sm text-white">🎭 Demo Mode</span>
             <span className="ml-1 text-xs text-blue-200">(simulate workout history)</span>
           </label>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={periodizationEnabled}
+              onChange={(e) => setPeriodizationEnabled(e.target.checked)}
+              className="mr-2"
+            />
+            <span className="text-sm text-white">📊 Periodization</span>
+            <span className="ml-1 text-xs text-blue-200">(training phases & rotation)</span>
+          </label>
           
           {/* Debug Button */}
           {selectedExercise && selectedExercise !== 'Other' && (
@@ -766,6 +796,15 @@ const WorkoutForm = ({ onSuccess }) => {
               </div>
             ) : null}
           </div>
+        )}
+
+        {/* Periodization Panel */}
+        {periodizationEnabled && (
+          <PeriodizationPanel
+            currentExercise={selectedExercise}
+            onExerciseChange={handleExerciseChange}
+            onPeriodizedWorkoutApply={handlePeriodizedWorkoutApply}
+          />
         )}
 
         <div className="grid grid-cols-3 gap-4">
