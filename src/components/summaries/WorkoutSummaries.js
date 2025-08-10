@@ -56,16 +56,30 @@ const WorkoutSummaries = () => {
           }
           
           try {
-            const workoutDate = new Date(workoutDateRaw);
-            if (isNaN(workoutDate.getTime())) {
-              console.log('⚠️ Invalid date in workout:', workoutDateRaw, workout);
-              return false;
+            // Handle timezone-safe date comparison
+            let workoutDateStr;
+            
+            if (typeof workoutDateRaw === 'string' && workoutDateRaw.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              // If it's already in YYYY-MM-DD format, use it directly to avoid timezone issues
+              workoutDateStr = workoutDateRaw;
+            } else {
+              // Parse the date and format it, being careful about timezones
+              const workoutDate = new Date(workoutDateRaw);
+              if (isNaN(workoutDate.getTime())) {
+                console.log('⚠️ Invalid date in workout:', workoutDateRaw, workout);
+                return false;
+              }
+              
+              // For string dates like "2025-08-05", add time to prevent timezone shift
+              if (typeof workoutDateRaw === 'string' && workoutDateRaw.includes('-')) {
+                const adjustedDate = new Date(workoutDateRaw + 'T12:00:00');
+                workoutDateStr = format(adjustedDate, 'yyyy-MM-dd');
+              } else {
+                workoutDateStr = format(workoutDate, 'yyyy-MM-dd');
+              }
             }
             
-            // Compare date strings to avoid timezone issues
-            const workoutDateStr = format(workoutDate, 'yyyy-MM-dd');
             const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-            
             const isMatch = workoutDateStr === selectedDateStr;
             
             console.log('🔍 Date comparison:', {
