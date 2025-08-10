@@ -574,16 +574,26 @@ const WorkoutSummaries = () => {
               </div>
 
               {/* Insights */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
-                <h4 className="text-lg font-semibold mb-4 flex items-center" style={{color: '#000000'}}>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6 force-black-text">
+                <h4 className="text-lg font-semibold mb-4 flex items-center force-black-text">
                   <span className="mr-2">💡</span>
                   Workout Insights
                 </h4>
                 <div className="space-y-2">
                   {summaryData.insights.map((insight, index) => (
-                    <div key={index} style={{color: '#000000'}}>• {insight}</div>
+                    <div key={index} className="force-black-text">• {insight}</div>
                   ))}
                 </div>
+                <style jsx>{`
+                  .force-black-text,
+                  .force-black-text *,
+                  .force-black-text h4,
+                  .force-black-text span,
+                  .force-black-text div {
+                    color: #000000 !important;
+                    -webkit-text-fill-color: #000000 !important;
+                  }
+                `}</style>
               </div>
 
               {/* Share Options */}
