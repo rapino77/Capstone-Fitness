@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import React, { useState, useEffect, useCallback } from 'react';
+import { format, subDays } from 'date-fns';
 import axios from 'axios';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -19,62 +17,8 @@ const GoalProgressChart = ({ goals }) => {
   const [selectedGoalId, setSelectedGoalId] = useState('all');
   const [timeRange, setTimeRange] = useState(30); // days
   const [isLoading, setIsLoading] = useState(false);
-  const [progressData, setProgressData] = useState([]);
 
-  useEffect(() => {
-    if (goals && goals.length > 0) {
-      fetchProgressData();
-    }
-  }, [goals, selectedGoalId, timeRange]);
-
-  const fetchProgressData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Get progress records from the API
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-goal-progress`, {
-        params: {
-          goalId: selectedGoalId === 'all' ? undefined : selectedGoalId,
-          days: timeRange
-        }
-      });
-
-      if (response.data.success) {
-        setProgressData(response.data.data || []);
-        generateChartData(response.data.data || []);
-      }
-    } catch (error) {
-      console.log('No progress API endpoint found, using simulated data');
-      // If API doesn't exist yet, generate simulated progress data
-      generateSimulatedData();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateSimulatedData = () => {
-    // Generate simulated progress data based on current goal values
-    const activeGoals = goals.filter(g => g.status === 'Active');
-    const dataPoints = [];
-    
-    for (let i = timeRange; i >= 0; i--) {
-      const date = format(subDays(new Date(), i), 'MM/dd');
-      const dataPoint = { date };
-      
-      activeGoals.forEach(goal => {
-        // Simulate gradual progress
-        const progressRate = goal.progressPercentage / timeRange;
-        const simulatedProgress = Math.max(0, goal.progressPercentage - (progressRate * i));
-        dataPoint[goal.goalTitle || `Goal ${goal.id}`] = parseFloat(simulatedProgress.toFixed(1));
-      });
-      
-      dataPoints.push(dataPoint);
-    }
-    
-    setChartData(dataPoints);
-  };
-
-  const generateChartData = (progressRecords) => {
+  const generateChartData = useCallback((progressRecords) => {
     // Group progress records by date and goal
     const dataByDate = {};
     const today = new Date();
@@ -112,7 +56,59 @@ const GoalProgressChart = ({ goals }) => {
     });
     
     setChartData(dataArray);
-  };
+  }, [timeRange]);
+
+  const generateSimulatedData = useCallback(() => {
+    // Generate simulated progress data based on current goal values
+    const activeGoals = goals.filter(g => g.status === 'Active');
+    const dataPoints = [];
+    
+    for (let i = timeRange; i >= 0; i--) {
+      const date = format(subDays(new Date(), i), 'MM/dd');
+      const dataPoint = { date };
+      
+      activeGoals.forEach(goal => {
+        // Simulate gradual progress
+        const progressRate = goal.progressPercentage / timeRange;
+        const simulatedProgress = Math.max(0, goal.progressPercentage - (progressRate * i));
+        dataPoint[goal.goalTitle || `Goal ${goal.id}`] = parseFloat(simulatedProgress.toFixed(1));
+      });
+      
+      dataPoints.push(dataPoint);
+    }
+    
+    setChartData(dataPoints);
+  }, [goals, timeRange]);
+
+  const fetchProgressData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get progress records from the API
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-goal-progress`, {
+        params: {
+          goalId: selectedGoalId === 'all' ? undefined : selectedGoalId,
+          days: timeRange
+        }
+      });
+
+      if (response.data.success) {
+        generateChartData(response.data.data || []);
+      }
+    } catch (error) {
+      console.log('No progress API endpoint found, using simulated data');
+      // If API doesn't exist yet, generate simulated progress data
+      generateSimulatedData();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedGoalId, timeRange, generateChartData, generateSimulatedData]);
+
+  useEffect(() => {
+    if (goals && goals.length > 0) {
+      fetchProgressData();
+    }
+  }, [goals, fetchProgressData]);
 
   const activeGoals = goals.filter(g => g.status === 'Active');
   const chartGoals = selectedGoalId === 'all' 

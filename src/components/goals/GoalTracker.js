@@ -38,7 +38,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [onGoalsLoaded]);
 
   useEffect(() => {
     fetchGoals();
