@@ -61,19 +61,25 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
     }
   };
 
-  // Custom tick components to force black text
+  // Custom tick components to force black text - DEBUGGING VERSION
   const CustomXAxisTick = (props) => {
     const { x, y, payload } = props;
+    console.log('CustomXAxisTick rendering:', { x, y, payload: payload.value });
     return (
       <g transform={`translate(${x},${y})`}>
+        {/* Add a background rect to debug positioning */}
+        <rect x={-20} y={-5} width={40} height={20} fill="yellow" opacity={0.5} />
         <text
           x={0}
           y={0}
           dy={16}
           textAnchor="end"
-          fill="black"
+          fill="#FF0000"
+          stroke="#FF0000"
+          strokeWidth="0.5"
           transform="rotate(-45)"
-          fontSize="12"
+          fontSize="14"
+          fontWeight="bold"
         >
           {formatXAxis(payload.value)}
         </text>
@@ -83,15 +89,21 @@ const StrengthProgressionSection = ({ strengthProgression }) => {
 
   const CustomYAxisTick = (props) => {
     const { x, y, payload } = props;
+    console.log('CustomYAxisTick rendering:', { x, y, payload: payload.value });
     return (
       <g transform={`translate(${x},${y})`}>
+        {/* Add a background rect to debug positioning */}
+        <rect x={-30} y={-10} width={25} height={15} fill="cyan" opacity={0.5} />
         <text
           x={0}
           y={0}
           dy={4}
           textAnchor="end"
-          fill="black"
-          fontSize="12"
+          fill="#FF0000"
+          stroke="#FF0000"
+          strokeWidth="0.5"
+          fontSize="14"
+          fontWeight="bold"
         >
           {Math.round(payload.value)}
         </text>

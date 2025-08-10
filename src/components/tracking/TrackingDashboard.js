@@ -3,7 +3,7 @@ import WeightLogger from '../weight/WeightLogger';
 import StrengthProgression from '../strength/StrengthProgression';
 import Sidebar from '../common/Sidebar';
 
-const TrackingDashboard = ({ initialSection = 'weight', onSectionChange }) => {
+const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeightSuccess }) => {
   const [activeSection, setActiveSection] = useState(initialSection);
   
   // Update section when initialSection changes (from search navigation)
@@ -55,7 +55,7 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange }) => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'weight':
-        return <WeightLogger />;
+        return <WeightLogger onSuccess={onWeightSuccess} />;
       case 'strength':
         return <StrengthProgression />;
       case 'volume':
@@ -65,7 +65,7 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange }) => {
       case 'body-composition':
         return <ComingSoonPlaceholder title="Body Composition Tracker" />;
       default:
-        return <WeightLogger />;
+        return <WeightLogger onSuccess={onWeightSuccess} />;
     }
   };
 

@@ -96,6 +96,12 @@ const ChallengeSystem = ({ onSuccess }) => {
     fetchData();
   }, []);
 
+  // Refresh data when component key changes (from parent)
+  useEffect(() => {
+    console.log('🔄 ChallengeSystem refreshed by parent');
+    fetchData();
+  }, [onSuccess]);
+
   // Add effect to reload challenges when component becomes visible again
   useEffect(() => {
     const handleVisibilityChange = () => {

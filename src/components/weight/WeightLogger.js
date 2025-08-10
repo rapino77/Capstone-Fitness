@@ -18,7 +18,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useCelebration } from '../../context/CelebrationContext';
 import WeightEntriesTable from './WeightEntriesTable';
 
-const WeightLogger = () => {
+const WeightLogger = ({ onSuccess }) => {
   const { theme } = useTheme();
   const { celebrateMilestone, celebrateGoalCompletion } = useCelebration();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -238,6 +238,11 @@ const WeightLogger = () => {
         // Refresh correlation data if we're viewing it
         if (viewMode === 'correlation') {
           fetchCorrelationData();
+        }
+        
+        // Call onSuccess to trigger challenge refresh
+        if (onSuccess) {
+          onSuccess(response.data);
         }
         
         console.log('Weight logged successfully. Milestone achievements:', milestoneAchievements);

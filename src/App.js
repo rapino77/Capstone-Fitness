@@ -8,6 +8,7 @@ import BadgeDisplay from './components/badges/BadgeDisplay';
 import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
 import Dashboard from './components/dashboard/Dashboard';
+import ChallengeSystem from './components/challenges/ChallengeSystem';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
 import EntranceAnimation from './components/common/EntranceAnimation';
@@ -21,6 +22,7 @@ const AppContent = () => {
   const [activeTrackingSection, setActiveTrackingSection] = useState('weight');
   const [refreshHistory, setRefreshHistory] = useState(0);
   const [refreshGoals, setRefreshGoals] = useState(0);
+  const [refreshChallenges, setRefreshChallenges] = useState(0);
   const [showGoalCreator, setShowGoalCreator] = useState(false);
   const [showEntrance, setShowEntrance] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
@@ -28,6 +30,13 @@ const AppContent = () => {
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
     setRefreshHistory(prev => prev + 1);
+    // Also refresh challenges to update progress
+    setRefreshChallenges(prev => prev + 1);
+  };
+
+  const handleWeightSuccess = () => {
+    // Refresh challenges when weight is logged
+    setRefreshChallenges(prev => prev + 1);
   };
 
   const handleGoalCreated = () => {
@@ -73,6 +82,7 @@ const AppContent = () => {
     { id: 'workout', name: 'Log Workout', icon: '💪' },
     { id: 'tracking', name: 'Analytics', icon: '📈' },
     { id: 'badges', name: 'Badges', icon: '🏆' },
+    { id: 'challenges', name: 'Challenges', icon: '🎮' },
     { id: 'goals', name: 'Goals', icon: '🎯' },
     { id: 'history', name: 'History', icon: '📋' }
   ];
@@ -189,11 +199,16 @@ const AppContent = () => {
               <TrackingDashboard 
                 initialSection={activeTrackingSection}
                 onSectionChange={setActiveTrackingSection}
+                onWeightSuccess={handleWeightSuccess}
               />
             )}
             
             {activeTab === 'badges' && (
               <BadgeDisplay />
+            )}
+            
+            {activeTab === 'challenges' && (
+              <ChallengeSystem key={refreshChallenges} />
             )}
             
             {activeTab === 'goals' && (
