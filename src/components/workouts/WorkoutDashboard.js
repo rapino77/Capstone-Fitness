@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import WorkoutForm from './WorkoutForm';
 import WorkoutTemplates from '../templates/WorkoutTemplates';
 import RestDayScheduler from '../scheduler/RestDayScheduler';
-import ChallengeSystem from '../challenges/ChallengeSystem';
 import WorkoutSummaries from '../summaries/WorkoutSummaries';
 import Sidebar from '../common/Sidebar';
 
@@ -42,12 +41,6 @@ const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }
       description: 'Plan your recovery days'
     },
     {
-      id: 'challenges',
-      name: 'Challenge System',
-      icon: '🏆',
-      description: 'Set and track fitness challenges'
-    },
-    {
       id: 'summaries',
       name: 'Workout Summaries',
       icon: '📊',
@@ -69,8 +62,6 @@ const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }
         return <WorkoutTemplates />;
       case 'scheduler':
         return <RestDayScheduler />;
-      case 'challenges':
-        return <ChallengeSystem onSuccess={onSuccess} />;
       case 'summaries':
         return <WorkoutSummaries />;
       case 'quick-log':

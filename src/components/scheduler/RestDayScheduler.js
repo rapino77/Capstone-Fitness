@@ -9,9 +9,16 @@ const RestDayScheduler = () => {
   const [selectedDays, setSelectedDays] = useState(30);
   const [isLoading, setIsLoading] = useState(true);
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [scheduledRestDays, setScheduledRestDays] = useState([]);
+  const [showRestDaySelector, setShowRestDaySelector] = useState(false);
 
   useEffect(() => {
     fetchWorkoutData();
+    // Load saved rest days from localStorage
+    const savedRestDays = localStorage.getItem('scheduledRestDays');
+    if (savedRestDays) {
+      setScheduledRestDays(JSON.parse(savedRestDays));
+    }
   }, []);
 
   useEffect(() => {
@@ -114,6 +121,26 @@ const RestDayScheduler = () => {
     }
   };
 
+  const toggleRestDay = (dayIndex) => {
+    const updatedRestDays = [...scheduledRestDays];
+    if (updatedRestDays.includes(dayIndex)) {
+      updatedRestDays.splice(updatedRestDays.indexOf(dayIndex), 1);
+    } else {
+      updatedRestDays.push(dayIndex);
+    }
+    setScheduledRestDays(updatedRestDays);
+    localStorage.setItem('scheduledRestDays', JSON.stringify(updatedRestDays));
+  };
+
+  const isScheduledRestDay = (dayIndex) => {
+    return scheduledRestDays.includes(dayIndex);
+  };
+
+  const getScheduledRestDayName = (dayIndex) => {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return days[dayIndex];
+  };
+
   if (isLoading) {
     return (
       <div className="bg-blue-primary rounded-lg shadow-md p-6">
@@ -136,7 +163,48 @@ const RestDayScheduler = () => {
   return (
     <div className="bg-blue-primary rounded-lg shadow-md p-6">
       <div className="mb-6">
-        <h2 className="text-2xl section-header mb-4">Rest Day Scheduler</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl section-header">Rest Day Scheduler</h2>
+          <button
+            onClick={() => setShowRestDaySelector(!showRestDaySelector)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+          >
+            {showRestDaySelector ? '✓ Save Rest Days' : '📅 Schedule Rest Days'}
+          </button>
+        </div>
+        
+        {/* Rest Day Selector */}
+        {showRestDaySelector && (
+          <div className="mb-6 bg-white bg-opacity-10 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-3">Select Your Weekly Rest Days</h3>
+            <p className="text-sm text-gray-200 mb-4">
+              Choose which days of the week you want to schedule as rest days. These will repeat every week.
+            </p>
+            <div className="grid grid-cols-7 gap-2">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                <button
+                  key={day}
+                  onClick={() => toggleRestDay(index)}
+                  className={`py-3 px-2 rounded-lg font-medium transition-all ${
+                    isScheduledRestDay(index)
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'bg-gray-600 text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="text-sm">{day}</div>
+                  <div className="text-xs mt-1">
+                    {isScheduledRestDay(index) ? '😴 Rest' : 'Active'}
+                  </div>
+                </button>
+              ))}
+            </div>
+            {scheduledRestDays.length > 0 && (
+              <div className="mt-4 text-sm text-gray-200">
+                <strong>Scheduled rest days:</strong> {scheduledRestDays.map(day => getScheduledRestDayName(day)).join(', ')}
+              </div>
+            )}
+          </div>
+        )}
         
         {/* Analysis Period Selector */}
         <div className="mb-6">
@@ -240,12 +308,18 @@ const RestDayScheduler = () => {
             </div>
           ))}
           
-          {weekDays.map((day, index) => (
-            <div key={index} className={`rounded-lg p-3 min-h-[100px] ${
-              day.isToday ? 'bg-blue-600 border-2 border-blue-400' :
-              day.workouts.length > 0 ? 'bg-green-500 bg-opacity-80' :
-              'bg-gray-500 bg-opacity-50'
-            }`}>
+          {weekDays.map((day, index) => {
+            const dayOfWeek = day.date.getDay();
+            const adjustedDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday=0 to Sunday=6
+            const isScheduledRest = isScheduledRestDay(adjustedDayIndex);
+            
+            return (
+              <div key={index} className={`rounded-lg p-3 min-h-[100px] ${
+                day.isToday ? 'bg-blue-600 border-2 border-blue-400' :
+                isScheduledRest ? 'bg-red-500 bg-opacity-60 border-2 border-red-400' :
+                day.workouts.length > 0 ? 'bg-green-500 bg-opacity-80' :
+                'bg-gray-500 bg-opacity-50'
+              }`}>
               <div className="text-center">
                 <div className="text-sm font-medium text-white mb-1">
                   {format(day.date, 'd')}
@@ -267,14 +341,20 @@ const RestDayScheduler = () => {
                       </div>
                     )}
                   </div>
+                ) : isScheduledRest ? (
+                  <div className="text-xs text-white">
+                    <div className="font-medium">😴 Scheduled Rest</div>
+                    <div className="text-xs opacity-75 mt-1">Weekly rest day</div>
+                  </div>
                 ) : (
                   <div className="text-xs text-white opacity-75">
-                    😴 Rest Day
+                    💤 Rest Day
                   </div>
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Recommendations */}

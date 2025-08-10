@@ -7,6 +7,7 @@ import TrackingDashboard from './components/tracking/TrackingDashboard';
 import BadgeDisplay from './components/badges/BadgeDisplay';
 import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
+import GoalProgressChart from './components/goals/GoalProgressChart';
 import Dashboard from './components/dashboard/Dashboard';
 import ChallengeSystem from './components/challenges/ChallengeSystem';
 import ThemeSettings from './components/common/ThemeSettings';
@@ -26,6 +27,7 @@ const AppContent = () => {
   const [showGoalCreator, setShowGoalCreator] = useState(false);
   const [showEntrance, setShowEntrance] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
+  const [goalsData, setGoalsData] = useState([]);
 
   const handleWorkoutSuccess = () => {
     // Trigger history refresh when a new workout is logged
@@ -245,7 +247,9 @@ const AppContent = () => {
                     <GoalTracker 
                       onUpdateGoal={handleGoalUpdated}
                       refreshTrigger={refreshGoals}
+                      onGoalsLoaded={setGoalsData}
                     />
+                    <GoalProgressChart goals={goalsData} />
                   </>
                 ) : (
                   <GoalCreator 

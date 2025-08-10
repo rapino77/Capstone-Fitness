@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import axios from 'axios';
 import { useCelebration } from '../../context/CelebrationContext';
 
-const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
+const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
   const [goals, setGoals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('Active');
@@ -28,6 +28,10 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0 }) => {
       
       if (response.data.success) {
         setGoals(response.data.data);
+        // Share goals data with parent
+        if (onGoalsLoaded) {
+          onGoalsLoaded(response.data.data);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch goals:', error);
