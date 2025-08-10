@@ -40,21 +40,55 @@ const WorkoutSummaries = () => {
         console.log('🔍 Filtering workouts for date:', format(selectedDate, 'yyyy-MM-dd'));
         console.log('📊 Total workouts available:', workouts.length);
         
+        // Log first few workouts to see the data structure
+        if (workouts.length > 0) {
+          console.log('🔍 Sample workout data:', workouts.slice(0, 3));
+          console.log('🔍 Available date fields:', Object.keys(workouts[0]));
+        }
+        
         const dayWorkouts = workouts.filter(workout => {
-          const workoutDate = new Date(workout.date || workout.Date);
-          // Handle timezone issues by comparing date strings
-          const workoutDateStr = format(workoutDate, 'yyyy-MM-dd');
-          const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+          // Try multiple date field variations
+          const workoutDateRaw = workout.date || workout.Date || workout.created_time || workout.createdTime;
           
-          const isMatch = workoutDateStr === selectedDateStr;
-          if (isMatch) {
-            console.log('✅ Found matching workout:', workout);
+          if (!workoutDateRaw) {
+            console.log('⚠️ No date field found in workout:', workout);
+            return false;
           }
           
-          return isMatch;
+          try {
+            const workoutDate = new Date(workoutDateRaw);
+            if (isNaN(workoutDate.getTime())) {
+              console.log('⚠️ Invalid date in workout:', workoutDateRaw, workout);
+              return false;
+            }
+            
+            // Compare date strings to avoid timezone issues
+            const workoutDateStr = format(workoutDate, 'yyyy-MM-dd');
+            const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+            
+            const isMatch = workoutDateStr === selectedDateStr;
+            
+            console.log('🔍 Date comparison:', {
+              workout: workout.exercise || workout.Exercise || 'Unknown',
+              workoutDateRaw,
+              workoutDateStr,
+              selectedDateStr,
+              isMatch
+            });
+            
+            if (isMatch) {
+              console.log('✅ Found matching workout:', workout);
+            }
+            
+            return isMatch;
+          } catch (error) {
+            console.error('❌ Error processing workout date:', error, workout);
+            return false;
+          }
         });
         
         console.log('📊 Filtered workouts for selected date:', dayWorkouts.length);
+        console.log('📊 Matching workouts:', dayWorkouts);
         setWorkoutData(dayWorkouts);
       } else {
         setWorkoutData([]);
@@ -394,12 +428,15 @@ const WorkoutSummaries = () => {
               console.log('🔍 Debug Info:');
               console.log('Selected Date:', selectedDate);
               console.log('Formatted Date:', format(selectedDate, 'yyyy-MM-dd'));
+              console.log('Workout Data Count:', workoutData.length);
               console.log('Workout Data:', workoutData);
               console.log('Summary Data:', summaryData);
+              // Force a refresh to get latest data
+              fetchWorkoutData();
             }}
             className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm"
           >
-            🐛 Debug
+            🐛 Debug & Refresh
           </button>
         </div>
       </div>

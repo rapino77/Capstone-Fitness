@@ -110,6 +110,242 @@ export const workoutTemplates = {
         ]
       }
     }
+  },
+  bro_split: {
+    name: "Bro Split",
+    description: "5-day split targeting one major muscle group per day",
+    frequency: 5,
+    restDays: 1,
+    templates: {
+      chest: {
+        name: "Chest Day",
+        description: "Complete chest development",
+        primaryMuscles: ["Chest"],
+        exercises: [
+          { name: "Bench Press", sets: 4, reps: "6-8", category: "compound", priority: "primary" },
+          { name: "Incline Barbell Press", sets: 4, reps: "8-10", category: "compound", priority: "primary" },
+          { name: "Dumbbell Flyes", sets: 3, reps: "12-15", category: "isolation", priority: "secondary" },
+          { name: "Incline Dumbbell Press", sets: 3, reps: "10-12", category: "compound", priority: "secondary" },
+          { name: "Cable Crossovers", sets: 3, reps: "15-20", category: "isolation", priority: "accessory" },
+          { name: "Dips", sets: 3, reps: "10-15", category: "compound", priority: "accessory" }
+        ]
+      },
+      back: {
+        name: "Back Day",
+        description: "Complete back development",
+        primaryMuscles: ["Back"],
+        exercises: [
+          { name: "Deadlift", sets: 4, reps: "5-6", category: "compound", priority: "primary" },
+          { name: "Pull-ups", sets: 4, reps: "6-10", category: "compound", priority: "primary" },
+          { name: "Bent Over Row", sets: 4, reps: "8-10", category: "compound", priority: "secondary" },
+          { name: "T-Bar Rows", sets: 3, reps: "10-12", category: "compound", priority: "secondary" },
+          { name: "Cable Rows", sets: 3, reps: "12-15", category: "compound", priority: "secondary" },
+          { name: "Lat Pulldowns", sets: 3, reps: "12-15", category: "compound", priority: "accessory" },
+          { name: "Face Pulls", sets: 3, reps: "15-20", category: "isolation", priority: "accessory" }
+        ]
+      },
+      shoulders: {
+        name: "Shoulder Day",
+        description: "Complete shoulder development",
+        primaryMuscles: ["Shoulders"],
+        exercises: [
+          { name: "Overhead Press", sets: 4, reps: "6-8", category: "compound", priority: "primary" },
+          { name: "Lateral Raises", sets: 4, reps: "12-15", category: "isolation", priority: "primary" },
+          { name: "Rear Delt Flyes", sets: 3, reps: "15-20", category: "isolation", priority: "secondary" },
+          { name: "Arnold Press", sets: 3, reps: "10-12", category: "compound", priority: "secondary" },
+          { name: "Front Raises", sets: 3, reps: "12-15", category: "isolation", priority: "accessory" },
+          { name: "Upright Rows", sets: 3, reps: "12-15", category: "compound", priority: "accessory" }
+        ]
+      },
+      arms: {
+        name: "Arms Day",
+        description: "Biceps and triceps focus",
+        primaryMuscles: ["Biceps", "Triceps"],
+        exercises: [
+          { name: "Close-Grip Bench Press", sets: 4, reps: "8-10", category: "compound", priority: "primary" },
+          { name: "Barbell Curls", sets: 4, reps: "10-12", category: "isolation", priority: "primary" },
+          { name: "Tricep Dips", sets: 3, reps: "10-15", category: "compound", priority: "secondary" },
+          { name: "Hammer Curls", sets: 3, reps: "12-15", category: "isolation", priority: "secondary" },
+          { name: "Tricep Extensions", sets: 3, reps: "12-15", category: "isolation", priority: "secondary" },
+          { name: "Cable Curls", sets: 3, reps: "15-20", category: "isolation", priority: "accessory" },
+          { name: "Diamond Push-ups", sets: 3, reps: "max", category: "compound", priority: "accessory" }
+        ]
+      },
+      legs: {
+        name: "Legs Day",
+        description: "Complete lower body development",
+        primaryMuscles: ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
+        exercises: [
+          { name: "Squat", sets: 4, reps: "6-8", category: "compound", priority: "primary" },
+          { name: "Romanian Deadlift", sets: 4, reps: "8-10", category: "compound", priority: "primary" },
+          { name: "Leg Press", sets: 3, reps: "12-15", category: "compound", priority: "secondary" },
+          { name: "Walking Lunges", sets: 3, reps: "12-15", category: "compound", priority: "secondary" },
+          { name: "Leg Curls", sets: 3, reps: "12-15", category: "isolation", priority: "secondary" },
+          { name: "Leg Extensions", sets: 3, reps: "15-20", category: "isolation", priority: "accessory" },
+          { name: "Calf Raises", sets: 4, reps: "15-20", category: "isolation", priority: "accessory" }
+        ]
+      }
+    }
+  },
+  starter: {
+    name: "Beginner Starter",
+    description: "Perfect for beginners - full body 3x per week with basic movements",
+    frequency: 3,
+    restDays: 1,
+    templates: {
+      day1: {
+        name: "Full Body A",
+        description: "Basic compound movements",
+        primaryMuscles: ["Full Body"],
+        exercises: [
+          { name: "Squat", sets: 3, reps: "8-12", category: "compound", priority: "primary" },
+          { name: "Bench Press", sets: 3, reps: "8-12", category: "compound", priority: "primary" },
+          { name: "Bent Over Row", sets: 3, reps: "8-12", category: "compound", priority: "primary" },
+          { name: "Overhead Press", sets: 2, reps: "10-15", category: "compound", priority: "secondary" },
+          { name: "Plank", sets: 3, reps: "30-60s", category: "core", priority: "accessory" }
+        ]
+      },
+      day2: {
+        name: "Full Body B",
+        description: "Alternative compound movements",
+        primaryMuscles: ["Full Body"],
+        exercises: [
+          { name: "Deadlift", sets: 3, reps: "5-8", category: "compound", priority: "primary" },
+          { name: "Push-ups", sets: 3, reps: "8-15", category: "compound", priority: "primary" },
+          { name: "Pull-ups/Lat Pulldown", sets: 3, reps: "5-12", category: "compound", priority: "primary" },
+          { name: "Lunges", sets: 2, reps: "10-15", category: "compound", priority: "secondary" },
+          { name: "Side Plank", sets: 2, reps: "20-40s", category: "core", priority: "accessory" }
+        ]
+      },
+      day3: {
+        name: "Full Body C",
+        description: "Mixed movements with accessories",
+        primaryMuscles: ["Full Body"],
+        exercises: [
+          { name: "Goblet Squat", sets: 3, reps: "10-15", category: "compound", priority: "primary" },
+          { name: "Dumbbell Press", sets: 3, reps: "10-15", category: "compound", priority: "primary" },
+          { name: "Dumbbell Rows", sets: 3, reps: "10-15", category: "compound", priority: "primary" },
+          { name: "Bicep Curls", sets: 2, reps: "12-15", category: "isolation", priority: "secondary" },
+          { name: "Tricep Extensions", sets: 2, reps: "12-15", category: "isolation", priority: "secondary" }
+        ]
+      }
+    }
+  },
+  strength: {
+    name: "Strength Focused",
+    description: "4-day program focused on building maximum strength",
+    frequency: 4,
+    restDays: 1,
+    templates: {
+      squat: {
+        name: "Squat Focus",
+        description: "Squat-centered lower body strength",
+        primaryMuscles: ["Quadriceps", "Glutes"],
+        exercises: [
+          { name: "Back Squat", sets: 5, reps: "3-5", category: "compound", priority: "primary" },
+          { name: "Front Squat", sets: 3, reps: "6-8", category: "compound", priority: "secondary" },
+          { name: "Romanian Deadlift", sets: 3, reps: "8-10", category: "compound", priority: "secondary" },
+          { name: "Bulgarian Split Squats", sets: 3, reps: "8-12", category: "compound", priority: "accessory" },
+          { name: "Leg Press", sets: 3, reps: "12-15", category: "compound", priority: "accessory" }
+        ]
+      },
+      bench: {
+        name: "Bench Focus",
+        description: "Bench press-centered upper body strength",
+        primaryMuscles: ["Chest", "Shoulders", "Triceps"],
+        exercises: [
+          { name: "Bench Press", sets: 5, reps: "3-5", category: "compound", priority: "primary" },
+          { name: "Incline Bench Press", sets: 3, reps: "6-8", category: "compound", priority: "secondary" },
+          { name: "Close-Grip Bench Press", sets: 3, reps: "8-10", category: "compound", priority: "secondary" },
+          { name: "Dumbbell Press", sets: 3, reps: "10-12", category: "compound", priority: "accessory" },
+          { name: "Tricep Dips", sets: 3, reps: "8-12", category: "compound", priority: "accessory" }
+        ]
+      },
+      deadlift: {
+        name: "Deadlift Focus",
+        description: "Deadlift-centered posterior chain strength",
+        primaryMuscles: ["Back", "Hamstrings", "Glutes"],
+        exercises: [
+          { name: "Conventional Deadlift", sets: 5, reps: "3-5", category: "compound", priority: "primary" },
+          { name: "Sumo Deadlift", sets: 3, reps: "6-8", category: "compound", priority: "secondary" },
+          { name: "Bent Over Row", sets: 3, reps: "8-10", category: "compound", priority: "secondary" },
+          { name: "Good Mornings", sets: 3, reps: "10-12", category: "compound", priority: "accessory" },
+          { name: "Hyperextensions", sets: 3, reps: "12-15", category: "isolation", priority: "accessory" }
+        ]
+      },
+      press: {
+        name: "Press Focus",
+        description: "Overhead press-centered shoulder strength",
+        primaryMuscles: ["Shoulders", "Triceps"],
+        exercises: [
+          { name: "Overhead Press", sets: 5, reps: "3-5", category: "compound", priority: "primary" },
+          { name: "Push Press", sets: 3, reps: "6-8", category: "compound", priority: "secondary" },
+          { name: "Incline Dumbbell Press", sets: 3, reps: "8-10", category: "compound", priority: "secondary" },
+          { name: "Lateral Raises", sets: 3, reps: "12-15", category: "isolation", priority: "accessory" },
+          { name: "Face Pulls", sets: 3, reps: "15-20", category: "isolation", priority: "accessory" }
+        ]
+      }
+    }
+  },
+  bodyweight: {
+    name: "Bodyweight Only",
+    description: "No equipment needed - bodyweight exercises for home workouts",
+    frequency: 4,
+    restDays: 1,
+    templates: {
+      upper: {
+        name: "Upper Body",
+        description: "Upper body bodyweight exercises",
+        primaryMuscles: ["Chest", "Back", "Shoulders", "Arms"],
+        exercises: [
+          { name: "Push-ups", sets: 4, reps: "8-20", category: "compound", priority: "primary" },
+          { name: "Pike Push-ups", sets: 3, reps: "5-15", category: "compound", priority: "primary" },
+          { name: "Diamond Push-ups", sets: 3, reps: "5-15", category: "compound", priority: "secondary" },
+          { name: "Tricep Dips (chair)", sets: 3, reps: "8-20", category: "compound", priority: "secondary" },
+          { name: "Superman", sets: 3, reps: "15-25", category: "isolation", priority: "accessory" },
+          { name: "Plank to Push-up", sets: 3, reps: "8-15", category: "compound", priority: "accessory" }
+        ]
+      },
+      lower: {
+        name: "Lower Body",
+        description: "Lower body bodyweight exercises",
+        primaryMuscles: ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
+        exercises: [
+          { name: "Bodyweight Squats", sets: 4, reps: "15-30", category: "compound", priority: "primary" },
+          { name: "Lunges", sets: 3, reps: "12-20", category: "compound", priority: "primary" },
+          { name: "Single-Leg Squats", sets: 3, reps: "5-15", category: "compound", priority: "secondary" },
+          { name: "Glute Bridges", sets: 3, reps: "15-25", category: "isolation", priority: "secondary" },
+          { name: "Calf Raises", sets: 3, reps: "20-30", category: "isolation", priority: "accessory" },
+          { name: "Wall Sit", sets: 3, reps: "30-60s", category: "isolation", priority: "accessory" }
+        ]
+      },
+      core: {
+        name: "Core & Conditioning",
+        description: "Core strength and cardio conditioning",
+        primaryMuscles: ["Core"],
+        exercises: [
+          { name: "Burpees", sets: 4, reps: "8-15", category: "compound", priority: "primary" },
+          { name: "Mountain Climbers", sets: 3, reps: "20-40", category: "compound", priority: "primary" },
+          { name: "Plank", sets: 3, reps: "30-90s", category: "core", priority: "secondary" },
+          { name: "Russian Twists", sets: 3, reps: "20-40", category: "core", priority: "secondary" },
+          { name: "Bicycle Crunches", sets: 3, reps: "20-40", category: "core", priority: "accessory" },
+          { name: "High Knees", sets: 3, reps: "30-60s", category: "compound", priority: "accessory" }
+        ]
+      },
+      hiit: {
+        name: "HIIT Circuit",
+        description: "High-intensity interval training",
+        primaryMuscles: ["Full Body"],
+        exercises: [
+          { name: "Jumping Jacks", sets: 4, reps: "45s", category: "compound", priority: "primary" },
+          { name: "Burpees", sets: 4, reps: "30s", category: "compound", priority: "primary" },
+          { name: "squat Jumps", sets: 4, reps: "30s", category: "compound", priority: "secondary" },
+          { name: "Push-up to T", sets: 4, reps: "30s", category: "compound", priority: "secondary" },
+          { name: "Plank Jacks", sets: 4, reps: "30s", category: "core", priority: "accessory" },
+          { name: "Rest", sets: 1, reps: "60s", category: "compound", priority: "accessory" }
+        ]
+      }
+    }
   }
 };
 
@@ -164,6 +400,62 @@ export const getWorkoutSchedule = (templateType, startDate = new Date()) => {
           date,
           type: fbPattern[day],
           template: fbPattern[day] !== 'rest' ? template.templates[fbPattern[day]] : null
+        });
+      }
+    } else if (templateType === 'bro_split') {
+      // Bro Split: Chest, Back, Shoulders, Arms, Legs, Rest, Rest
+      const broPattern = ['chest', 'back', 'shoulders', 'arms', 'legs', 'rest', 'rest'];
+      
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + (week * 7) + day);
+        
+        weekSchedule.push({
+          date,
+          type: broPattern[day],
+          template: broPattern[day] !== 'rest' ? template.templates[broPattern[day]] : null
+        });
+      }
+    } else if (templateType === 'starter') {
+      // Starter: Day1, Rest, Day2, Rest, Day3, Rest, Rest
+      const starterPattern = ['day1', 'rest', 'day2', 'rest', 'day3', 'rest', 'rest'];
+      
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + (week * 7) + day);
+        
+        weekSchedule.push({
+          date,
+          type: starterPattern[day],
+          template: starterPattern[day] !== 'rest' ? template.templates[starterPattern[day]] : null
+        });
+      }
+    } else if (templateType === 'strength') {
+      // Strength: Squat, Bench, Rest, Deadlift, Press, Rest, Rest
+      const strengthPattern = ['squat', 'bench', 'rest', 'deadlift', 'press', 'rest', 'rest'];
+      
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + (week * 7) + day);
+        
+        weekSchedule.push({
+          date,
+          type: strengthPattern[day],
+          template: strengthPattern[day] !== 'rest' ? template.templates[strengthPattern[day]] : null
+        });
+      }
+    } else if (templateType === 'bodyweight') {
+      // Bodyweight: Upper, Lower, Rest, Core, HIIT, Rest, Rest
+      const bodyweightPattern = ['upper', 'lower', 'rest', 'core', 'hiit', 'rest', 'rest'];
+      
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + (week * 7) + day);
+        
+        weekSchedule.push({
+          date,
+          type: bodyweightPattern[day],
+          template: bodyweightPattern[day] !== 'rest' ? template.templates[bodyweightPattern[day]] : null
         });
       }
     }
