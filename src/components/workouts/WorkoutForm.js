@@ -8,6 +8,7 @@ import { detectImmediateDeload, formatDeloadPrompt } from '../../utils/deloadDet
 import { useCelebration } from '../../context/CelebrationContext';
 import DeloadPrompt from './DeloadPrompt';
 import PeriodizationPanel from '../rotation/PeriodizationPanel';
+import WorkoutTimer from '../timer/WorkoutTimer';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,6 +22,8 @@ const WorkoutForm = ({ onSuccess }) => {
   const [showDeloadPrompt, setShowDeloadPrompt] = useState(false);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [periodizationEnabled, setPeriodizationEnabled] = useState(true);
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [workoutTimerData, setWorkoutTimerData] = useState(null);
   const { celebratePR } = useCelebration();
   
   const {
@@ -273,19 +276,48 @@ const WorkoutForm = ({ onSuccess }) => {
     }
   };
 
+  // Timer handlers
+  const handleTimerData = (timerData) => {
+    setWorkoutTimerData(timerData);
+  };
+
+  const handleWorkoutComplete = (workoutSummary) => {
+    // Timer workout is complete, auto-populate any missing data
+    if (workoutSummary) {
+      setWorkoutTimerData(workoutSummary);
+      
+      // Add timer summary to notes
+      const currentNotes = watch('notes') || '';
+      const timerNote = `Timer: ${workoutSummary.setCount} sets in ${Math.round(workoutSummary.totalDuration / 60)}min (${workoutSummary.efficiency}% efficiency)`;
+      setValue('notes', currentNotes ? `${currentNotes}\n${timerNote}` : timerNote);
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitMessage({ type: '', text: '' });
 
     try {
-      // Include progression tracking info and userId
+      // Include progression tracking info, timer data, and userId
       const submissionData = {
         ...data,
         userId: 'default-user',  // Add userId to match what the API expects
         progressionApplied: progressionSuggestion?.suggestion && 
           data.sets === progressionSuggestion.suggestion.sets &&
           data.reps === progressionSuggestion.suggestion.reps &&
-          data.weight === progressionSuggestion.suggestion.weight
+          data.weight === progressionSuggestion.suggestion.weight,
+        // Include timer data if available
+        ...(workoutTimerData && {
+          totalDuration: workoutTimerData.totalDuration,
+          workTime: workoutTimerData.workTime,
+          restTime: workoutTimerData.restTime,
+          setCount: workoutTimerData.setCount,
+          avgSetDuration: workoutTimerData.avgSetDuration,
+          avgRestDuration: workoutTimerData.avgRestDuration,
+          efficiency: workoutTimerData.efficiency,
+          startTime: new Date(Date.now() - (workoutTimerData.totalDuration * 1000)).toISOString(),
+          endTime: new Date().toISOString()
+        })
       };
 
       console.log('💾 Submitting workout data:', submissionData);
@@ -359,6 +391,7 @@ const WorkoutForm = ({ onSuccess }) => {
         
         reset();
         setProgressionSuggestion(null);
+        setWorkoutTimerData(null); // Clear timer data
         if (onSuccess) onSuccess(response.data);
         
         // Re-select the exercise and refresh suggestion for next workout
@@ -592,6 +625,16 @@ const WorkoutForm = ({ onSuccess }) => {
             <span className="text-sm text-white">📊 Periodization</span>
             <span className="ml-1 text-xs text-blue-200">(training phases & rotation)</span>
           </label>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={timerEnabled}
+              onChange={(e) => setTimerEnabled(e.target.checked)}
+              className="mr-2"
+            />
+            <span className="text-sm text-white">⏱️ Workout Timer</span>
+            <span className="ml-1 text-xs text-blue-200">(track duration & metrics)</span>
+          </label>
           
           {/* Debug Button */}
           {selectedExercise && selectedExercise !== 'Other' && (
@@ -804,6 +847,15 @@ const WorkoutForm = ({ onSuccess }) => {
             currentExercise={selectedExercise}
             onExerciseChange={handleExerciseChange}
             onPeriodizedWorkoutApply={handlePeriodizedWorkoutApply}
+          />
+        )}
+
+        {/* Workout Timer */}
+        {timerEnabled && (
+          <WorkoutTimer
+            currentExercise={selectedExercise}
+            onWorkoutComplete={handleWorkoutComplete}
+            onTimerData={handleTimerData}
           />
         )}
 

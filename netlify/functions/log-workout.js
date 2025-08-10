@@ -62,7 +62,17 @@ exports.handler = async (event, context) => {
       Reps: parseInt(data.reps) || 0,
       Weight: parseFloat(data.weight) || 0,
       Date: data.date || new Date().toISOString().split('T')[0],
-      Notes: data.notes || ''
+      Notes: data.notes || '',
+      // Duration tracking fields
+      'Total Duration': data.totalDuration ? parseInt(data.totalDuration) : null,
+      'Work Time': data.workTime ? parseInt(data.workTime) : null,
+      'Rest Time': data.restTime ? parseInt(data.restTime) : null,
+      'Set Count': data.setCount ? parseInt(data.setCount) : null,
+      'Average Set Duration': data.avgSetDuration ? parseInt(data.avgSetDuration) : null,
+      'Average Rest Duration': data.avgRestDuration ? parseInt(data.avgRestDuration) : null,
+      'Workout Efficiency': data.efficiency ? parseInt(data.efficiency) : null,
+      'Start Time': data.startTime || null,
+      'End Time': data.endTime || null
     });
 
     // Auto-update related goals after logging workout

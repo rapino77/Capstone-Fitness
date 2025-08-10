@@ -17,6 +17,8 @@ import {
 } from 'recharts';
 import WeeklyReport from './WeeklyReport';
 import StrengthProgressionSection from './StrengthProgressionSection';
+import DurationAnalytics from '../analytics/DurationAnalytics';
+import WorkoutStreak from '../streaks/WorkoutStreak';
 
 const Dashboard = ({ refreshTrigger = 0 }) => {
   const [analytics, setAnalytics] = useState(null);
@@ -131,6 +133,9 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
 
   return (
     <div className="space-y-6">
+      {/* Workout Streak Section */}
+      <WorkoutStreak userId="default-user" refreshTrigger={refreshTrigger} />
+      
       {/* Header with Timeframe Selector */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl section-header">Dashboard Overview</h1>
@@ -458,6 +463,11 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
           </div>
         </div>
       )}
+
+      {/* Duration Analytics Section */}
+      <div className="mt-8">
+        <DurationAnalytics userId="default-user" />
+      </div>
     </div>
   );
 };
