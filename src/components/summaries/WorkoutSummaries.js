@@ -575,13 +575,13 @@ const WorkoutSummaries = () => {
 
               {/* Insights */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
-                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
                   <span className="mr-2">💡</span>
                   Workout Insights
                 </h4>
                 <div className="space-y-2">
                   {summaryData.insights.map((insight, index) => (
-                    <div key={index} className="text-gray-700">• {insight}</div>
+                    <div key={index} className="text-black">• {insight}</div>
                   ))}
                 </div>
               </div>
