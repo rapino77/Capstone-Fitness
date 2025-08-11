@@ -18,11 +18,16 @@ import {
 import WeeklyReport from './WeeklyReport';
 import StrengthProgressionSection from './StrengthProgressionSection';
 import WorkoutStreak from '../streaks/WorkoutStreak';
+import SummaryInsights from '../summaries/SummaryInsights';
+import ExportProgressReport from '../export/ExportProgressReport';
+import ProgressPhotos from '../photos/ProgressPhotos';
 
 const Dashboard = ({ refreshTrigger = 0 }) => {
   const [analytics, setAnalytics] = useState(null);
   const [recentPRs, setRecentPRs] = useState([]);
   const [progressionSuggestions, setProgressionSuggestions] = useState([]);
+  const [weightCorrelation, setWeightCorrelation] = useState(null);
+  const [goalPredictions, setGoalPredictions] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState(30);
 
@@ -30,8 +35,8 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
     try {
       setIsLoading(true);
       
-      // Fetch analytics data and progression suggestions
-      const [analyticsResponse, prsResponse] = await Promise.all([
+      // Fetch analytics data, PRs, weight-performance correlation, and goal predictions
+      const [analyticsResponse, prsResponse, correlationResponse, predictionsResponse] = await Promise.all([
         axios.get(`${process.env.REACT_APP_API_URL}/get-analytics`, {
           params: {
             timeframe,
@@ -45,7 +50,13 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
             checkLatest: 'false',
             limit: '5'
           }
-        })
+        }),
+        axios.get(`${process.env.REACT_APP_API_URL}/get-weight-performance-correlation`, {
+          params: {
+            limit: timeframe.toString()
+          }
+        }),
+        axios.get(`${process.env.REACT_APP_API_URL}/get-goal-predictions`)
       ]);
 
       // Get recent workouts to generate progression suggestions
@@ -60,6 +71,14 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
       
       if (prsResponse.data.success) {
         setRecentPRs(prsResponse.data.data.currentPRs || []);
+      }
+      
+      if (correlationResponse.data.success) {
+        setWeightCorrelation(correlationResponse.data.data);
+      }
+      
+      if (predictionsResponse.data.success) {
+        setGoalPredictions(predictionsResponse.data.data);
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -155,6 +174,9 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
         </div>
       </div>
 
+      {/* Summary Insights Section */}
+      <SummaryInsights refreshTrigger={refreshTrigger} />
+
       {/* Weekly Report Section */}
       <WeeklyReport />
 
@@ -189,6 +211,77 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
           color="bg-purple-500"
         />
       </div>
+
+      {/* Weight-Performance Correlation */}
+      {weightCorrelation && weightCorrelation.combinedData?.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-lg font-semibold mb-4">Body Weight vs Performance Correlation</h3>
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">
+                Correlation: <span className={`font-semibold ${
+                  Math.abs(weightCorrelation.correlation.coefficient) > 0.5 ? 'text-green-600' :
+                  Math.abs(weightCorrelation.correlation.coefficient) > 0.3 ? 'text-yellow-600' :
+                  'text-gray-600'
+                }`}>
+                  {weightCorrelation.correlation.coefficient.toFixed(3)} ({weightCorrelation.correlation.strength})
+                </span>
+              </span>
+              <span className="text-gray-600">
+                {weightCorrelation.correlation.dataPoints} data points
+              </span>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={weightCorrelation.combinedData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="date" 
+                tickFormatter={(date) => format(new Date(date), 'MM/dd')}
+              />
+              <YAxis yAxisId="weight" orientation="left" />
+              <YAxis yAxisId="volume" orientation="right" />
+              <Tooltip 
+                labelFormatter={(date) => format(new Date(date), 'MMM dd, yyyy')}
+                formatter={(value, name) => [
+                  name === 'weight' ? `${value} lbs` : `${(value/1000).toFixed(1)}k lbs`,
+                  name === 'weight' ? 'Body Weight' : 'Training Volume'
+                ]}
+              />
+              <Line 
+                yAxisId="weight"
+                type="monotone" 
+                dataKey="weight" 
+                stroke="#3B82F6" 
+                strokeWidth={2}
+                dot={{ fill: '#3B82F6' }}
+              />
+              <Line 
+                yAxisId="volume"
+                type="monotone" 
+                dataKey="volume" 
+                stroke="#10B981" 
+                strokeWidth={2}
+                dot={{ fill: '#10B981' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          {weightCorrelation.insights && weightCorrelation.insights.length > 0 && (
+            <div className="mt-4">
+              {weightCorrelation.insights.map((insight, index) => (
+                <div key={index} className={`p-3 rounded-lg text-sm ${
+                  insight.type === 'success' ? 'bg-green-50 text-green-700' :
+                  insight.type === 'warning' ? 'bg-yellow-50 text-yellow-700' :
+                  insight.type === 'info' ? 'bg-blue-50 text-blue-700' :
+                  'bg-gray-50 text-gray-700'
+                }`}>
+                  <span className="font-medium">{insight.title}:</span> {insight.message}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Weight Progress & Goal Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -277,6 +370,67 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                   </ResponsiveContainer>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Goal Achievement Predictions */}
+        {goalPredictions && goalPredictions.predictions?.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Goal Achievement Predictions</h3>
+            <div className="mb-4 grid grid-cols-3 gap-4 text-center text-sm">
+              <div className="p-2 bg-green-50 rounded">
+                <div className="font-bold text-green-600">{goalPredictions.summary.likelyToSucceed}</div>
+                <div className="text-green-700">On Track</div>
+              </div>
+              <div className="p-2 bg-yellow-50 rounded">
+                <div className="font-bold text-yellow-600">{goalPredictions.summary.needsAttention}</div>
+                <div className="text-yellow-700">Need Focus</div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded">
+                <div className="font-bold text-gray-600">{goalPredictions.summary.insufficientData}</div>
+                <div className="text-gray-700">More Data Needed</div>
+              </div>
+            </div>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {goalPredictions.predictions.map((prediction) => (
+                <div key={prediction.goalId} className={`p-3 rounded-lg border-l-4 ${
+                  prediction.likelihood === 'very_likely' ? 'bg-green-50 border-green-500' :
+                  prediction.likelihood === 'likely' ? 'bg-blue-50 border-blue-500' :
+                  prediction.likelihood === 'possible' ? 'bg-yellow-50 border-yellow-500' :
+                  prediction.likelihood === 'unlikely' ? 'bg-red-50 border-red-500' :
+                  'bg-gray-50 border-gray-500'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{prediction.goalTitle}</div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        {prediction.daysRemaining > 0 ? `${prediction.daysRemaining} days remaining` : 'Past due'}
+                        {prediction.currentProgress > 0 && ` • ${prediction.currentProgress.toFixed(0)}% complete`}
+                      </div>
+                      {prediction.insights && prediction.insights.length > 0 && (
+                        <div className="text-xs text-gray-600 bg-white/50 rounded p-2">
+                          {prediction.insights[0]}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right ml-3">
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        prediction.likelihood === 'very_likely' ? 'bg-green-100 text-green-700' :
+                        prediction.likelihood === 'likely' ? 'bg-blue-100 text-blue-700' :
+                        prediction.likelihood === 'possible' ? 'bg-yellow-100 text-yellow-700' :
+                        prediction.likelihood === 'unlikely' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {prediction.likelihood.replace('_', ' ')}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {prediction.confidence} confidence
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -462,6 +616,12 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
           </div>
         </div>
       )}
+
+      {/* Export Progress Report */}
+      <ExportProgressReport />
+
+      {/* Progress Photos */}
+      <ProgressPhotos />
 
     </div>
   );
