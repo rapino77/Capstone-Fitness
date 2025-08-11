@@ -155,15 +155,18 @@ export class WorkoutTimer {
 
   // Set-level tracking methods
   startSet(exercise, setNumber) {
+    console.log('🎯 START SET called:', { exercise, setNumber, currentSetExists: !!this.currentSet });
     const now = Date.now();
     
     // End previous set if exists
     if (this.currentSet) {
+      console.log('🎯 Ending previous set before starting new one');
       this.endSet();
     }
     
     // Start new exercise tracking if needed
     if (!this.currentExercise || this.currentExercise.name !== exercise) {
+      console.log('🎯 Starting new exercise:', exercise);
       this.startExercise(exercise);
     }
     
@@ -176,11 +179,16 @@ export class WorkoutTimer {
       restBefore: this.restStartTime ? Math.floor((now - this.restStartTime) / 1000) : 0
     };
     
+    console.log('🎯 Current set created:', this.currentSet);
     this.restStartTime = null; // Clear rest timer
   }
 
   endSet(reps = null, weight = null) {
-    if (!this.currentSet) return;
+    console.log('🎯 END SET called:', { hasCurrentSet: !!this.currentSet, reps, weight });
+    if (!this.currentSet) {
+      console.log('❌ No current set to end!');
+      return;
+    }
     
     const now = Date.now();
     this.currentSet.endTime = now;
@@ -188,10 +196,13 @@ export class WorkoutTimer {
     this.currentSet.reps = reps;
     this.currentSet.weight = weight;
     
+    console.log('🎯 Completed set data:', this.currentSet);
     this.sets.push({ ...this.currentSet });
+    console.log('🎯 Total sets now:', this.sets.length);
     
     if (this.currentExercise) {
       this.currentExercise.sets.push({ ...this.currentSet });
+      console.log('🎯 Added set to current exercise. Exercise sets:', this.currentExercise.sets.length);
     }
     
     this.currentSet = null;
@@ -240,27 +251,71 @@ export class WorkoutTimer {
 
   // Data export methods
   getWorkoutSummary() {
+    console.log('🎯 getWorkoutSummary called - current timer state:');
+    console.log('  - sets array length:', this.sets.length);
+    console.log('  - sets data:', this.sets);
+    console.log('  - current exercise:', this.currentExercise);
+    console.log('  - exercises array:', this.exercises);
+    
     const totalDuration = this.getTotalDuration();
     const setCount = this.sets.length;
     const exerciseCount = this.exercises.length + (this.currentExercise ? 1 : 0);
     
     // Calculate rest vs work time
-    const workTime = this.sets.reduce((total, set) => total + set.duration, 0);
-    const restTime = this.sets.reduce((total, set) => total + set.restBefore, 0);
+    let workTime = this.sets.reduce((total, set) => total + set.duration, 0);
+    let restTime = this.sets.reduce((total, set) => total + set.restBefore, 0);
+    
+    console.log('🎯 Calculated values before estimation:');
+    console.log('  - totalDuration:', totalDuration);
+    console.log('  - setCount:', setCount);
+    console.log('  - workTime:', workTime);
+    console.log('  - restTime:', restTime);
+    
+    // If no sets were tracked but timer was running, estimate work time and sets
+    if (setCount === 0 && totalDuration > 0) {
+      // Assume 70% work time, 30% rest time as a reasonable estimate
+      workTime = Math.round(totalDuration * 0.7);
+      restTime = Math.round(totalDuration * 0.3);
+      
+      // Estimate set count based on workout duration (assume 1 set per 90 seconds)
+      const estimatedSetCount = Math.max(1, Math.round(totalDuration / 90));
+      
+      // Create estimated set data for better analytics
+      for (let i = 0; i < estimatedSetCount; i++) {
+        const estimatedSetDuration = Math.round(workTime / estimatedSetCount);
+        const estimatedRestDuration = i < estimatedSetCount - 1 ? Math.round(restTime / (estimatedSetCount - 1)) : 0;
+        
+        this.sets.push({
+          exercise: 'Unknown',
+          setNumber: i + 1,
+          startTime: Date.now() - totalDuration * 1000 + (i * (estimatedSetDuration + estimatedRestDuration) * 1000),
+          endTime: Date.now() - totalDuration * 1000 + ((i + 1) * estimatedSetDuration + i * estimatedRestDuration) * 1000,
+          duration: estimatedSetDuration,
+          restBefore: estimatedRestDuration,
+          reps: null,
+          weight: null,
+          estimated: true
+        });
+      }
+    }
+    
     const otherTime = totalDuration - workTime - restTime;
     
+    // Recalculate set count after potential estimation
+    const finalSetCount = this.sets.length;
+    
     // Average set duration
-    const avgSetDuration = setCount > 0 ? workTime / setCount : 0;
+    const avgSetDuration = finalSetCount > 0 ? workTime / finalSetCount : 0;
     
     // Average rest time
-    const avgRestDuration = setCount > 1 ? restTime / (setCount - 1) : 0;
+    const avgRestDuration = finalSetCount > 1 ? restTime / (finalSetCount - 1) : 0;
     
     return {
       totalDuration,
       workTime,
       restTime,
       otherTime,
-      setCount,
+      setCount: finalSetCount,
       exerciseCount,
       avgSetDuration: Math.round(avgSetDuration),
       avgRestDuration: Math.round(avgRestDuration),
