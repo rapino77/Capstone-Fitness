@@ -142,23 +142,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
       {/* Weekly Report Section */}
       <WeeklyReport />
 
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
-        <MetricCard
-          title="Workouts"
-          value={analytics.workoutAnalytics.totalWorkouts}
-          subtitle={`${analytics.workoutAnalytics.averagePerWeek?.toFixed(1)}/week avg`}
-          icon="💪"
-          color="bg-blue-500"
-        />
-        <MetricCard
-          title="Total Volume"
-          value={`${(analytics.workoutAnalytics.totalVolume / 1000).toFixed(1)}k`}
-          subtitle="lbs moved"
-          icon="📊"
-          color="bg-green-500"
-        />
-      </div>
+
 
 
       {/* Weight Progress */}
@@ -297,20 +281,6 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
   );
 };
 
-// Metric Card Component
-const MetricCard = ({ title, value, subtitle, icon, color }) => (
-  <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 mobile-card">
-    <div className="flex items-center justify-between">
-      <div className="flex-1 min-w-0">
-        <p className="text-xs sm:text-sm font-medium text-gray-600 mobile-text-sm truncate">{title}</p>
-        <p className="text-lg sm:text-2xl font-bold text-gray-900 mobile-heading">{value}</p>
-        <p className="text-xs sm:text-sm text-gray-500 mobile-text-sm truncate">{subtitle}</p>
-      </div>
-      <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg ${color} flex items-center justify-center text-white text-sm sm:text-xl flex-shrink-0 ml-2`}>
-        {icon}
-      </div>
-    </div>
-  </div>
-);
+
 
 export default Dashboard;
