@@ -13,6 +13,8 @@ import ChallengeSystem from './components/challenges/ChallengeSystem';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
 import EntranceAnimation from './components/common/EntranceAnimation';
+import SwipeIndicator from './components/common/SwipeIndicator';
+import useSwipeNavigation from './hooks/useSwipeNavigation';
 import './styles/theme.css';
 import './styles/animations.css';
 
@@ -89,6 +91,13 @@ const AppContent = () => {
     { id: 'history', name: 'History', icon: '📋' }
   ];
 
+  // Swipe navigation hook
+  const { onTouchStart, onTouchMove, onTouchEnd, isSwipeIndicatorVisible } = useSwipeNavigation(
+    tabs, 
+    activeTab, 
+    handleTabChange
+  );
+
   return (
     <>
       {/* Entrance Animation */}
@@ -140,10 +149,10 @@ const AppContent = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Tab Navigation - Mobile Optimized */}
         <div 
-          className="rounded-lg shadow-sm mb-3 sm:mb-6 border transition-colors duration-200 sticky top-16 sm:top-20 z-30 backdrop-blur-sm"
+          className="rounded-xl shadow-sm mb-6 sm:mb-8 border transition-colors duration-200 sticky top-16 sm:top-20 z-30 backdrop-blur-sm"
           style={{ 
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border
@@ -161,17 +170,17 @@ const AppContent = () => {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`hover-lift flex-shrink-0 py-2 sm:py-4 px-2 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header touch-manipulation ${
+                className={`hover-lift flex-shrink-0 py-3 sm:py-4 px-3 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header touch-manipulation ${
                   index !== tabs.length - 1 ? 'border-r' : ''
-                } min-w-0 flex-1 sm:flex-initial`}
+                } min-w-0 flex-1 sm:flex-initial rounded-t-xl`}
                 style={{
                   color: activeTab === tab.id ? theme.colors.primary : theme.colors.textSecondary,
-                  backgroundColor: activeTab === tab.id ? `${theme.colors.primary}10` : 'transparent',
+                  backgroundColor: activeTab === tab.id ? `${theme.colors.primary}15` : 'transparent',
                   borderColor: theme.colors.border,
-                  borderBottomWidth: activeTab === tab.id ? '2px' : '0px',
+                  borderBottomWidth: activeTab === tab.id ? '3px' : '0px',
                   borderBottomColor: activeTab === tab.id ? theme.colors.primary : 'transparent',
-                  minHeight: '56px', // Larger touch target for mobile
-                  minWidth: '64px' // Ensure adequate width
+                  minHeight: '64px', // Even larger touch target
+                  minWidth: '72px' // More width for comfort
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== tab.id) {
@@ -186,9 +195,9 @@ const AppContent = () => {
                   }
                 }}
               >
-                <div className="flex flex-col items-center justify-center space-y-1">
-                  <span className="text-base sm:text-lg">{tab.icon}</span>
-                  <span className="transition-colors duration-200 text-xs font-medium leading-tight">
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <span className="text-lg sm:text-xl">{tab.icon}</span>
+                  <span className="transition-colors duration-200 text-xs sm:text-sm font-semibold leading-tight">
                     {/* Show appropriate names for mobile */}
                     <span className="sm:hidden">
                       {tab.id === 'workout' ? 'LOG' :
@@ -207,8 +216,14 @@ const AppContent = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
-        <div className="tab-content smooth-transition relative">
+        {/* Tab Content - With Swipe Support */}
+        <div 
+          className="tab-content smooth-transition relative"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{ touchAction: 'pan-y' }} // Allow vertical scrolling but capture horizontal swipes
+        >
             {activeTab === 'dashboard' && (
               <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
             )}
@@ -288,6 +303,13 @@ const AppContent = () => {
               <WorkoutHistory key={refreshHistory} />
             )}
         </div>
+        
+        {/* Swipe Navigation Indicator */}
+        <SwipeIndicator 
+          isVisible={isSwipeIndicatorVisible} 
+          currentTab={activeTab} 
+          tabs={tabs} 
+        />
       </main>
       </div>
     </>
