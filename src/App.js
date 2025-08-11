@@ -12,6 +12,7 @@ import GoalPredictions from './components/goals/GoalPredictions';
 import ProgressPhotos from './components/photos/ProgressPhotos';
 import Dashboard from './components/dashboard/Dashboard';
 import ChallengeSystem from './components/challenges/ChallengeSystem';
+import BuddySystem from './components/social/BuddySystem';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
 import EntranceAnimation from './components/common/EntranceAnimation';
@@ -90,6 +91,7 @@ const AppContent = () => {
     { id: 'badges', name: 'Badges', icon: '🏆' },
     { id: 'challenges', name: 'Challenges', icon: '🎮' },
     { id: 'goals', name: 'Goals', icon: '🎯' },
+    { id: 'buddies', name: 'Buddies', icon: '🤝' },
     { id: 'history', name: 'History', icon: '📋' }
   ];
 
@@ -206,6 +208,7 @@ const AppContent = () => {
                        tab.id === 'tracking' ? 'ANALYTICS' :
                        tab.id === 'challenges' ? 'GAMES' :
                        tab.id === 'dashboard' ? 'DASH' :
+                       tab.id === 'buddies' ? 'SOCIAL' :
                        tab.name.split(' ')[0].toUpperCase()}
                     </span>
                     <span className="hidden sm:inline">
@@ -252,6 +255,10 @@ const AppContent = () => {
             
             {activeTab === 'challenges' && (
               <ChallengeSystem key={refreshChallenges} />
+            )}
+            
+            {activeTab === 'buddies' && (
+              <BuddySystem userId="default-user" />
             )}
             
             {activeTab === 'goals' && (

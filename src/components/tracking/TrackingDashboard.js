@@ -3,6 +3,7 @@ import WeightLogger from '../weight/WeightLogger';
 import StrengthProgression from '../strength/StrengthProgression';
 import PersonalRecordsSidebar from '../analytics/PersonalRecordsSidebar';
 import DurationAnalytics from '../analytics/DurationAnalytics';
+import TrendAnalysisAlerts from '../analytics/TrendAnalysisAlerts';
 import SummaryInsights from '../summaries/SummaryInsights';
 import Sidebar from '../common/Sidebar';
 
@@ -60,6 +61,12 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
       description: 'Measurements & ratios'
     },
     {
+      id: 'trend-alerts',
+      name: 'Trend Analysis',
+      icon: '🔍',
+      description: 'Plateau & stall detection alerts'
+    },
+    {
       id: 'summary-insights',
       name: 'Summary Insights',
       icon: '💡',
@@ -81,6 +88,8 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
         return <ComingSoonPlaceholder title="Training Volume Analysis" />;
       case 'body-composition':
         return <ComingSoonPlaceholder title="Body Composition Tracker" />;
+      case 'trend-alerts':
+        return <TrendAnalysisAlerts userId="default-user" />;
       case 'summary-insights':
         return <SummaryInsights />;
       default:
