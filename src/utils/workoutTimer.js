@@ -114,6 +114,9 @@ export class WorkoutTimer {
   }
 
   reset() {
+    console.log('🚨 TIMER RESET called - clearing all data!');
+    console.log('  - Current sets before reset:', this.sets.length);
+    console.log('  - Current exercises before reset:', this.exercises.length);
     this.startTime = null;
     this.endTime = null;
     this.pausedTime = 0;
@@ -342,6 +345,9 @@ export class WorkoutTimer {
   }
 
   fromJSON(data) {
+    console.log('🔄 LOADING timer state from JSON:', data);
+    console.log('  - Loading sets:', data.sets?.length || 0);
+    console.log('  - Loading exercises:', data.exercises?.length || 0);
     this.startTime = data.startTime;
     this.endTime = data.endTime;
     this.pausedTime = data.pausedTime || 0;
@@ -352,6 +358,7 @@ export class WorkoutTimer {
     this.currentSet = data.currentSet;
     this.currentExercise = data.currentExercise;
     this.restStartTime = data.restStartTime;
+    console.log('🔄 Timer state loaded. Current sets:', this.sets.length);
     
     // Resume interval if was running
     if (this.state === TIMER_STATES.RUNNING) {

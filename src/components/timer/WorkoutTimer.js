@@ -32,7 +32,8 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
             onTimerData(summary);
           }
           
-          clearTimerState();
+          // Don't clear timer state yet - wait for user to save/discard
+          saveTimerState(timerInstance);
         } else {
           // Save state to localStorage
           saveTimerState(timerInstance);
@@ -168,6 +169,8 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
     if (onWorkoutComplete && workoutSummary) {
       onWorkoutComplete(workoutSummary);
     }
+    // Clear timer state after saving workout
+    clearTimerState();
   }, [onWorkoutComplete, workoutSummary]);
 
   const handleDiscardWorkout = useCallback(() => {
