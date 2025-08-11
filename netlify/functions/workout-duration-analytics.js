@@ -62,28 +62,33 @@ exports.handler = async (event, context) => {
         .eachPage(
           (records, fetchNextPage) => {
             records.forEach(record => {
-              const workout = {
-                id: record.id,
-                date: record.get('Date'),
-                exercise: record.get('Exercise'),
-                sets: record.get('Sets'),
-                reps: record.get('Reps'),
-                weight: record.get('Weight'),
-                totalDuration: record.get('Total Duration'),
-                workTime: record.get('Work Time'),
-                restTime: record.get('Rest Time'),
-                setCount: record.get('Set Count'),
-                avgSetDuration: record.get('Average Set Duration'),
-                avgRestDuration: record.get('Average Rest Duration'),
-                efficiency: record.get('Workout Efficiency'),
-                startTime: record.get('Start Time'),
-                endTime: record.get('End Time'),
-                notes: record.get('Notes')
-              };
-              
-              // Only include workouts with duration data
-              if (workout.totalDuration || workout.workTime) {
-                workouts.push(workout);
+              try {
+                const workout = {
+                  id: record.id,
+                  date: record.get('Date'),
+                  exercise: record.get('Exercise'),
+                  sets: record.get('Sets'),
+                  reps: record.get('Reps'),
+                  weight: record.get('Weight'),
+                  totalDuration: record.get('Total Duration'),
+                  workTime: record.get('Work Time'),
+                  restTime: record.get('Rest Time'),
+                  setCount: record.get('Set Count'),
+                  avgSetDuration: record.get('Average Set Duration'),
+                  avgRestDuration: record.get('Average Rest Duration'),
+                  efficiency: record.get('Workout Efficiency'),
+                  startTime: record.get('Start Time'),
+                  endTime: record.get('End Time'),
+                  notes: record.get('Notes')
+                };
+                
+                // Only include workouts with duration data
+                if (workout.totalDuration || workout.workTime) {
+                  workouts.push(workout);
+                }
+              } catch (fieldError) {
+                // If duration fields don't exist, just skip this record
+                console.log('Duration fields not found in record, skipping...');
               }
             });
             fetchNextPage();
@@ -96,6 +101,11 @@ exports.handler = async (event, context) => {
     });
 
     console.log(`Retrieved ${workouts.length} workouts with duration data for analytics`);
+    
+    // If no workouts with duration data, return empty analytics
+    if (workouts.length === 0) {
+      console.log('No workouts with duration data found. Returning empty analytics.');
+    }
 
     // Analytics functions (server-side implementations)
     const calculateWorkoutMetrics = (workouts) => {
