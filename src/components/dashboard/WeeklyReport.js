@@ -46,15 +46,45 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
       const hasWeights = reportData.weight && reportData.weight.measurements && reportData.weight.measurements.length > 0;
       const hasGoals = reportData.goalsAchieved && reportData.goalsAchieved.length > 0;
       const hasPRs = reportData.personalRecords && reportData.personalRecords.length > 0;
+      const hasNonZeroSummary = reportData.summary && (
+        reportData.summary.totalWorkouts > 0 || 
+        reportData.summary.totalSets > 0 || 
+        reportData.summary.totalReps > 0
+      );
       
-      if (!hasWorkouts && !hasWeights && !hasGoals && !hasPRs) {
-        console.log('📭 No data found for this week, using sample data for demonstration');
-        const sampleData = generateEmptyWeeklyReport(weekStart, weekEnd);
-        setReportData(sampleData);
-        setError('No data found for this week. Showing sample data for demonstration. Try logging some workouts, weights, or goals to see real data here.');
+      console.log('📊 Data availability check:', {
+        hasWorkouts,
+        hasWeights,
+        hasGoals,
+        hasPRs,
+        hasNonZeroSummary,
+        totalWorkouts: reportData.summary?.totalWorkouts,
+        workoutCount: reportData.workouts?.length
+      });
+      
+      if (!hasWorkouts && !hasWeights && !hasGoals && !hasPRs && !hasNonZeroSummary) {
+        console.log('📭 No data found for this week');
+        const emptyData = generateEmptyWeeklyReport(weekStart, weekEnd);
+        // Clear the sample data to show empty state instead
+        emptyData.workouts = [];
+        emptyData.weight.measurements = [];
+        emptyData.goalsAchieved = [];
+        emptyData.personalRecords = [];
+        emptyData.summary = {
+          totalWorkouts: 0,
+          totalExercises: 0,
+          totalSets: 0,
+          totalReps: 0,
+          totalWeight: 0,
+          avgWorkoutDuration: 0,
+          streak: 0
+        };
+        setReportData(emptyData);
+        setError(`No data found for ${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}. Try logging some workouts, weights, or goals to see real data here.`);
       } else {
         console.log('✅ Found real data for this week');
         setReportData(reportData);
+        setError(null); // Clear any previous errors
       }
     } catch (err) {
       console.error('Failed to fetch weekly report:', err);
@@ -141,26 +171,43 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
 
         report.workouts = Object.values(workoutsByDate).sort((a, b) => a.date - b.date);
 
-        // Calculate summary
+        // Calculate summary from workout data
         report.summary.totalWorkouts = Object.keys(workoutsByDate).length;
         let totalDuration = 0;
+        let totalExercises = 0;
+        
         weekWorkouts.forEach(w => {
-          report.summary.totalExercises += (w.exercises || w.Exercises || []).length;
-          report.summary.totalSets += w.sets || w.Sets || 0;
-          report.summary.totalReps += w.reps || w.Reps || 0;
-          report.summary.totalWeight += w.weight || w.Weight || 0;
-          totalDuration += w.duration || w.Duration || 0;
+          // Each workout record represents one exercise, so count it
+          totalExercises += 1;
+          report.summary.totalSets += parseInt(w.sets || w.Sets || 0);
+          report.summary.totalReps += parseInt(w.reps || w.Reps || 0);
+          report.summary.totalWeight += parseFloat(w.weight || w.Weight || 0);
+          totalDuration += parseFloat(w.duration || w.Duration || w['Total Duration'] || 0);
         });
 
+        report.summary.totalExercises = totalExercises;
+
         if (report.summary.totalWorkouts > 0) {
-          report.summary.avgWorkoutDuration = totalDuration / report.summary.totalWorkouts;
+          report.summary.avgWorkoutDuration = Math.round(totalDuration / report.summary.totalWorkouts);
         }
+        
+        console.log('📈 Calculated weekly summary:', {
+          totalWorkouts: report.summary.totalWorkouts,
+          totalExercises: report.summary.totalExercises,
+          totalSets: report.summary.totalSets,
+          totalReps: report.summary.totalReps,
+          totalWeight: report.summary.totalWeight,
+          avgWorkoutDuration: report.summary.avgWorkoutDuration
+        });
 
         // Find PRs from this week's workouts
         report.personalRecords = weekWorkouts
-          .flatMap(w => w.exercises || w.Exercises || [])
-          .filter(ex => ex.isPR)
-          .map(pr => ({ exercise: pr.name, weight: pr.weight, reps: pr.reps }));
+          .filter(w => w.isPR || w['Is PR'] || (w.notes && w.notes.toLowerCase().includes('pr')))
+          .map(w => ({ 
+            exercise: w.exercise || w.Exercise, 
+            weight: w.weight || w.Weight || 0, 
+            reps: w.reps || w.Reps || 0 
+          }));
 
       }
     } catch (error) {

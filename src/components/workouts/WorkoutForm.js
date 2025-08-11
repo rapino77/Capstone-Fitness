@@ -15,6 +15,12 @@ import {
   detectStrongLiftsPattern,
   getStrongLiftsStatus 
 } from '../../utils/strongLifts5x5';
+import {
+  getNextWendlerWorkout,
+  getWendlerWorkoutSuggestion,
+  detectWendlerPattern,
+  getWendlerStatus
+} from '../../utils/wendler531';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,8 +42,9 @@ const WorkoutForm = ({ onSuccess }) => {
   // Workout Plan State
   const [workoutMode, setWorkoutMode] = useState('freeform'); // 'freeform' or 'program'
   const [selectedProgram, setSelectedProgram] = useState('strongLifts5x5');
-  const [selectedWorkout, setSelectedWorkout] = useState('workoutA'); // For StrongLifts: 'workoutA' or 'workoutB'
+  const [selectedWorkout, setSelectedWorkout] = useState('workoutA'); // For StrongLifts: 'workoutA'/'workoutB', 5/3/1: 'squat'/'bench'/'deadlift'/'overhead'
   const [strongLiftsStatus, setStrongLiftsStatus] = useState(null);
+  const [wendlerStatus, setWendlerStatus] = useState(null);
   const [programSuggestion, setProgramSuggestion] = useState(null);
   
   const {
@@ -83,10 +90,21 @@ const WorkoutForm = ({ onSuccess }) => {
     'Deadlift'
   ];
 
+  const wendlerExercises = [
+    'Squat',
+    'Bench Press',
+    'Deadlift', 
+    'Overhead Press'
+  ];
+
   // Get exercises based on current mode
   const getExerciseOptions = () => {
-    if (workoutMode === 'program' && selectedProgram === 'strongLifts5x5') {
-      return strongLiftsExercises;
+    if (workoutMode === 'program') {
+      if (selectedProgram === 'strongLifts5x5') {
+        return strongLiftsExercises;
+      } else if (selectedProgram === 'wendler531') {
+        return wendlerExercises;
+      }
     }
     return commonExercises;
   };
@@ -215,14 +233,26 @@ const WorkoutForm = ({ onSuccess }) => {
           patternDetected: pattern.isFollowing,
           confidence: pattern.confidence
         });
+
+        // Also analyze for 5/3/1 pattern
+        const wendlerStatus = getWendlerStatus(workouts);
+        const wendlerPattern = detectWendlerPattern(workouts);
         
-        // Auto-suggest next workout if following StrongLifts
+        setWendlerStatus({
+          ...wendlerStatus,
+          patternDetected: wendlerPattern.isFollowing,
+          confidence: wendlerPattern.confidence
+        });
+        
+        // Auto-suggest next workout if following either program
         if (pattern.isFollowing && workoutMode === 'freeform') {
           const nextWorkout = getNextStrongLiftsWorkout(workouts);
           setSelectedWorkout(nextWorkout);
-          
-          // Don't auto-switch mode, just notify
           console.log('StrongLifts pattern detected, suggested next workout:', nextWorkout);
+        } else if (wendlerPattern.isFollowing && workoutMode === 'freeform') {
+          const nextWorkout = getNextWendlerWorkout(workouts);
+          setSelectedWorkout(nextWorkout);
+          console.log('Wendler 5/3/1 pattern detected, suggested next workout:', nextWorkout);
         }
       }
     } catch (error) {
@@ -231,7 +261,7 @@ const WorkoutForm = ({ onSuccess }) => {
   }, [workoutMode]);
 
   const fetchProgramSuggestion = useCallback(async () => {
-    if (workoutMode !== 'program' || selectedProgram !== 'strongLifts5x5') {
+    if (workoutMode !== 'program') {
       setProgramSuggestion(null);
       return;
     }
@@ -247,7 +277,13 @@ const WorkoutForm = ({ onSuccess }) => {
       
       if (response.data.success && response.data.data) {
         const workouts = response.data.data || [];
-        const suggestion = getStrongLiftsWorkoutSuggestion(selectedWorkout, workouts);
+        let suggestion = null;
+        
+        if (selectedProgram === 'strongLifts5x5') {
+          suggestion = getStrongLiftsWorkoutSuggestion(selectedWorkout, workouts);
+        } else if (selectedProgram === 'wendler531') {
+          suggestion = getWendlerWorkoutSuggestion(selectedWorkout, workouts);
+        }
         
         setProgramSuggestion(suggestion);
         
@@ -257,7 +293,7 @@ const WorkoutForm = ({ onSuccess }) => {
           setValue('exercise', firstExercise.name);
           setValue('sets', firstExercise.sets);
           setValue('reps', firstExercise.reps);
-          setValue('weight', firstExercise.suggestedWeight);
+          setValue('weight', firstExercise.suggestedWeight || 0);
         }
       }
     } catch (error) {
@@ -362,9 +398,11 @@ const WorkoutForm = ({ onSuccess }) => {
 
   // Update progression suggestions based on workout mode
   useEffect(() => {
-    if (workoutMode === 'program' && selectedProgram === 'strongLifts5x5') {
-      // In StrongLifts mode, disable regular progressive overload
+    if (workoutMode === 'program') {
+      // In program mode, disable regular progressive overload (programs handle their own progression)
       setProgressiveOverloadEnabled(false);
+    } else {
+      setProgressiveOverloadEnabled(true);
     }
   }, [workoutMode, selectedProgram]);
 
@@ -428,9 +466,11 @@ const WorkoutForm = ({ onSuccess }) => {
   const handleProgramChange = (program) => {
     setSelectedProgram(program);
     
-    // Set default workout for StrongLifts
+    // Set default workout for each program
     if (program === 'strongLifts5x5') {
       setSelectedWorkout('workoutA');
+    } else if (program === 'wendler531') {
+      setSelectedWorkout('squat');
     }
   };
 
@@ -945,6 +985,7 @@ const WorkoutForm = ({ onSuccess }) => {
               className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
             >
               <option value="strongLifts5x5">StrongLifts 5x5</option>
+              <option value="wendler531">Wendler 5/3/1</option>
             </select>
 
             {/* StrongLifts Workout Selection */}
@@ -979,10 +1020,63 @@ const WorkoutForm = ({ onSuccess }) => {
                 </div>
               </div>
             )}
+
+            {/* Wendler 5/3/1 Workout Selection */}
+            {selectedProgram === 'wendler531' && (
+              <div className="mt-4">
+                <label className="block text-sm font-semibold text-white mb-2">Workout Session</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutChange('squat')}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedWorkout === 'squat' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+                    }`}
+                  >
+                    Squat Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutChange('bench')}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedWorkout === 'bench' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+                    }`}
+                  >
+                    Bench Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutChange('deadlift')}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedWorkout === 'deadlift' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+                    }`}
+                  >
+                    Deadlift Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutChange('overhead')}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedWorkout === 'overhead' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+                    }`}
+                  >
+                    Press Day
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* StrongLifts Status */}
+        {/* Program Pattern Detection Status */}
         {strongLiftsStatus?.patternDetected && workoutMode === 'freeform' && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
             <div className="flex items-start">
@@ -997,6 +1091,31 @@ const WorkoutForm = ({ onSuccess }) => {
                     className="ml-2 text-green-600 underline hover:text-green-700"
                   >
                     Switch to Program Mode
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Wendler 5/3/1 Pattern Detection */}
+        {wendlerStatus?.patternDetected && workoutMode === 'freeform' && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start">
+              <span className="text-purple-600 mr-2">📊</span>
+              <div className="text-sm text-purple-800">
+                <p className="font-medium">Wendler 5/3/1 Pattern Detected! ({wendlerStatus.confidence}% confidence)</p>
+                <p className="text-xs mt-1">
+                  {wendlerStatus.recommendation} 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleWorkoutModeChange('program');
+                      handleProgramChange('wendler531');
+                    }}
+                    className="ml-2 text-purple-600 underline hover:text-purple-700"
+                  >
+                    Switch to 5/3/1 Program
                   </button>
                 </p>
               </div>
@@ -1288,6 +1407,98 @@ const WorkoutForm = ({ onSuccess }) => {
                         <div>• Upper body: +2.5 lbs | Lower body: +5 lbs</div>
                         <div>• If you fail 3 sessions in a row, deload by 10%</div>
                         <div>• Deadlifts are 1×5, all others are 5×5</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Wendler 5/3/1 Progression (Program Mode) */}
+        {workoutMode === 'program' && selectedProgram === 'wendler531' && selectedExercise && programSuggestion && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            {(() => {
+              const exerciseData = programSuggestion.exercises?.find(ex => ex.name === selectedExercise);
+              if (!exerciseData) return null;
+              
+              return (
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-sm font-semibold text-purple-900">Wendler 5/3/1 Progression:</h3>
+                    <button
+                      type="button"
+                      onClick={() => applyProgramSuggestion(exerciseData)}
+                      className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {exerciseData.progression?.cycleInfo && (
+                      <p className="text-sm text-purple-800 font-medium">
+                        Cycle {exerciseData.progression.cycleInfo.cycle}, Week {exerciseData.progression.cycleInfo.week}/4
+                        {exerciseData.progression.cycleInfo.isDeloadWeek && 
+                          <span className="ml-2 text-orange-600">🔄 Deload Week</span>
+                        }
+                      </p>
+                    )}
+                    
+                    {exerciseData.progression?.workingSets && exerciseData.progression.workingSets.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-purple-800 font-medium">Working Sets:</p>
+                        {exerciseData.progression.workingSets.map((set, index) => (
+                          <div key={index} className={`text-sm p-2 rounded ${
+                            set.isAMRAP ? 'bg-yellow-100 border-l-4 border-yellow-500' : 'bg-purple-100'
+                          }`}>
+                            <span className="font-medium">
+                              Set {index + 1}: {set.reps} @ {set.weight} lbs ({set.percentage}%)
+                            </span>
+                            {set.isAMRAP && (
+                              <div className="text-xs text-yellow-700 mt-1">
+                                🎯 AMRAP Set - Go for maximum reps!
+                                {exerciseData.progression?.amrapTarget && (
+                                  <div className="mt-1">
+                                    Target: {exerciseData.progression.amrapTarget.min}+ reps 
+                                    | Good: {exerciseData.progression.amrapTarget.good}+ 
+                                    | Excellent: {exerciseData.progression.amrapTarget.excellent}+
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-purple-800">
+                        <span className="font-medium">Target:</span> 
+                        {exerciseData.sets} sets × {exerciseData.reps} reps @ {exerciseData.suggestedWeight} lbs
+                      </p>
+                    )}
+                    
+                    <p className="text-xs text-purple-700">{exerciseData.progression?.reason}</p>
+                    
+                    {exerciseData.progression?.trainingMax && (
+                      <p className="text-xs text-purple-600 mt-2">
+                        Training Max: {exerciseData.progression.trainingMax} lbs
+                        {exerciseData.progression?.nextCycleTrainingMax && 
+                          exerciseData.progression.nextCycleTrainingMax !== exerciseData.progression.trainingMax && (
+                          <span className="ml-2 text-green-600">
+                            → {exerciseData.progression.nextCycleTrainingMax} lbs next cycle
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    
+                    <div className="mt-2 p-2 bg-purple-100 border border-purple-200 rounded text-xs">
+                      <div className="font-medium text-purple-800 mb-1">📈 Wendler 5/3/1 Protocol:</div>
+                      <div className="text-purple-700 space-y-1">
+                        <div>• Week 1: 65%, 75%, 85% for 5+ reps</div>
+                        <div>• Week 2: 70%, 80%, 90% for 3+ reps</div>
+                        <div>• Week 3: 75%, 85%, 95% for 1+ reps</div>
+                        <div>• Week 4: Deload at 40%, 50%, 60%</div>
+                        <div>• Beat your AMRAP rep targets each cycle!</div>
                       </div>
                     </div>
                   </div>

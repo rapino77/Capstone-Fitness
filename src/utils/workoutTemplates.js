@@ -317,6 +317,71 @@ export const workoutTemplates = {
       }
     }
   },
+  wendler531: {
+    name: "Wendler 5/3/1",
+    description: "Intermediate/advanced strength program - 4 main lifts with percentage-based progression",
+    frequency: 4,
+    restDays: 1,
+    isProgram: true,
+    programType: "wendler531",
+    cycleWeeks: 4,
+    templates: {
+      squat: {
+        name: "Squat Day",
+        description: "Squat focus with assistance work",
+        primaryMuscles: ["Quadriceps", "Glutes", "Core"],
+        exercises: [
+          { name: "Squat", sets: 3, reps: "variable", category: "compound", priority: "primary", isMainLift: true },
+          // Assistance work (50-100 reps each)
+          { name: "Romanian Deadlift", sets: 3, reps: "8-12", category: "compound", priority: "secondary" },
+          { name: "Leg Press", sets: 3, reps: "15-20", category: "compound", priority: "accessory" },
+          { name: "Walking Lunges", sets: 3, reps: "12-15", category: "compound", priority: "accessory" }
+        ]
+      },
+      bench: {
+        name: "Bench Press Day",
+        description: "Bench press focus with assistance work",
+        primaryMuscles: ["Chest", "Shoulders", "Triceps"],
+        exercises: [
+          { name: "Bench Press", sets: 3, reps: "variable", category: "compound", priority: "primary", isMainLift: true },
+          // Push assistance
+          { name: "Incline Dumbbell Press", sets: 3, reps: "10-15", category: "compound", priority: "secondary" },
+          { name: "Dips", sets: 3, reps: "10-15", category: "compound", priority: "secondary" },
+          // Pull assistance
+          { name: "Bent Over Row", sets: 3, reps: "10-12", category: "compound", priority: "accessory" },
+          { name: "Face Pulls", sets: 3, reps: "15-20", category: "isolation", priority: "accessory" }
+        ]
+      },
+      deadlift: {
+        name: "Deadlift Day",
+        description: "Deadlift focus with assistance work",
+        primaryMuscles: ["Back", "Hamstrings", "Glutes"],
+        exercises: [
+          { name: "Deadlift", sets: 3, reps: "variable", category: "compound", priority: "primary", isMainLift: true },
+          // Pull assistance
+          { name: "Pull-ups", sets: 3, reps: "8-12", category: "compound", priority: "secondary" },
+          { name: "Cable Rows", sets: 3, reps: "10-12", category: "compound", priority: "secondary" },
+          // Single leg/core
+          { name: "Bulgarian Split Squats", sets: 3, reps: "10-12", category: "compound", priority: "accessory" },
+          { name: "Plank", sets: 3, reps: "30-60s", category: "core", priority: "accessory" }
+        ]
+      },
+      overhead: {
+        name: "Overhead Press Day",
+        description: "Overhead press focus with assistance work",
+        primaryMuscles: ["Shoulders", "Triceps", "Core"],
+        exercises: [
+          { name: "Overhead Press", sets: 3, reps: "variable", category: "compound", priority: "primary", isMainLift: true },
+          // Push assistance
+          { name: "Close-Grip Bench Press", sets: 3, reps: "8-10", category: "compound", priority: "secondary" },
+          { name: "Lateral Raises", sets: 3, reps: "12-15", category: "isolation", priority: "secondary" },
+          // Pull assistance
+          { name: "Barbell Rows", sets: 3, reps: "8-10", category: "compound", priority: "accessory" },
+          { name: "Chin-ups", sets: 3, reps: "6-10", category: "compound", priority: "accessory" }
+        ]
+      }
+    }
+  },
   bodyweight: {
     name: "Bodyweight Only",
     description: "No equipment needed - bodyweight exercises for home workouts",
@@ -489,6 +554,21 @@ export const getWorkoutSchedule = (templateType, startDate = new Date()) => {
           date,
           type: sl5x5Pattern[day],
           template: sl5x5Pattern[day] !== 'rest' ? template.templates[sl5x5Pattern[day]] : null
+        });
+      }
+    } else if (templateType === 'wendler531') {
+      // Wendler 5/3/1: Squat, Bench, Rest, Deadlift, Press, Rest, Rest
+      const wendlerPattern = ['squat', 'bench', 'rest', 'deadlift', 'overhead', 'rest', 'rest'];
+      
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + (week * 7) + day);
+        
+        weekSchedule.push({
+          date,
+          type: wendlerPattern[day],
+          template: wendlerPattern[day] !== 'rest' ? template.templates[wendlerPattern[day]] : null,
+          week: week + 1 // Track which week of the 4-week cycle
         });
       }
     } else if (templateType === 'bodyweight') {
