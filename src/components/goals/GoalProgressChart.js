@@ -128,7 +128,7 @@ const GoalProgressChart = ({ goals }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-blue-primary rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
@@ -139,19 +139,19 @@ const GoalProgressChart = ({ goals }) => {
 
   if (activeGoals.length === 0) {
     return (
-      <div className="bg-blue-primary rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">Goal Progress Over Time</h3>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Goal Progress Over Time</h3>
         <div className="text-center py-8">
-          <p className="text-gray-200">No active goals to display progress for.</p>
+          <p className="text-gray-500">No active goals to display progress for.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-blue-primary rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-white">Goal Progress Over Time</h3>
+        <h3 className="text-xl font-semibold text-gray-900">Goal Progress Over Time</h3>
         
         <div className="flex space-x-4">
           <select
@@ -263,23 +263,23 @@ const GoalProgressChart = ({ goals }) => {
       
       {/* Progress Summary */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white bg-opacity-10 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-200 mb-1">Active Goals</h4>
-          <p className="text-2xl font-bold text-white">{activeGoals.length}</p>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-gray-600 mb-1">Active Goals</h4>
+          <p className="text-2xl font-bold text-gray-900">{activeGoals.length}</p>
         </div>
         
-        <div className="bg-white bg-opacity-10 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-200 mb-1">Average Progress</h4>
-          <p className="text-2xl font-bold text-white">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-gray-600 mb-1">Average Progress</h4>
+          <p className="text-2xl font-bold text-gray-900">
             {activeGoals.length > 0 
               ? (activeGoals.reduce((sum, g) => sum + g.progressPercentage, 0) / activeGoals.length).toFixed(1)
               : 0}%
           </p>
         </div>
         
-        <div className="bg-white bg-opacity-10 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-200 mb-1">Goals Near Completion</h4>
-          <p className="text-2xl font-bold text-white">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-gray-600 mb-1">Goals Near Completion</h4>
+          <p className="text-2xl font-bold text-gray-900">
             {activeGoals.filter(g => g.progressPercentage >= 75).length}
           </p>
         </div>
