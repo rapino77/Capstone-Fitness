@@ -278,10 +278,12 @@ const WorkoutForm = ({ onSuccess }) => {
 
   // Timer handlers
   const handleTimerData = (timerData) => {
+    console.log('🔧 handleTimerData called with:', timerData);
     setWorkoutTimerData(timerData);
   };
 
   const handleWorkoutComplete = (workoutSummary) => {
+    console.log('🔧 handleWorkoutComplete called with:', workoutSummary);
     // Timer workout is complete, auto-populate any missing data
     if (workoutSummary) {
       setWorkoutTimerData(workoutSummary);
