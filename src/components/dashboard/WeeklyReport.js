@@ -36,7 +36,7 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
     setError(null);
     
     try {
-      console.log('🔄 Fetching weekly report for:', weekStart, 'to', weekEnd);
+      console.log('🔄 Fetching weekly report for:', weekStart, 'to', weekEnd, 'refreshTrigger:', refreshTrigger);
       // Try to fetch real data from existing endpoints
       const reportData = await fetchRealWeeklyData(weekStart, weekEnd);
       console.log('📊 Weekly report data:', reportData);
@@ -131,7 +131,10 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
       // Fetch workouts for the week
       console.log('📞 Calling get-workouts API...');
       const workoutsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
-        params: { userId: 'default-user' }
+        params: { 
+          userId: 'default-user',
+          _t: Date.now() // Cache buster
+        }
       });
       
       console.log('💪 Workouts API response:', workoutsResponse.data);
@@ -218,7 +221,10 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
     try {
       // Fetch weight data for the week
       const weightResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-weights`, {
-        params: { userId: 'default-user' }
+        params: { 
+          userId: 'default-user',
+          _t: Date.now() // Cache buster
+        }
       });
       
       console.log('⚖️ Weight API response:', weightResponse.data);

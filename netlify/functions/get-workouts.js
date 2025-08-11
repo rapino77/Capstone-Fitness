@@ -116,7 +116,17 @@ exports.handler = async (event, context) => {
         date: record.get('Date') || new Date().toISOString().split('T')[0],
         notes: record.get('Notes') || 'Empty record - add fields to Workouts table',
         createdTime: createdTime,
-        isEmpty: Object.keys(record.fields).length === 0
+        isEmpty: Object.keys(record.fields).length === 0,
+        // Duration fields for analytics
+        duration: record.get('Total Duration') || record.get('Duration') || 0,
+        totalDuration: record.get('Total Duration') || 0,
+        workTime: record.get('Work Time') || 0,
+        restTime: record.get('Rest Time') || 0,
+        setCount: record.get('Set Count') || 0,
+        avgSetDuration: record.get('Average Set Duration') || 0,
+        avgRestDuration: record.get('Average Rest Duration') || 0,
+        efficiency: record.get('Workout Efficiency') || 0,
+        isPR: record.get('Is PR') || false
       };
     });
 
