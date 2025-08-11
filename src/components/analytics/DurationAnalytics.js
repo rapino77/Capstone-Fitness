@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import DurationDebug from './DurationDebug';
 
 const DurationAnalytics = ({ userId = 'default-user' }) => {
   const [metrics, setMetrics] = useState(null);
@@ -82,9 +81,6 @@ const DurationAnalytics = ({ userId = 'default-user' }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md">
-      {/* Debug Info - Temporary */}
-      <DurationDebug />
-      
       {/* Header */}
       <div className="border-b border-gray-200 p-6">
         <div className="flex justify-between items-center">
