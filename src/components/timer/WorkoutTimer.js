@@ -202,6 +202,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
             </span>
           )}
           <button
+            type="button"
             onClick={() => setIsMinimized(false)}
             className="text-xs hover:text-blue-200 transition-colors"
           >
@@ -218,6 +219,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
         <h3 className="text-lg font-semibold">Workout Timer</h3>
         <div className="flex space-x-2">
           <button
+            type="button"
             onClick={() => setIsMinimized(true)}
             className="text-sm text-blue-200 hover:text-white transition-colors"
           >
@@ -246,6 +248,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
       <div className="flex justify-center space-x-3 mb-4">
         {timerState === TIMER_STATES.IDLE && (
           <button
+            type="button"
             onClick={handleStart}
             className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg font-medium transition-colors"
           >
@@ -255,6 +258,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
 
         {timerState === TIMER_STATES.RUNNING && (
           <button
+            type="button"
             onClick={handlePause}
             className="bg-yellow-500 hover:bg-yellow-600 px-6 py-2 rounded-lg font-medium transition-colors"
           >
@@ -264,6 +268,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
 
         {timerState === TIMER_STATES.PAUSED && (
           <button
+            type="button"
             onClick={handleStart}
             className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg font-medium transition-colors"
           >
@@ -273,6 +278,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
 
         {(timerState === TIMER_STATES.RUNNING || timerState === TIMER_STATES.PAUSED) && (
           <button
+            type="button"
             onClick={handleStop}
             className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg font-medium transition-colors"
           >
@@ -282,6 +288,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
 
         {timerState !== TIMER_STATES.IDLE && (
           <button
+            type="button"
             onClick={handleReset}
             className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
           >
@@ -298,6 +305,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
             <div className="flex items-center space-x-3">
               <span className="font-mono text-lg">{formatDuration(restTime)}</span>
               <button
+                type="button"
                 onClick={handleEndRest}
                 className="bg-blue-400 hover:bg-blue-300 text-blue-900 px-3 py-1 rounded text-sm font-medium transition-colors"
               >
@@ -314,12 +322,14 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
           <div className="text-sm mb-2">Current: {currentExercise}</div>
           <div className="flex space-x-2">
             <button
+              type="button"
               onClick={() => handleStartSet(currentExercise)}
               className="bg-purple-400 hover:bg-purple-300 text-purple-900 px-3 py-1 rounded text-sm font-medium transition-colors"
             >
               Start Set
             </button>
             <button
+              type="button"
               onClick={() => handleEndSet()}
               className="bg-purple-400 hover:bg-purple-300 text-purple-900 px-3 py-1 rounded text-sm font-medium transition-colors"
             >

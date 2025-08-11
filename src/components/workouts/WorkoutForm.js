@@ -280,6 +280,8 @@ const WorkoutForm = ({ onSuccess }) => {
   const handleTimerData = (timerData) => {
     console.log('🎯 Timer data received in WorkoutForm:', timerData);
     setWorkoutTimerData(timerData);
+    // Note: This is just updating timer data, NOT submitting the workout
+    // Deload detection should only happen during actual form submission
   };
 
   const handleWorkoutComplete = (workoutSummary) => {
@@ -307,15 +309,15 @@ const WorkoutForm = ({ onSuccess }) => {
           data.sets === progressionSuggestion.suggestion.sets &&
           data.reps === progressionSuggestion.suggestion.reps &&
           data.weight === progressionSuggestion.suggestion.weight,
-        // Include timer data if available
-        ...(workoutTimerData && {
+        // Include timer data if available (with fallback for basic timing)
+        ...(workoutTimerData && workoutTimerData.totalDuration > 0 && {
           totalDuration: workoutTimerData.totalDuration,
-          workTime: workoutTimerData.workTime,
-          restTime: workoutTimerData.restTime,
-          setCount: workoutTimerData.setCount,
-          avgSetDuration: workoutTimerData.avgSetDuration,
-          avgRestDuration: workoutTimerData.avgRestDuration,
-          efficiency: workoutTimerData.efficiency,
+          workTime: workoutTimerData.workTime || 0,
+          restTime: workoutTimerData.restTime || 0,
+          setCount: workoutTimerData.setCount || 0,
+          avgSetDuration: workoutTimerData.avgSetDuration || 0,
+          avgRestDuration: workoutTimerData.avgRestDuration || 0,
+          efficiency: workoutTimerData.efficiency || 0,
           startTime: new Date(Date.now() - (workoutTimerData.totalDuration * 1000)).toISOString(),
           endTime: new Date().toISOString()
         })
@@ -331,9 +333,10 @@ const WorkoutForm = ({ onSuccess }) => {
       console.log('🎯 PR Detection Result:', prResult);
 
       // Check for deload before submitting
-      console.log('🔄 Checking for deload...', {
+      console.log('🔄 Checking for deload during FORM SUBMISSION...', {
         current: submissionData,
-        recent: recentWorkouts.length
+        recent: recentWorkouts.length,
+        callerContext: 'FORM_SUBMISSION'
       });
       
       const deloadResult = detectImmediateDeload(submissionData, recentWorkouts);
@@ -855,11 +858,27 @@ const WorkoutForm = ({ onSuccess }) => {
 
         {/* Workout Timer */}
         {timerEnabled && (
-          <WorkoutTimer
-            currentExercise={selectedExercise}
-            onWorkoutComplete={handleWorkoutComplete}
-            onTimerData={handleTimerData}
-          />
+          <>
+            <WorkoutTimer
+              currentExercise={selectedExercise}
+              onWorkoutComplete={handleWorkoutComplete}
+              onTimerData={handleTimerData}
+            />
+            {/* Debug: Show timer data status */}
+            {workoutTimerData ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                <div className="text-sm text-green-800">
+                  ✅ Timer data available: {workoutTimerData.totalDuration}s total, {workoutTimerData.setCount} sets, {workoutTimerData.efficiency}% efficiency
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
+                <div className="text-sm text-yellow-800">
+                  ⏳ No timer data yet - start timer and track sets to capture duration data
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <div className="grid grid-cols-3 gap-4">
