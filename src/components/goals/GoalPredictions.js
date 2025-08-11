@@ -1,19 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import axios from 'axios';
 
 const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
   const [predictions, setPredictions] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [usingClientSide, setUsingClientSide] = useState(false);
 
   const generateClientSidePredictions = useCallback((goals) => {
     const activeGoals = goals.filter(g => g.status === 'Active');
     const predictions = activeGoals.map(goal => {
       const currentProgress = goal.progressPercentage || 0;
       const daysRemaining = goal.daysRemaining || 0;
-      const timeElapsedRatio = goal.timeElapsedRatio || 0.5; // Assume halfway if not available
+      
+      // Calculate timeElapsedRatio based on goal dates
+      let timeElapsedRatio = 0.5; // Default to halfway
+      if (goal.targetDate) {
+        const targetDate = new Date(goal.targetDate);
+        const createdDate = goal.createdDate ? new Date(goal.createdDate) : new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)); // Default to 30 days ago
+        const now = new Date();
+        
+        const totalDays = Math.max(1, Math.floor((targetDate - createdDate) / (1000 * 60 * 60 * 24)));
+        const elapsedDays = Math.max(0, Math.floor((now - createdDate) / (1000 * 60 * 60 * 24)));
+        timeElapsedRatio = Math.min(1, elapsedDays / totalDays);
+      }
       
       // Simple prediction algorithm based on current progress and time remaining
       let likelihood, confidence;
@@ -94,28 +103,11 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
   const fetchPredictions = useCallback(async () => {
     try {
       setIsLoading(true);
-
-      // Try to fetch from API first
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-goal-predictions`, {
-        params: {
-          userId: 'default-user'
-        },
-        timeout: 3000 // 3 second timeout
-      });
-
-      if (response.data.success) {
-        setPredictions(response.data.data.predictions || []);
-        setSummary(response.data.data.summary || null);
-        setUsingClientSide(false);
-        return;
-      }
-    } catch (error) {
-      console.log('API not available, using client-side predictions');
-      // Fall back to client-side predictions
+      
+      // Use client-side predictions directly (no API call)
       const { predictions: clientPredictions, summary: clientSummary } = generateClientSidePredictions(goals);
       setPredictions(clientPredictions);
       setSummary(clientSummary);
-      setUsingClientSide(true);
     } finally {
       setIsLoading(false);
     }
@@ -372,11 +364,7 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
 
       {/* Last Updated */}
       <div className="text-xs text-gray-400 mt-4 text-center">
-        {usingClientSide ? (
-          <span>Predictions based on current goal progress • Run 'netlify dev' for advanced AI predictions</span>
-        ) : (
-          <span>Predictions are updated in real-time based on your workout and weight data</span>
-        )}
+        <span>Predictions based on current goal progress and timeline • Updates automatically when goals change</span>
       </div>
     </div>
   );
