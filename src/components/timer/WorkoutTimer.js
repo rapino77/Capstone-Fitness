@@ -61,18 +61,24 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
     };
   }, [onTimerData]);
 
-  // Update rest timer
+  // Update rest timer and pass current timer data to parent
   useEffect(() => {
     let restInterval;
     if (timer && timer.restStartTime && timerState === TIMER_STATES.RUNNING) {
       restInterval = setInterval(() => {
         setRestTime(timer.getCurrentRestTime());
+        
+        // Pass current timer data to parent in real-time
+        if (onTimerData) {
+          const currentSummary = timer.getWorkoutSummary();
+          onTimerData(currentSummary);
+        }
       }, 1000);
     }
     return () => {
       if (restInterval) clearInterval(restInterval);
     };
-  }, [timer, timerState]);
+  }, [timer, timerState, onTimerData]);
 
   // Handle exercise changes
   useEffect(() => {
@@ -87,20 +93,35 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
   const handleStart = useCallback(() => {
     if (timer) {
       timer.start();
+      // Pass current timer data when starting
+      if (onTimerData && timer.getElapsedTime() > 0) {
+        const currentSummary = timer.getWorkoutSummary();
+        onTimerData(currentSummary);
+      }
     }
-  }, [timer]);
+  }, [timer, onTimerData]);
 
   const handlePause = useCallback(() => {
     if (timer) {
       timer.pause();
+      // Pass current timer data when pausing
+      if (onTimerData) {
+        const currentSummary = timer.getWorkoutSummary();
+        onTimerData(currentSummary);
+      }
     }
-  }, [timer]);
+  }, [timer, onTimerData]);
 
   const handleStop = useCallback(() => {
     if (timer) {
       timer.stop();
+      // Pass current timer data when stopping
+      if (onTimerData) {
+        const currentSummary = timer.getWorkoutSummary();
+        onTimerData(currentSummary);
+      }
     }
-  }, [timer]);
+  }, [timer, onTimerData]);
 
   const handleReset = useCallback(() => {
     if (timer) {
@@ -116,14 +137,24 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
   const handleStartSet = useCallback((exercise, setNumber = 1) => {
     if (timer) {
       timer.startSet(exercise, setNumber);
+      // Pass current timer data when starting a set
+      if (onTimerData) {
+        const currentSummary = timer.getWorkoutSummary();
+        onTimerData(currentSummary);
+      }
     }
-  }, [timer]);
+  }, [timer, onTimerData]);
 
   const handleEndSet = useCallback((reps = null, weight = null) => {
     if (timer) {
       timer.endSet(reps, weight);
+      // Pass current timer data when ending a set
+      if (onTimerData) {
+        const currentSummary = timer.getWorkoutSummary();
+        onTimerData(currentSummary);
+      }
     }
-  }, [timer]);
+  }, [timer, onTimerData]);
 
   const handleEndRest = useCallback(() => {
     if (timer) {

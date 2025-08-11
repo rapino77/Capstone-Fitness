@@ -278,6 +278,7 @@ const WorkoutForm = ({ onSuccess }) => {
 
   // Timer handlers
   const handleTimerData = (timerData) => {
+    console.log('🎯 Timer data received in WorkoutForm:', timerData);
     setWorkoutTimerData(timerData);
   };
 
@@ -321,6 +322,8 @@ const WorkoutForm = ({ onSuccess }) => {
       };
 
       console.log('💾 Submitting workout data:', submissionData);
+      console.log('🎯 Current workoutTimerData state:', workoutTimerData);
+      console.log('🎯 Timer data included in submission:', workoutTimerData ? 'YES' : 'NO');
 
       // Check for PR before submitting
       console.log('🔍 Checking for PR...', submissionData);
