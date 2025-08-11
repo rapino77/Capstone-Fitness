@@ -23,3 +23,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .claude/settings.local.json
+
+# Test and debug files
+check-duration-data.js
+test-timer-data.js
+app.log
+dev.log
+nul

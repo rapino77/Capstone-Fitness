@@ -32,7 +32,8 @@
       "Bash(npm test:*)",
       "Bash(taskkill:*)",
       "Bash(powershell:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }
