@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import WeightLogger from '../weight/WeightLogger';
 import StrengthProgression from '../strength/StrengthProgression';
+import PersonalRecordsSidebar from '../analytics/PersonalRecordsSidebar';
+import DurationAnalytics from '../analytics/DurationAnalytics';
 import Sidebar from '../common/Sidebar';
 
 const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeightSuccess }) => {
@@ -27,22 +29,28 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
       description: 'Track weight changes over time'
     },
     {
+      id: 'duration',
+      name: 'Workout Duration',
+      icon: '⏱️',
+      description: 'Duration analytics and trends'
+    },
+    {
       id: 'strength',
       name: 'Strength Progression',
       icon: '💪',
       description: 'Multi-exercise strength charts'
     },
     {
+      id: 'performance',
+      name: 'Personal Records',
+      icon: '🏆',
+      description: 'All-time PRs and achievements'
+    },
+    {
       id: 'volume',
       name: 'Training Volume',
       icon: '📈',
       description: 'Weekly volume analysis'
-    },
-    {
-      id: 'performance',
-      name: 'Performance Metrics',
-      icon: '🎯',
-      description: 'PRs and improvements'
     },
     {
       id: 'body-composition',
@@ -56,12 +64,14 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
     switch (activeSection) {
       case 'weight':
         return <WeightLogger onSuccess={onWeightSuccess} />;
+      case 'duration':
+        return <DurationAnalytics userId="default-user" />;
       case 'strength':
         return <StrengthProgression />;
+      case 'performance':
+        return <PersonalRecordsSidebar userId="default-user" />;
       case 'volume':
         return <ComingSoonPlaceholder title="Training Volume Analysis" />;
-      case 'performance':
-        return <ComingSoonPlaceholder title="Performance Metrics Dashboard" />;
       case 'body-composition':
         return <ComingSoonPlaceholder title="Body Composition Tracker" />;
       default:

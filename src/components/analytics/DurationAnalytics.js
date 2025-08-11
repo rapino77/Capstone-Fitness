@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import PersonalRecordsSidebar from './PersonalRecordsSidebar';
 
 const DurationAnalytics = ({ userId = 'default-user' }) => {
   const [metrics, setMetrics] = useState(null);
@@ -11,7 +10,6 @@ const DurationAnalytics = ({ userId = 'default-user' }) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('30');
-  const [refreshTrigger] = useState(0);
 
   // Fetch analytics data
   const fetchAnalytics = useCallback(async () => {
@@ -82,53 +80,51 @@ const DurationAnalytics = ({ userId = 'default-user' }) => {
   }
 
   return (
-    <div className="flex gap-6">
-      {/* Main Analytics Content */}
-      <div className="flex-1 bg-white rounded-lg shadow-md">
-        {/* Header */}
-        <div className="border-b border-gray-200 p-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">Workout Duration Analytics</h2>
-            <div className="flex items-center space-x-4">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="border border-gray-300 rounded px-3 py-1 text-sm"
-              >
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 3 months</option>
-                <option value="365">Last year</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="flex space-x-6 mt-4">
-            {[
-              { id: 'overview', label: 'Overview' },
-              { id: 'trends', label: 'Trends' },
-              { id: 'exercises', label: 'By Exercise' },
-              { id: 'recommendations', label: 'Recommendations' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+    <div className="bg-white rounded-lg shadow-md">
+      {/* Header */}
+      <div className="border-b border-gray-200 p-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Workout Duration Analytics</h2>
+          <div className="flex items-center space-x-4">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-1 text-sm"
+            >
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 3 months</option>
+              <option value="365">Last year</option>
+            </select>
           </div>
         </div>
 
-        <div className="p-6">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && metrics && (
+        {/* Tab Navigation */}
+        <div className="flex space-x-6 mt-4">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'trends', label: 'Trends' },
+            { id: 'exercises', label: 'By Exercise' },
+            { id: 'recommendations', label: 'Recommendations' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6">
+        {/* Overview Tab */}
+        {activeTab === 'overview' && metrics && (
             <div className="space-y-6">
               {/* Key Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -280,29 +276,23 @@ const DurationAnalytics = ({ userId = 'default-user' }) => {
             </div>
           )}
 
-          {/* Recommendations Tab */}
-          {activeTab === 'recommendations' && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Recommendations</h3>
-              {recommendations.length > 0 ? (
-                <div className="space-y-4">
-                  {recommendations.map((rec, index) => (
-                    <RecommendationCard key={index} recommendation={rec} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-500 text-center py-8">
-                  No recommendations available. Keep tracking your workouts for personalized insights!
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Personal Records Sidebar */}
-      <div className="w-80 flex-shrink-0">
-        <PersonalRecordsSidebar userId={userId} refreshTrigger={refreshTrigger} />
+        {/* Recommendations Tab */}
+        {activeTab === 'recommendations' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-900">Recommendations</h3>
+            {recommendations.length > 0 ? (
+              <div className="space-y-4">
+                {recommendations.map((rec, index) => (
+                  <RecommendationCard key={index} recommendation={rec} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-center py-8">
+                No recommendations available. Keep tracking your workouts for personalized insights!
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -17,7 +17,6 @@ import {
 } from 'recharts';
 import WeeklyReport from './WeeklyReport';
 import StrengthProgressionSection from './StrengthProgressionSection';
-import DurationAnalytics from '../analytics/DurationAnalytics';
 import WorkoutStreak from '../streaks/WorkoutStreak';
 
 const Dashboard = ({ refreshTrigger = 0 }) => {
@@ -464,10 +463,6 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
         </div>
       )}
 
-      {/* Duration Analytics Section */}
-      <div className="mt-8">
-        <DurationAnalytics userId="default-user" />
-      </div>
     </div>
   );
 };
