@@ -320,7 +320,22 @@ const WorkoutForm = ({ onSuccess }) => {
         })
       };
 
+      console.log('🔍 TIMER DEBUG INFO:');
+      console.log('Timer enabled:', timerEnabled);
+      console.log('Workout timer data:', workoutTimerData);
+      console.log('Timer data available for submission:', !!(workoutTimerData && (workoutTimerData.totalDuration || workoutTimerData.workTime)));
+      
       console.log('💾 Submitting workout data:', submissionData);
+      
+      if (workoutTimerData) {
+        console.log('✅ Timer data included in submission:');
+        console.log('- Total Duration:', workoutTimerData.totalDuration, 'seconds');
+        console.log('- Work Time:', workoutTimerData.workTime, 'seconds');
+        console.log('- Rest Time:', workoutTimerData.restTime, 'seconds');
+        console.log('- Efficiency:', workoutTimerData.efficiency, '%');
+      } else {
+        console.log('❌ No timer data available for submission');
+      }
 
       // Check for PR before submitting
       console.log('🔍 Checking for PR...', submissionData);
