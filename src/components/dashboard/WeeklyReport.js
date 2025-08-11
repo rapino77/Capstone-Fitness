@@ -41,14 +41,21 @@ const WeeklyReport = () => {
       const reportData = await fetchRealWeeklyData(weekStart, weekEnd);
       console.log('📊 Weekly report data:', reportData);
       
-      // FOR TESTING: Always use sample data to confirm rendering works
-      console.log('🧪 TESTING MODE: Using sample data instead of API data');
-      const sampleData = generateEmptyWeeklyReport(weekStart, weekEnd);
-      setReportData(sampleData);
-      setError('Testing mode: Showing sample data instead of real API data');
+      // Check if we got any real data
+      const hasWorkouts = reportData.workouts && reportData.workouts.length > 0;
+      const hasWeights = reportData.weight && reportData.weight.measurements && reportData.weight.measurements.length > 0;
+      const hasGoals = reportData.goalsAchieved && reportData.goalsAchieved.length > 0;
+      const hasPRs = reportData.personalRecords && reportData.personalRecords.length > 0;
       
-      // TODO: Remove this and uncomment the line below when APIs are working
-      // setReportData(reportData);
+      if (!hasWorkouts && !hasWeights && !hasGoals && !hasPRs) {
+        console.log('📭 No data found for this week, using sample data for demonstration');
+        const sampleData = generateEmptyWeeklyReport(weekStart, weekEnd);
+        setReportData(sampleData);
+        setError('No data found for this week. Showing sample data for demonstration. Try logging some workouts, weights, or goals to see real data here.');
+      } else {
+        console.log('✅ Found real data for this week');
+        setReportData(reportData);
+      }
     } catch (err) {
       console.error('Failed to fetch weekly report:', err);
       // Set error message for user visibility
