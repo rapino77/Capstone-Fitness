@@ -9,6 +9,7 @@ import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
 import GoalProgressChart from './components/goals/GoalProgressChart';
 import GoalPredictions from './components/goals/GoalPredictions';
+import ProgressPhotos from './components/photos/ProgressPhotos';
 import Dashboard from './components/dashboard/Dashboard';
 import ChallengeSystem from './components/challenges/ChallengeSystem';
 import ThemeSettings from './components/common/ThemeSettings';
@@ -291,6 +292,17 @@ const AppContent = () => {
                     />
                     <GoalPredictions goals={goalsData} refreshTrigger={refreshGoals} />
                     <GoalProgressChart goals={goalsData} />
+                    
+                    {/* Progress Photos Section */}
+                    <div className="mt-6">
+                      <h2 
+                        className="text-2xl font-bold mb-4 transition-colors duration-200"
+                        style={{ color: theme.colors.text }}
+                      >
+                        Progress Photos
+                      </h2>
+                      <ProgressPhotos />
+                    </div>
                   </>
                 ) : (
                   <GoalCreator 

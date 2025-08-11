@@ -140,7 +140,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
       </div>
 
       {/* Weekly Report Section */}
-      <WeeklyReport />
+      <WeeklyReport refreshTrigger={refreshTrigger} />
 
 
 

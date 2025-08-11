@@ -5,7 +5,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval } 
 // Using inline SVG icons instead of heroicons
 import axios from 'axios';
 
-const WeeklyReport = () => {
+const WeeklyReport = ({ refreshTrigger = 0 }) => {
   const reportContentRef = useRef(null);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [reportData, setReportData] = useState(null);
@@ -29,7 +29,7 @@ const WeeklyReport = () => {
   useEffect(() => {
     fetchWeeklyReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWeek]); // fetchWeeklyReport is not included to avoid infinite loops
+  }, [currentWeek, refreshTrigger]); // fetchWeeklyReport is not included to avoid infinite loops
 
   const fetchWeeklyReport = async () => {
     setLoading(true);
@@ -110,10 +110,14 @@ const WeeklyReport = () => {
         allWorkouts = workoutsResponse.data.workouts || workoutsResponse.data.data;
         
         // Filter workouts for this week
+        console.log(`🔍 Filtering ${allWorkouts.length} workouts for week ${start.toDateString()} to ${end.toDateString()}`);
         const weekWorkouts = allWorkouts.filter(workout => {
           const workoutDate = new Date(workout.date || workout.Date);
-          return workoutDate >= start && workoutDate <= end;
+          const isInRange = workoutDate >= start && workoutDate <= end;
+          console.log(`  - Workout on ${workoutDate.toDateString()}: ${isInRange ? '✅ INCLUDED' : '❌ EXCLUDED'}`);
+          return isInRange;
         });
+        console.log(`📋 Found ${weekWorkouts.length} workouts for this week`);
 
         // Process workouts into daily groups
         const workoutsByDate = {};

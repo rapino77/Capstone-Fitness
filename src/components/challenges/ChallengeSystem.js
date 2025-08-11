@@ -700,12 +700,12 @@ const ChallengeSystem = ({ onSuccess }) => {
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">{challenge.icon}</span>
                   <div>
-                    <h4 className="font-medium text-green-800">{challenge.name}</h4>
-                    <p className="text-xs text-green-600">{challenge.category}</p>
+                    <h4 className="font-medium text-gray-800">{challenge.name}</h4>
+                    <p className="text-xs text-gray-600">{challenge.category}</p>
                   </div>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-green-700">{challenge.reward}</span>
+                  <span className="text-gray-700 font-medium">{challenge.reward}</span>
                   <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
                     +{challenge.points}
                   </span>

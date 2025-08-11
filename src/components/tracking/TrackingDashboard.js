@@ -3,6 +3,7 @@ import WeightLogger from '../weight/WeightLogger';
 import StrengthProgression from '../strength/StrengthProgression';
 import PersonalRecordsSidebar from '../analytics/PersonalRecordsSidebar';
 import DurationAnalytics from '../analytics/DurationAnalytics';
+import SummaryInsights from '../summaries/SummaryInsights';
 import Sidebar from '../common/Sidebar';
 
 const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeightSuccess }) => {
@@ -57,6 +58,12 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
       name: 'Body Composition',
       icon: '📊',
       description: 'Measurements & ratios'
+    },
+    {
+      id: 'summary-insights',
+      name: 'Summary Insights',
+      icon: '💡',
+      description: 'Weekly/monthly key insights'
     }
   ];
 
@@ -74,6 +81,8 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
         return <ComingSoonPlaceholder title="Training Volume Analysis" />;
       case 'body-composition':
         return <ComingSoonPlaceholder title="Body Composition Tracker" />;
+      case 'summary-insights':
+        return <SummaryInsights />;
       default:
         return <WeightLogger onSuccess={onWeightSuccess} />;
     }
