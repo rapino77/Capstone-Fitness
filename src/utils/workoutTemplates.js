@@ -287,6 +287,36 @@ export const workoutTemplates = {
       }
     }
   },
+  strongLifts5x5: {
+    name: "StrongLifts 5x5",
+    description: "Classic strength program - 2 alternating full-body workouts, 3x per week",
+    frequency: 3,
+    restDays: 1,
+    isProgram: true, // Special flag for structured programs
+    programType: "stronglifts5x5",
+    templates: {
+      workoutA: {
+        name: "Workout A",
+        description: "Squat, Bench Press, Barbell Row",
+        primaryMuscles: ["Quadriceps", "Chest", "Back"],
+        exercises: [
+          { name: "Squat", sets: 5, reps: "5", category: "compound", priority: "primary", weight: "startingWeight" },
+          { name: "Bench Press", sets: 5, reps: "5", category: "compound", priority: "primary", weight: "startingWeight" },
+          { name: "Barbell Rows", sets: 5, reps: "5", category: "compound", priority: "primary", weight: "startingWeight" }
+        ]
+      },
+      workoutB: {
+        name: "Workout B", 
+        description: "Squat, Overhead Press, Deadlift",
+        primaryMuscles: ["Quadriceps", "Shoulders", "Back", "Hamstrings"],
+        exercises: [
+          { name: "Squat", sets: 5, reps: "5", category: "compound", priority: "primary", weight: "startingWeight" },
+          { name: "Overhead Press", sets: 5, reps: "5", category: "compound", priority: "primary", weight: "startingWeight" },
+          { name: "Deadlift", sets: 1, reps: "5", category: "compound", priority: "primary", weight: "startingWeight" }
+        ]
+      }
+    }
+  },
   bodyweight: {
     name: "Bodyweight Only",
     description: "No equipment needed - bodyweight exercises for home workouts",
@@ -442,6 +472,23 @@ export const getWorkoutSchedule = (templateType, startDate = new Date()) => {
           date,
           type: strengthPattern[day],
           template: strengthPattern[day] !== 'rest' ? template.templates[strengthPattern[day]] : null
+        });
+      }
+    } else if (templateType === 'strongLifts5x5') {
+      // StrongLifts 5x5: A, Rest, B, Rest, A, Rest, Rest (alternating A/B each week)
+      const isOddWeek = week % 2 === 0; // Week 1, 3 start with A, Week 2, 4 start with B
+      const sl5x5Pattern = isOddWeek 
+        ? ['workoutA', 'rest', 'workoutB', 'rest', 'workoutA', 'rest', 'rest']
+        : ['workoutB', 'rest', 'workoutA', 'rest', 'workoutB', 'rest', 'rest'];
+      
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + (week * 7) + day);
+        
+        weekSchedule.push({
+          date,
+          type: sl5x5Pattern[day],
+          template: sl5x5Pattern[day] !== 'rest' ? template.templates[sl5x5Pattern[day]] : null
         });
       }
     } else if (templateType === 'bodyweight') {

@@ -34,7 +34,9 @@
       "Bash(powershell:*)",
       "Bash(timeout:*)",
       "Bash(git restore:*)",
-      "Bash(del \"C:\\Users\\socce\\OneDrive\\Documents\\GitHub\\Capstone-Fitness\\src\\components\\debug\\ApiDebugger.js\")"
+      "Bash(del \"C:\\Users\\socce\\OneDrive\\Documents\\GitHub\\Capstone-Fitness\\src\\components\\debug\\ApiDebugger.js\")",
+      "WebFetch(domain:stronglifts.com)",
+      "Bash(del \"C:\\Users\\socce\\OneDrive\\Documents\\GitHub\\Capstone-Fitness\\test-stronglifts.js\")"
     ],
     "deny": []
   }

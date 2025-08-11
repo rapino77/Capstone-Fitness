@@ -9,6 +9,12 @@ import { useCelebration } from '../../context/CelebrationContext';
 import DeloadPrompt from './DeloadPrompt';
 import PeriodizationPanel from '../rotation/PeriodizationPanel';
 import WorkoutTimer from '../timer/WorkoutTimer';
+import { 
+  getNextStrongLiftsWorkout, 
+  getStrongLiftsWorkoutSuggestion,
+  detectStrongLiftsPattern,
+  getStrongLiftsStatus 
+} from '../../utils/strongLifts5x5';
 
 const WorkoutForm = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +32,13 @@ const WorkoutForm = ({ onSuccess }) => {
   const [workoutTimerData, setWorkoutTimerData] = useState(null);
   const timerRef = useRef(null);
   const { celebratePR } = useCelebration();
+  
+  // Workout Plan State
+  const [workoutMode, setWorkoutMode] = useState('freeform'); // 'freeform' or 'program'
+  const [selectedProgram, setSelectedProgram] = useState('strongLifts5x5');
+  const [selectedWorkout, setSelectedWorkout] = useState('workoutA'); // For StrongLifts: 'workoutA' or 'workoutB'
+  const [strongLiftsStatus, setStrongLiftsStatus] = useState(null);
+  const [programSuggestion, setProgramSuggestion] = useState(null);
   
   const {
     register,
@@ -61,6 +74,22 @@ const WorkoutForm = ({ onSuccess }) => {
     'Shoulder Raises',
     'Other'
   ];
+
+  const strongLiftsExercises = [
+    'Squat',
+    'Bench Press', 
+    'Barbell Rows',
+    'Overhead Press',
+    'Deadlift'
+  ];
+
+  // Get exercises based on current mode
+  const getExerciseOptions = () => {
+    if (workoutMode === 'program' && selectedProgram === 'strongLifts5x5') {
+      return strongLiftsExercises;
+    }
+    return commonExercises;
+  };
 
   const fetchLastWorkout = useCallback(async (exercise) => {
     console.log(`📊 fetchLastWorkout called for: ${exercise}`);
@@ -166,6 +195,77 @@ const WorkoutForm = ({ onSuccess }) => {
     }
   }, []);
 
+  const analyzeStrongLiftsStatus = useCallback(async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
+        params: {
+          userId: 'default-user',
+          limit: 20, // Get more history for pattern analysis
+          _t: Date.now()
+        }
+      });
+      
+      if (response.data.success && response.data.data) {
+        const workouts = response.data.data || [];
+        const status = getStrongLiftsStatus(workouts);
+        const pattern = detectStrongLiftsPattern(workouts);
+        
+        setStrongLiftsStatus({
+          ...status,
+          patternDetected: pattern.isFollowing,
+          confidence: pattern.confidence
+        });
+        
+        // Auto-suggest next workout if following StrongLifts
+        if (pattern.isFollowing && workoutMode === 'freeform') {
+          const nextWorkout = getNextStrongLiftsWorkout(workouts);
+          setSelectedWorkout(nextWorkout);
+          
+          // Don't auto-switch mode, just notify
+          console.log('StrongLifts pattern detected, suggested next workout:', nextWorkout);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to analyze StrongLifts status:', error);
+    }
+  }, [workoutMode]);
+
+  const fetchProgramSuggestion = useCallback(async () => {
+    if (workoutMode !== 'program' || selectedProgram !== 'strongLifts5x5') {
+      setProgramSuggestion(null);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-workouts`, {
+        params: {
+          userId: 'default-user',
+          limit: 10,
+          _t: Date.now()
+        }
+      });
+      
+      if (response.data.success && response.data.data) {
+        const workouts = response.data.data || [];
+        const suggestion = getStrongLiftsWorkoutSuggestion(selectedWorkout, workouts);
+        
+        setProgramSuggestion(suggestion);
+        
+        // Auto-populate the first exercise for quick start
+        if (suggestion && suggestion.exercises.length > 0) {
+          const firstExercise = suggestion.exercises[0];
+          setValue('exercise', firstExercise.name);
+          setValue('sets', firstExercise.sets);
+          setValue('reps', firstExercise.reps);
+          setValue('weight', firstExercise.suggestedWeight);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch program suggestion:', error);
+      setProgramSuggestion(null);
+    }
+  }, [workoutMode, selectedProgram, selectedWorkout, setValue]);
+
   const fetchProgressionSuggestion = useCallback(async (exercise) => {
     console.log('💡 fetchProgressionSuggestion called for:', exercise);
     setLoadingSuggestion(true);
@@ -246,6 +346,28 @@ const WorkoutForm = ({ onSuccess }) => {
     }
   }, [selectedExercise, progressiveOverloadEnabled, fetchProgressionSuggestion, fetchLastWorkout]);
 
+  // Analyze StrongLifts status on component mount
+  useEffect(() => {
+    analyzeStrongLiftsStatus();
+  }, [analyzeStrongLiftsStatus]);
+
+  // Fetch program suggestions when mode or program changes
+  useEffect(() => {
+    if (workoutMode === 'program') {
+      fetchProgramSuggestion();
+    } else {
+      setProgramSuggestion(null);
+    }
+  }, [workoutMode, selectedProgram, selectedWorkout, fetchProgramSuggestion]);
+
+  // Update progression suggestions based on workout mode
+  useEffect(() => {
+    if (workoutMode === 'program' && selectedProgram === 'strongLifts5x5') {
+      // In StrongLifts mode, disable regular progressive overload
+      setProgressiveOverloadEnabled(false);
+    }
+  }, [workoutMode, selectedProgram]);
+
   const applyProgressionSuggestion = () => {
     if (progressionSuggestion?.suggestion) {
       setValue('sets', progressionSuggestion.suggestion.sets);
@@ -257,6 +379,63 @@ const WorkoutForm = ({ onSuccess }) => {
       const progressionNote = `Applied progressive overload: ${progressionSuggestion.reason}`;
       setValue('notes', currentNotes ? `${currentNotes}\n${progressionNote}` : progressionNote);
     }
+  };
+
+  const applyProgramSuggestion = (exercise) => {
+    if (programSuggestion && programSuggestion.exercises) {
+      const exerciseData = programSuggestion.exercises.find(ex => ex.name === exercise.name);
+      if (exerciseData) {
+        setValue('exercise', exerciseData.name);
+        setValue('sets', exerciseData.sets);
+        setValue('reps', exerciseData.reps);
+        setValue('weight', exerciseData.suggestedWeight);
+        
+        // Add program note
+        const currentNotes = watch('notes') || '';
+        const programNote = `StrongLifts 5x5 - ${exerciseData.progression?.reason || 'Following program'}`;
+        setValue('notes', currentNotes ? `${currentNotes}\n${programNote}` : programNote);
+      }
+    }
+  };
+
+  const handleWorkoutModeChange = (mode) => {
+    setWorkoutMode(mode);
+    
+    // Reset form when switching modes
+    if (mode === 'freeform') {
+      // Reset to default values
+      reset({
+        exercise: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        sets: 3,
+        reps: 10,
+        weight: 0
+      });
+      setProgressiveOverloadEnabled(true);
+    } else if (mode === 'program') {
+      // Reset with program defaults
+      reset({
+        exercise: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        sets: 5,
+        reps: 5,
+        weight: 0
+      });
+      setProgressiveOverloadEnabled(false);
+    }
+  };
+
+  const handleProgramChange = (program) => {
+    setSelectedProgram(program);
+    
+    // Set default workout for StrongLifts
+    if (program === 'strongLifts5x5') {
+      setSelectedWorkout('workoutA');
+    }
+  };
+
+  const handleWorkoutChange = (workout) => {
+    setSelectedWorkout(workout);
   };
 
   // Periodization panel handlers
@@ -719,6 +898,148 @@ const WorkoutForm = ({ onSuccess }) => {
           )}
         </div>
       </div>
+
+      {/* Workout Mode Selection */}
+      <div className="mb-6">
+        <div className="bg-blue-600 bg-opacity-20 rounded-xl p-4 mb-4">
+          <h3 className="text-base font-semibold text-white mb-3">Workout Mode</h3>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleWorkoutModeChange('freeform')}
+              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                workoutMode === 'freeform' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+              }`}
+            >
+              <div className="text-center">
+                <div className="text-lg mb-1">🎯</div>
+                <div className="text-sm">Free Form</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleWorkoutModeChange('program')}
+              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                workoutMode === 'program' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+              }`}
+            >
+              <div className="text-center">
+                <div className="text-lg mb-1">📋</div>
+                <div className="text-sm">Program</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Program Selection */}
+        {workoutMode === 'program' && (
+          <div className="bg-blue-600 bg-opacity-20 rounded-xl p-4 mb-4">
+            <h3 className="text-base font-semibold text-white mb-3">Select Program</h3>
+            <select
+              value={selectedProgram}
+              onChange={(e) => handleProgramChange(e.target.value)}
+              className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
+            >
+              <option value="strongLifts5x5">StrongLifts 5x5</option>
+            </select>
+
+            {/* StrongLifts Workout Selection */}
+            {selectedProgram === 'strongLifts5x5' && (
+              <div className="mt-4">
+                <label className="block text-sm font-semibold text-white mb-2">Workout Session</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutChange('workoutA')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedWorkout === 'workoutA' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+                    }`}
+                  >
+                    Workout A
+                    <div className="text-xs opacity-75 mt-1">Squat • Bench • Row</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutChange('workoutB')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedWorkout === 'workoutB' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-600 bg-opacity-30 text-blue-100 hover:bg-blue-600 hover:bg-opacity-40'
+                    }`}
+                  >
+                    Workout B
+                    <div className="text-xs opacity-75 mt-1">Squat • Press • Deadlift</div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* StrongLifts Status */}
+        {strongLiftsStatus?.patternDetected && workoutMode === 'freeform' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start">
+              <span className="text-green-600 mr-2">📊</span>
+              <div className="text-sm text-green-800">
+                <p className="font-medium">StrongLifts Pattern Detected! ({strongLiftsStatus.confidence}% confidence)</p>
+                <p className="text-xs mt-1">
+                  {strongLiftsStatus.recommendation} 
+                  <button
+                    type="button"
+                    onClick={() => handleWorkoutModeChange('program')}
+                    className="ml-2 text-green-600 underline hover:text-green-700"
+                  >
+                    Switch to Program Mode
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Program Suggestions */}
+        {programSuggestion && workoutMode === 'program' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-semibold text-blue-900">
+                {programSuggestion.name} - Exercise Suggestions
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {programSuggestion.exercises.map((exercise, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-center justify-between bg-white rounded-lg p-3 border border-blue-100"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-800">{exercise.name}</div>
+                    <div className="text-sm text-gray-600">
+                      {exercise.sets} sets × {exercise.reps} reps @ {exercise.suggestedWeight} lbs
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      {exercise.progression?.reason || 'Following program progression'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => applyProgramSuggestion(exercise)}
+                    className="ml-3 bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
+                  >
+                    Use
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
@@ -730,8 +1051,10 @@ const WorkoutForm = ({ onSuccess }) => {
             className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
             style={{ minHeight: '52px' }}
           >
-            <option value="">Select an exercise</option>
-            {commonExercises.map((exercise) => (
+            <option value="">
+              {workoutMode === 'program' ? 'Select from program exercises' : 'Select an exercise'}
+            </option>
+            {getExerciseOptions().map((exercise) => (
               <option key={exercise} value={exercise}>{exercise}</option>
             ))}
           </select>
@@ -772,8 +1095,8 @@ const WorkoutForm = ({ onSuccess }) => {
           </div>
         )}
 
-        {/* Progressive Overload Suggestion */}
-        {progressiveOverloadEnabled && selectedExercise && selectedExercise !== 'Other' && (
+        {/* Progressive Overload Suggestion (Free Form Mode) */}
+        {progressiveOverloadEnabled && selectedExercise && selectedExercise !== 'Other' && workoutMode === 'freeform' && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             {loadingSuggestion ? (
               <div className="flex items-center">
@@ -901,6 +1224,76 @@ const WorkoutForm = ({ onSuccess }) => {
                 </div>
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* StrongLifts Progression (Program Mode) */}
+        {workoutMode === 'program' && selectedProgram === 'strongLifts5x5' && selectedExercise && programSuggestion && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            {(() => {
+              const exerciseData = programSuggestion.exercises?.find(ex => ex.name === selectedExercise);
+              if (!exerciseData) return null;
+              
+              return (
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-sm font-semibold text-blue-900">StrongLifts 5x5 Progression:</h3>
+                    <button
+                      type="button"
+                      onClick={() => applyProgramSuggestion(exerciseData)}
+                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-blue-800">
+                      <span className="font-medium">Target:</span> 
+                      {exerciseData.sets} sets × {exerciseData.reps} reps @ {exerciseData.suggestedWeight} lbs
+                    </p>
+                    <p className="text-xs text-blue-700">{exerciseData.progression?.reason}</p>
+                    {exerciseData.progression?.lastWorkout && (
+                      <p className="text-xs text-blue-600 mt-2">
+                        Last workout: {exerciseData.progression.lastWorkout.sets}×{exerciseData.progression.lastWorkout.reps} @ {exerciseData.progression.lastWorkout.weight}lbs
+                      </p>
+                    )}
+                    {exerciseData.progression?.recentFailures > 0 && (
+                      <div className="text-xs text-orange-700 mt-1 font-medium">
+                        ⚠️ Recent failures: {exerciseData.progression.recentFailures}/3
+                        {exerciseData.progression.deloadRecommended && 
+                          <span className="text-red-700 ml-2">🔄 Deload recommended</span>
+                        }
+                      </div>
+                    )}
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs text-blue-700 mr-2">Confidence:</span>
+                      <div className="flex space-x-1">
+                        {['high', 'medium', 'low'].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-2 w-8 rounded ${
+                              exerciseData.progression?.confidence === 'high' && level !== 'low' ? 'bg-blue-600' :
+                              exerciseData.progression?.confidence === 'medium' && level === 'high' ? 'bg-blue-600' :
+                              exerciseData.progression?.confidence === 'medium' && level === 'medium' ? 'bg-blue-400' :
+                              'bg-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-2 p-2 bg-blue-100 border border-blue-200 rounded text-xs">
+                      <div className="font-medium text-blue-800 mb-1">📈 StrongLifts Rules:</div>
+                      <div className="text-blue-700 space-y-1">
+                        <div>• Add weight each workout if you completed all sets</div>
+                        <div>• Upper body: +2.5 lbs | Lower body: +5 lbs</div>
+                        <div>• If you fail 3 sessions in a row, deload by 10%</div>
+                        <div>• Deadlifts are 1×5, all others are 5×5</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
