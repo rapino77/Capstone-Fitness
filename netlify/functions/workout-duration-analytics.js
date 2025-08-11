@@ -82,9 +82,21 @@ exports.handler = async (event, context) => {
                   notes: record.get('Notes')
                 };
                 
+                console.log('📊 Retrieved workout record:', {
+                  id: workout.id,
+                  exercise: workout.exercise,
+                  date: workout.date,
+                  totalDuration: workout.totalDuration,
+                  workTime: workout.workTime,
+                  hasDurationData: !!(workout.totalDuration || workout.workTime)
+                });
+                
                 // Only include workouts with duration data
                 if (workout.totalDuration || workout.workTime) {
+                  console.log('✅ Including workout with duration data');
                   workouts.push(workout);
+                } else {
+                  console.log('❌ Skipping workout without duration data');
                 }
               } catch (fieldError) {
                 // If duration fields don't exist, just skip this record

@@ -86,6 +86,30 @@ const DurationAnalytics = ({ userId = 'default-user' }) => {
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">Workout Duration Analytics</h2>
           <div className="flex items-center space-x-4">
+            <button
+              onClick={fetchAnalytics}
+              disabled={isLoading}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+              title="Refresh analytics data"
+            >
+              🔄 Refresh
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const response = await axios.get(`${process.env.REACT_APP_API_URL}/check-workout-duration`);
+                  console.log('🔍 Workout Duration Debug:', response.data);
+                  alert(`Found ${response.data.totalWorkouts} workouts, ${response.data.workoutsWithDuration} with duration data. Check console for details.`);
+                } catch (error) {
+                  console.error('Debug failed:', error);
+                  alert('Debug failed. Check console for details.');
+                }
+              }}
+              className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors"
+              title="Debug workout data"
+            >
+              🔧 Debug
+            </button>
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
