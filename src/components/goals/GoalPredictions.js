@@ -6,7 +6,6 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
   const [predictions, setPredictions] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [usingClientSide, setUsingClientSide] = useState(false);
 
   const generateClientSidePredictions = useCallback((goals) => {
@@ -95,7 +94,6 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
   const fetchPredictions = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
 
       // Try to fetch from API first
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-goal-predictions`, {

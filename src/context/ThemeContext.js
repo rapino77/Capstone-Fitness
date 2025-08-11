@@ -162,8 +162,13 @@ export const ThemeProvider = ({ children }) => {
       }
     } else {
       // Check system preference for dark mode
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDark(prefersDark);
+      try {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setIsDark(prefersDark);
+      } catch (error) {
+        // Fallback to light mode if matchMedia is not available
+        setIsDark(false);
+      }
     }
   }, []);
 
