@@ -1341,6 +1341,49 @@ button[class*="bg-"][class*="-100"] {
   min-width: 120px;
 }
 
+/* Chart tooltip fixes - ensure readable text */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  color: #111827 !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
+  color: #111827 !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  color: #374151 !important;
+  font-size: 13px !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-name {
+  color: #374151 !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-value {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+/* Additional tooltip content styling */
+.recharts-tooltip-wrapper div {
+  color: #111827 !important;
+}
+
+.recharts-tooltip-wrapper p {
+  color: #111827 !important;
+  margin: 0 !important;
+}
+
+.recharts-tooltip-wrapper span {
+  color: #111827 !important;
+}
+
 /* Mobile-friendly form layout */
 .mobile-form {
   display: flex;

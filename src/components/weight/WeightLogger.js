@@ -705,15 +705,24 @@ const WeightLogger = ({ onSuccess }) => {
                   return [value, name];
                 }}
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  color: '#111827',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  backgroundColor: '#ffffff !important',
+                  border: '1px solid #e5e7eb !important',
+                  borderRadius: '8px !important',
+                  color: '#111827 !important',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1) !important',
+                  fontSize: '14px !important',
+                  padding: '10px !important'
                 }}
                 labelStyle={{
-                  color: '#374151'
+                  color: '#111827 !important',
+                  fontWeight: 'bold !important',
+                  fontSize: '14px !important'
                 }}
+                itemStyle={{
+                  color: '#374151 !important',
+                  fontSize: '13px !important'
+                }}
+                cursor={false}
               />
               <Legend 
                 wrapperStyle={{ color: theme.colors.text }}
@@ -824,15 +833,24 @@ const WeightLogger = ({ onSuccess }) => {
                       return [value, name];
                     }}
                     contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      color: '#111827',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      backgroundColor: '#ffffff !important',
+                      border: '1px solid #e5e7eb !important',
+                      borderRadius: '8px !important',
+                      color: '#111827 !important',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1) !important',
+                      fontSize: '14px !important',
+                      padding: '10px !important'
                     }}
                     labelStyle={{
-                      color: '#374151'
+                      color: '#111827 !important',
+                      fontWeight: 'bold !important',
+                      fontSize: '14px !important'
                     }}
+                    itemStyle={{
+                      color: '#374151 !important',
+                      fontSize: '13px !important'
+                    }}
+                    cursor={false}
                   />
                   <Legend 
                     wrapperStyle={{ color: theme.colors.text }}
