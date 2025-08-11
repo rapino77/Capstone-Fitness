@@ -55,25 +55,69 @@ exports.handler = async (event, context) => {
 
     // Create record in Airtable with actual workout data
     console.log('Creating workout record with data:', data);
-    const record = await base('Workouts').create({
-      'User ID': data.userId || 'default-user',  // Add User ID field
-      Exercise: data.exercise,
-      Sets: parseInt(data.sets) || 0,
-      Reps: parseInt(data.reps) || 0,
-      Weight: parseFloat(data.weight) || 0,
-      Date: data.date || new Date().toISOString().split('T')[0],
-      Notes: data.notes || '',
-      // Duration tracking fields
-      'Total Duration': data.totalDuration ? parseInt(data.totalDuration) : null,
-      'Work Time': data.workTime ? parseInt(data.workTime) : null,
-      'Rest Time': data.restTime ? parseInt(data.restTime) : null,
-      'Set Count': data.setCount ? parseInt(data.setCount) : null,
-      'Average Set Duration': data.avgSetDuration ? parseInt(data.avgSetDuration) : null,
-      'Average Rest Duration': data.avgRestDuration ? parseInt(data.avgRestDuration) : null,
-      'Workout Efficiency': data.efficiency ? parseInt(data.efficiency) : null,
-      'Start Time': data.startTime || null,
-      'End Time': data.endTime || null
-    });
+    
+    // First, let's try a minimal record to see what fields exist
+    let record;
+    try {
+      // Try with all fields first
+      const fullRecordData = {
+        'User ID': data.userId || 'default-user',
+        Exercise: data.exercise,
+        Sets: parseInt(data.sets) || 0,
+        Reps: parseInt(data.reps) || 0,
+        Weight: parseFloat(data.weight) || 0,
+        Date: data.date || new Date().toISOString().split('T')[0],
+        Notes: data.notes || ''
+      };
+      
+      // Add duration fields if they exist in the data
+      if (data.totalDuration || data.workTime) {
+        Object.assign(fullRecordData, {
+          'Total Duration': data.totalDuration ? parseInt(data.totalDuration) : null,
+          'Work Time': data.workTime ? parseInt(data.workTime) : null,
+          'Rest Time': data.restTime ? parseInt(data.restTime) : null,
+          'Set Count': data.setCount ? parseInt(data.setCount) : null,
+          'Average Set Duration': data.avgSetDuration ? parseInt(data.avgSetDuration) : null,
+          'Average Rest Duration': data.avgRestDuration ? parseInt(data.avgRestDuration) : null,
+          'Workout Efficiency': data.efficiency ? parseInt(data.efficiency) : null,
+          'Start Time': data.startTime || null,
+          'End Time': data.endTime || null
+        });
+      }
+      
+      record = await base('Workouts').create(fullRecordData);
+      console.log('✅ Workout created with all fields');
+      
+    } catch (error) {
+      console.log('⚠️ Failed with full data, trying minimal record...');
+      console.log('Error was:', error.message);
+      
+      // If that fails, try without duration fields
+      try {
+        const minimalRecordData = {
+          Exercise: data.exercise,
+          Sets: parseInt(data.sets) || 0,
+          Reps: parseInt(data.reps) || 0,
+          Weight: parseFloat(data.weight) || 0,
+          Date: data.date || new Date().toISOString().split('T')[0],
+          Notes: data.notes || ''
+        };
+        
+        // Try adding User ID if it exists
+        try {
+          minimalRecordData['User ID'] = data.userId || 'default-user';
+        } catch (e) {
+          console.log('User ID field may not exist');
+        }
+        
+        record = await base('Workouts').create(minimalRecordData);
+        console.log('✅ Workout created with basic fields only');
+        
+      } catch (minimalError) {
+        console.error('❌ Failed even with minimal data:', minimalError.message);
+        throw new Error(`Cannot create workout record. Please check your Airtable table structure. Error: ${minimalError.message}`);
+      }
+    }
 
     // Auto-update related goals after logging workout
     try {
