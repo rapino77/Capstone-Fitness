@@ -145,9 +145,11 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
         // Filter workouts for this week
         console.log(`🔍 Filtering ${allWorkouts.length} workouts for week ${start.toDateString()} to ${end.toDateString()}`);
         const weekWorkouts = allWorkouts.filter(workout => {
-          const workoutDate = new Date(workout.date || workout.Date);
+          // Parse date string in local timezone to avoid UTC issues
+          const dateStr = workout.date || workout.Date;
+          const workoutDate = new Date(dateStr + 'T12:00:00'); // Add noon to ensure local timezone
           const isInRange = workoutDate >= start && workoutDate <= end;
-          console.log(`  - Workout on ${workoutDate.toDateString()}: ${isInRange ? '✅ INCLUDED' : '❌ EXCLUDED'}`);
+          console.log(`  - Workout on ${dateStr} (${workoutDate.toDateString()}): ${isInRange ? '✅ INCLUDED' : '❌ EXCLUDED'}`);
           return isInRange;
         });
         console.log(`📋 Found ${weekWorkouts.length} workouts for this week`);
@@ -234,10 +236,14 @@ const WeeklyReport = ({ refreshTrigger = 0 }) => {
         
         // Filter weights for this week
         const weekWeights = allWeights.filter(weight => {
-          const weightDate = new Date(weight.date || weight.Date);
-          return weightDate >= start && weightDate <= end;
+          // Parse date string in local timezone to avoid UTC issues
+          const dateStr = weight.date || weight.Date;
+          const weightDate = new Date(dateStr + 'T12:00:00'); // Add noon to ensure local timezone
+          const isInRange = weightDate >= start && weightDate <= end;
+          console.log(`  - Weight on ${dateStr} (${weightDate.toDateString()}): ${isInRange ? '✅ INCLUDED' : '❌ EXCLUDED'}`);
+          return isInRange;
         }).map(w => ({
-          date: new Date(w.date || w.Date),
+          date: new Date((w.date || w.Date) + 'T12:00:00'),
           weight: w.weight || w.Weight,
           unit: w.unit || w.Unit || 'lbs'
         })).sort((a, b) => a.date - b.date);
