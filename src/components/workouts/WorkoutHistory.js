@@ -296,29 +296,29 @@ const WorkoutHistory = () => {
                         <p className="text-sm text-gray-500 mt-1">{workout.notes}</p>
                       )}
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">
-                          Total Volume: {workout.sets * workout.reps * workout.weight} lbs
-                        </p>
+                      <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4 flex-shrink-0">
+                        <div className="text-left sm:text-right order-2 sm:order-1">
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            Total: {workout.sets * workout.reps * workout.weight} lbs
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteWorkout(workout.id)}
+                          disabled={isDeleting === workout.id}
+                          className={`text-red-600 hover:text-red-800 active:text-red-900 transition-colors touch-manipulation p-1 rounded order-1 sm:order-2 ${
+                            isDeleting === workout.id ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          title="Delete workout"
+                        >
+                          {isDeleting === workout.id ? (
+                            <span className="text-sm">Deleting...</span>
+                          ) : (
+                            <svg className="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleDeleteWorkout(workout.id)}
-                        disabled={isDeleting === workout.id}
-                        className={`text-red-600 hover:text-red-800 transition-colors ${
-                          isDeleting === workout.id ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                        title="Delete workout"
-                      >
-                        {isDeleting === workout.id ? (
-                          <span className="text-sm">Deleting...</span>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -326,11 +326,12 @@ const WorkoutHistory = () => {
           ))}
           
           {pagination.hasMore && (
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-4 sm:mt-6">
               <button
                 onClick={handleLoadMore}
                 disabled={isLoading}
-                className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 text-white py-3 sm:py-2 px-4 sm:px-6 rounded-lg sm:rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation font-medium text-base"
+                style={{ minHeight: '52px' }}
               >
                 Load More
               </button>
@@ -338,12 +339,14 @@ const WorkoutHistory = () => {
           )}
         </div>
       ) : (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-gray-500">
-            {workouts.length === 0 
-              ? "No workouts found. Start logging your workouts!" 
-              : "No workouts match your filters. Try adjusting your search criteria."}
-          </p>
+        <div className="flex justify-center items-center h-48 sm:h-64">
+          <div className="text-center px-4">
+            <p className="text-gray-300 text-base sm:text-lg">
+              {workouts.length === 0 
+                ? "No workouts found. Start logging your workouts!" 
+                : "No workouts match your filters. Try adjusting your search criteria."}
+            </p>
+          </div>
         </div>
       )}
     </div>

@@ -80,16 +80,18 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
   };
 
   return (
-    <div className="flex gap-6">
-      {/* Sidebar */}
-      <Sidebar 
-        sections={sections}
-        activeSection={activeSection}
-        onSectionChange={handleSectionChange}
-      />
+    <div className="flex flex-col lg:flex-row gap-3 sm:gap-6">
+      {/* Sidebar - Mobile optimized */}
+      <div className="lg:w-80">
+        <Sidebar 
+          sections={sections}
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+        />
+      </div>
       
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {renderActiveSection()}
       </div>
     </div>

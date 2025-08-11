@@ -624,44 +624,45 @@ const WeightLogger = ({ onSuccess }) => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Weight Progress</h3>
-          <div className="flex gap-2">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-3 sm:space-y-0">
+          <h3 className="text-lg sm:text-xl font-bold">Weight Progress</h3>
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setViewMode('chart')}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-3 py-2 rounded text-sm font-medium touch-manipulation ${
                 viewMode === 'chart'
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400'
               }`}
             >
-              Chart View
+              Chart
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-3 py-2 rounded text-sm font-medium touch-manipulation ${
                 viewMode === 'table'
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400'
               }`}
             >
-              Table View
+              Table
             </button>
             <button
               onClick={() => setViewMode('correlation')}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-3 py-2 rounded text-sm font-medium touch-manipulation ${
                 viewMode === 'correlation'
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 active:bg-gray-400'
               }`}
             >
-              Weight vs Performance
+              <span className="hidden sm:inline">Weight vs Performance</span>
+              <span className="sm:hidden">Correlation</span>
             </button>
             <button
               onClick={handleResetWeights}
               disabled={isResetting || isLoading}
-              className="px-3 py-1 rounded text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border border-red-600"
+              className="px-3 py-2 rounded text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border border-red-600 touch-manipulation"
               title="Reset all weight entries (permanent deletion)"
             >
               {isResetting ? 'Resetting...' : 'Reset All'}
