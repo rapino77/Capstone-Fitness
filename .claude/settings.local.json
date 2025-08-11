@@ -33,7 +33,8 @@
       "Bash(taskkill:*)",
       "Bash(powershell:*)",
       "Bash(timeout:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(del \"C:\\Users\\socce\\OneDrive\\Documents\\GitHub\\Capstone-Fitness\\src\\components\\debug\\ApiDebugger.js\")"
     ],
     "deny": []
   }
