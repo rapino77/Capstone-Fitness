@@ -965,6 +965,68 @@ button[class*="bg-"][class*="-100"] {
   -webkit-text-fill-color: #000000 !important;
 }
 
+/* Mobile-first improvements */
+@media (max-width: 768px) {
+  /* Ensure proper spacing on mobile */
+  .space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  /* Better touch targets for mobile */
+  input, select, textarea, button {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Improve form element appearance on mobile */
+  input[type="number"], 
+  input[type="text"], 
+  input[type="date"], 
+  select, 
+  textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+  }
+  
+  /* Better button styling on mobile */
+  button {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Hide scrollbars but maintain scroll functionality */
+  .overflow-x-auto {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Collapsible details styling */
+  details summary {
+    list-style: none;
+  }
+  
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+  
+  details[open] summary::after {
+    content: '−';
+  }
+  
+  details summary::after {
+    content: '+';
+    float: right;
+    font-weight: bold;
+  }
+}
+
 /* ========================================
    MOBILE-FIRST UTILITIES
    ======================================== */

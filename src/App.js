@@ -140,27 +140,28 @@ const AppContent = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
-        {/* Tab Navigation - Mobile First */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-8">
+        {/* Tab Navigation - Mobile Optimized */}
         <div 
-          className="rounded-lg shadow-sm mb-4 sm:mb-6 border transition-colors duration-200 sticky top-16 sm:top-20 z-30 backdrop-blur-sm"
+          className="rounded-lg shadow-sm mb-3 sm:mb-6 border transition-colors duration-200 sticky top-16 sm:top-20 z-30 backdrop-blur-sm"
           style={{ 
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border
           }}
         >
           <nav 
-            className="flex overflow-x-auto scrollbar-hide"
+            className="flex overflow-x-auto"
             style={{
               scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
             }}
           >
             {tabs.map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`hover-lift flex-shrink-0 py-3 sm:py-4 px-3 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header touch-manipulation ${
+                className={`hover-lift flex-shrink-0 py-2 sm:py-4 px-2 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header touch-manipulation ${
                   index !== tabs.length - 1 ? 'border-r' : ''
                 } min-w-0 flex-1 sm:flex-initial`}
                 style={{
@@ -169,7 +170,8 @@ const AppContent = () => {
                   borderColor: theme.colors.border,
                   borderBottomWidth: activeTab === tab.id ? '2px' : '0px',
                   borderBottomColor: activeTab === tab.id ? theme.colors.primary : 'transparent',
-                  minHeight: '44px' // Touch target minimum
+                  minHeight: '56px', // Larger touch target for mobile
+                  minWidth: '64px' // Ensure adequate width
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== tab.id) {
@@ -184,12 +186,16 @@ const AppContent = () => {
                   }
                 }}
               >
-                <div className="flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2">
-                  <span className="icon-hover text-lg sm:text-base">{tab.icon}</span>
-                  <span className="transition-colors duration-200 text-xs sm:text-sm font-medium">
-                    {/* Show abbreviated names on mobile */}
+                <div className="flex flex-col items-center justify-center space-y-1">
+                  <span className="text-base sm:text-lg">{tab.icon}</span>
+                  <span className="transition-colors duration-200 text-xs font-medium leading-tight">
+                    {/* Show appropriate names for mobile */}
                     <span className="sm:hidden">
-                      {tab.name.split(' ')[0]}
+                      {tab.id === 'workout' ? 'LOG' :
+                       tab.id === 'tracking' ? 'ANALYTICS' :
+                       tab.id === 'challenges' ? 'GAMES' :
+                       tab.id === 'dashboard' ? 'DASH' :
+                       tab.name.split(' ')[0].toUpperCase()}
                     </span>
                     <span className="hidden sm:inline">
                       {tab.name}
