@@ -8,6 +8,7 @@ import BadgeDisplay from './components/badges/BadgeDisplay';
 import GoalCreator from './components/goals/GoalCreator';
 import GoalTracker from './components/goals/GoalTracker';
 import GoalProgressChart from './components/goals/GoalProgressChart';
+import GoalPredictions from './components/goals/GoalPredictions';
 import Dashboard from './components/dashboard/Dashboard';
 import ChallengeSystem from './components/challenges/ChallengeSystem';
 import ThemeSettings from './components/common/ThemeSettings';
@@ -288,6 +289,7 @@ const AppContent = () => {
                       refreshTrigger={refreshGoals}
                       onGoalsLoaded={setGoalsData}
                     />
+                    <GoalPredictions goals={goalsData} refreshTrigger={refreshGoals} />
                     <GoalProgressChart goals={goalsData} />
                   </>
                 ) : (
