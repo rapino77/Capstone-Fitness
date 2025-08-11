@@ -178,15 +178,19 @@ const WeeklyReport = () => {
 
     try {
       // Fetch goals data
-      const goalsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/get-goals`, {
-        params: { userId: 'default-user' }
+      const goalsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
+        params: { 
+          status: 'all',
+          sortBy: 'Created Date',
+          sortDirection: 'desc'
+        }
       });
       
       console.log('🎯 Goals API response:', goalsResponse.data);
       
-      if (goalsResponse.data.success && goalsResponse.data.goals) {
+      if (goalsResponse.data.success && goalsResponse.data.data) {
         // Filter goals that were achieved this week
-        const goalsAchieved = goalsResponse.data.goals.filter(goal => {
+        const goalsAchieved = goalsResponse.data.data.filter(goal => {
           const achievedDate = goal.achieved_date || goal['Achieved Date'];
           if (!achievedDate) return false;
           
