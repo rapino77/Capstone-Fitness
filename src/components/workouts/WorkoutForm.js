@@ -22,7 +22,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [showDeloadPrompt, setShowDeloadPrompt] = useState(false);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [periodizationEnabled, setPeriodizationEnabled] = useState(true);
-  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerEnabled, setTimerEnabled] = useState(true);
   const [workoutTimerData, setWorkoutTimerData] = useState(null);
   const { celebratePR } = useCelebration();
   
