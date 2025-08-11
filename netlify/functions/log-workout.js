@@ -72,6 +72,12 @@ exports.handler = async (event, context) => {
       
       // Add duration fields if they exist in the data
       if (data.totalDuration || data.workTime) {
+        console.log('📊 Adding duration data to workout record:');
+        console.log('- Total Duration:', data.totalDuration);
+        console.log('- Work Time:', data.workTime);
+        console.log('- Rest Time:', data.restTime);
+        console.log('- Efficiency:', data.efficiency);
+        
         Object.assign(fullRecordData, {
           'Total Duration': data.totalDuration ? parseInt(data.totalDuration) : null,
           'Work Time': data.workTime ? parseInt(data.workTime) : null,
@@ -87,6 +93,12 @@ exports.handler = async (event, context) => {
       
       record = await base('Workouts').create(fullRecordData);
       console.log('✅ Workout created with all fields');
+      
+      // Log what was actually saved
+      console.log('📊 Saved duration data check:');
+      console.log('- Total Duration saved:', record.get('Total Duration'));
+      console.log('- Work Time saved:', record.get('Work Time'));
+      console.log('- Efficiency saved:', record.get('Workout Efficiency'));
       
     } catch (error) {
       console.log('⚠️ Failed with full data, trying minimal record...');
