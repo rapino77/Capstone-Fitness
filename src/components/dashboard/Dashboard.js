@@ -131,19 +131,19 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mobile-space-y space-y-4 sm:space-y-6">
       {/* Workout Streak Section */}
       <WorkoutStreak userId="default-user" refreshTrigger={refreshTrigger} />
       
       {/* Header with Timeframe Selector */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl section-header">Dashboard Overview</h1>
-        <div className="flex space-x-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl section-header mobile-heading">Dashboard Overview</h1>
+        <div className="flex space-x-2 justify-start sm:justify-end">
           {[7, 30, 90].map((days) => (
             <button
               key={days}
               onClick={() => setTimeframe(days)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
+              className={`mobile-button px-3 py-2 rounded-md text-sm font-medium touch-manipulation ${
                 timeframe === days
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-500 hover:text-gray-700'
@@ -159,7 +159,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
       <WeeklyReport />
 
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <MetricCard
           title="Workouts"
           value={analytics.workoutAnalytics.totalWorkouts}
@@ -191,10 +191,10 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
       </div>
 
       {/* Weight Progress & Goal Progress */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weight Progress Chart */}
         {analytics.weightAnalytics.dataPoints?.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <h3 className="text-lg font-semibold mb-4">Weight Progress</h3>
             <div className="mb-4">
               <div className="flex items-center justify-between text-sm text-gray-600">
@@ -206,7 +206,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
                 </span>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={150} className="sm:h-[200px]">
               <LineChart data={analytics.weightAnalytics.dataPoints}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -283,12 +283,12 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
       </div>
 
       {/* Exercise Progress & Recent PRs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Exercise Breakdown */}
         {Object.keys(analytics.workoutAnalytics.exerciseBreakdown).length > 0 && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <h3 className="text-lg font-semibold mb-4">Exercise Volume Breakdown</h3>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
               <BarChart
                 data={Object.entries(analytics.workoutAnalytics.exerciseBreakdown)
                   .map(([exercise, data]) => ({
@@ -407,9 +407,9 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
 
       {/* Insights & Recommendations */}
       {analytics.insights.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Insights & Recommendations</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-4 mobile-subheading">Insights & Recommendations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             {analytics.insights.map((insight, index) => (
               <div key={index} className={`p-4 rounded-lg border-l-4 ${
                 insight.type === 'celebration' ? 'bg-green-50 border-green-500' :
@@ -438,18 +438,18 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
 
       {/* Upcoming Goals Deadlines */}
       {analytics.goalAnalytics.upcomingDeadlines?.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Upcoming Goal Deadlines</h3>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-4 mobile-subheading">Upcoming Goal Deadlines</h3>
           <div className="space-y-3">
             {analytics.goalAnalytics.upcomingDeadlines.map((goal) => (
-              <div key={goal.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+              <div key={goal.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-red-50 rounded-lg space-y-2 sm:space-y-0">
                 <div>
-                  <div className="font-medium text-gray-900">{goal.title}</div>
+                  <div className="font-medium text-gray-900 mobile-text">{goal.title}</div>
                   <div className="text-sm text-gray-600">
                     Due: {format(new Date(goal.targetDate), 'MMM dd, yyyy')}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <div className="font-bold text-red-600">
                     {goal.daysRemaining} days left
                   </div>
@@ -469,14 +469,14 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
 
 // Metric Card Component
 const MetricCard = ({ title, value, subtitle, icon, color }) => (
-  <div className="bg-white rounded-lg shadow-md p-6">
+  <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 mobile-card">
     <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        <p className="text-sm text-gray-500">{subtitle}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-medium text-gray-600 mobile-text-sm truncate">{title}</p>
+        <p className="text-lg sm:text-2xl font-bold text-gray-900 mobile-heading">{value}</p>
+        <p className="text-xs sm:text-sm text-gray-500 mobile-text-sm truncate">{subtitle}</p>
       </div>
-      <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center text-white text-xl`}>
+      <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg ${color} flex items-center justify-center text-white text-sm sm:text-xl flex-shrink-0 ml-2`}>
         {icon}
       </div>
     </div>

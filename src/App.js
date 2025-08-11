@@ -107,59 +107,69 @@ const AppContent = () => {
       <ThemeSettings />
       
       <header 
-        className="shadow-sm border-b transition-colors duration-200"
+        className="shadow-sm border-b transition-colors duration-200 sticky top-0 z-40"
         style={{ 
           backgroundColor: theme.colors.background,
           borderColor: theme.colors.border
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-start">
-            <div className="flex items-center space-x-3 mr-8">
-              <div className="text-4xl icon-hover">⚡</div>
-              <h1 className="text-4xl fitness-title hover-glow cursor-pointer">
-                Fitness Command Center
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-6">
+          <div className="flex items-center justify-between">
+            {/* Mobile-first logo - smaller on mobile */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="text-2xl sm:text-4xl icon-hover">⚡</div>
+              <h1 className="text-lg sm:text-2xl lg:text-4xl fitness-title hover-glow cursor-pointer font-bold">
+                <span className="sm:hidden">Fitness</span>
+                <span className="hidden sm:inline">Fitness Command Center</span>
               </h1>
             </div>
             
-            <div className="flex-1 flex items-center justify-end space-x-6">
-              <SearchBar onNavigate={handleSearchNavigation} />
+            {/* Mobile-optimized search and tagline */}
+            <div className="flex items-center space-x-2 sm:space-x-6">
+              <div className="w-full max-w-xs sm:max-w-md">
+                <SearchBar onNavigate={handleSearchNavigation} />
+              </div>
               <div 
-                className="text-sm transition-colors duration-200 hidden sm:block"
+                className="text-xs sm:text-sm transition-colors duration-200 hidden md:block"
                 style={{ color: theme.colors.textSecondary }}
               >
-                Your complete fitness tracking solution
+                Your complete fitness solution
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tab Navigation */}
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+        {/* Tab Navigation - Mobile First */}
         <div 
-          className="rounded-lg shadow-sm mb-6 border transition-colors duration-200"
+          className="rounded-lg shadow-sm mb-4 sm:mb-6 border transition-colors duration-200 sticky top-16 sm:top-20 z-30 backdrop-blur-sm"
           style={{ 
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border
           }}
         >
           <nav 
-            className="flex overflow-x-auto"
+            className="flex overflow-x-auto scrollbar-hide"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
           >
             {tabs.map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`hover-lift flex-1 py-4 px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header ${
+                className={`hover-lift flex-shrink-0 py-3 sm:py-4 px-3 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header touch-manipulation ${
                   index !== tabs.length - 1 ? 'border-r' : ''
-                }`}
+                } min-w-0 flex-1 sm:flex-initial`}
                 style={{
                   color: activeTab === tab.id ? theme.colors.primary : theme.colors.textSecondary,
                   backgroundColor: activeTab === tab.id ? `${theme.colors.primary}10` : 'transparent',
                   borderColor: theme.colors.border,
                   borderBottomWidth: activeTab === tab.id ? '2px' : '0px',
-                  borderBottomColor: activeTab === tab.id ? theme.colors.primary : 'transparent'
+                  borderBottomColor: activeTab === tab.id ? theme.colors.primary : 'transparent',
+                  minHeight: '44px' // Touch target minimum
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== tab.id) {
@@ -174,9 +184,17 @@ const AppContent = () => {
                   }
                 }}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="icon-hover">{tab.icon}</span>
-                  <span className="transition-colors duration-200">{tab.name}</span>
+                <div className="flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2">
+                  <span className="icon-hover text-lg sm:text-base">{tab.icon}</span>
+                  <span className="transition-colors duration-200 text-xs sm:text-sm font-medium">
+                    {/* Show abbreviated names on mobile */}
+                    <span className="sm:hidden">
+                      {tab.name.split(' ')[0]}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {tab.name}
+                    </span>
+                  </span>
                 </div>
               </button>
             ))}

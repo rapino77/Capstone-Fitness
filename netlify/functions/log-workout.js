@@ -47,6 +47,14 @@ exports.handler = async (event, context) => {
 
     // Basic validation - just log what we received since table has no fields yet
     console.log('Received workout data:', JSON.stringify(data, null, 2));
+    console.log('🔍 Duration fields check:', {
+      hasTotalDuration: !!data.totalDuration,
+      hasWorkTime: !!data.workTime,
+      totalDuration: data.totalDuration,
+      workTime: data.workTime,
+      setCount: data.setCount,
+      efficiency: data.efficiency
+    });
 
     // Configure Airtable
     const base = new Airtable({
@@ -85,9 +93,10 @@ exports.handler = async (event, context) => {
           'Set Count': data.setCount ? parseInt(data.setCount) : null,
           'Average Set Duration': data.avgSetDuration ? parseInt(data.avgSetDuration) : null,
           'Average Rest Duration': data.avgRestDuration ? parseInt(data.avgRestDuration) : null,
-          'Workout Efficiency': data.efficiency ? parseInt(data.efficiency) : null,
-          'Start Time': data.startTime || null,
-          'End Time': data.endTime || null
+          'Workout Efficiency': data.efficiency ? parseInt(data.efficiency) : null
+          // Temporarily removing Start Time and End Time fields that are causing the error
+          // 'Start Time': data.startTime ? new Date(data.startTime).toISOString() : null,
+          // 'End Time': data.endTime ? new Date(data.endTime).toISOString() : null
         });
       }
       

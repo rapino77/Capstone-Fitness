@@ -377,6 +377,12 @@ const WorkoutForm = ({ onSuccess }) => {
         }
       }
 
+      // Temporarily use test endpoint to debug data flow
+      console.log('🧪 Using test endpoint to verify data...');
+      const testResponse = await axios.post(`${process.env.REACT_APP_API_URL}/test-form-submission`, submissionData);
+      console.log('🧪 Test endpoint response:', testResponse.data);
+      
+      // Also call the real endpoint
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/log-workout`, submissionData);
       console.log('💾 Workout logging response:', {
         success: response.data.success,
@@ -615,9 +621,9 @@ const WorkoutForm = ({ onSuccess }) => {
   };
 
   return (
-    <div className="bg-blue-primary rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl section-header">Log Workout</h2>
+    <div className="bg-blue-primary rounded-lg shadow-md p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl section-header mobile-heading">Log Workout</h2>
         <div className="flex flex-col space-y-2">
           <label className="flex items-center cursor-pointer">
             <input
@@ -682,14 +688,14 @@ const WorkoutForm = ({ onSuccess }) => {
         </div>
       </div>
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="mobile-form space-y-4">
         <div>
           <label className="block text-sm font-medium text-white mb-1">
             Exercise
           </label>
           <select
             {...register('exercise', { required: 'Exercise is required' })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+            className="mobile-input w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
             <option value="">Select an exercise</option>
             {commonExercises.map((exercise) => (
@@ -900,7 +906,7 @@ const WorkoutForm = ({ onSuccess }) => {
           </>
         )}
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="mobile-form-row grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-medium text-white mb-1">
               Sets
@@ -912,7 +918,7 @@ const WorkoutForm = ({ onSuccess }) => {
                 min: { value: 1, message: 'Minimum 1 set' },
                 max: { value: 100, message: 'Maximum 100 sets' }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="mobile-input w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             {errors.sets && (
               <p className="mt-1 text-sm text-red-600">{errors.sets.message}</p>
@@ -930,7 +936,7 @@ const WorkoutForm = ({ onSuccess }) => {
                 min: { value: 1, message: 'Minimum 1 rep' },
                 max: { value: 1000, message: 'Maximum 1000 reps' }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="mobile-input w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             {errors.reps && (
               <p className="mt-1 text-sm text-red-600">{errors.reps.message}</p>
@@ -949,7 +955,7 @@ const WorkoutForm = ({ onSuccess }) => {
                 min: { value: 0, message: 'Weight cannot be negative' },
                 max: { value: 2000, message: 'Maximum 2000 lbs' }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="mobile-input w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             {errors.weight && (
               <p className="mt-1 text-sm text-red-600">{errors.weight.message}</p>
@@ -967,7 +973,7 @@ const WorkoutForm = ({ onSuccess }) => {
               required: 'Date is required',
               validate: value => new Date(value) <= new Date() || 'Date cannot be in the future'
             })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+            className="mobile-input w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           />
           {errors.date && (
             <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
@@ -981,7 +987,7 @@ const WorkoutForm = ({ onSuccess }) => {
           <textarea
             {...register('notes')}
             rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+            className="mobile-input w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black resize-none"
             placeholder="Any additional notes about your workout..."
           />
         </div>
@@ -999,7 +1005,7 @@ const WorkoutForm = ({ onSuccess }) => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mobile-button mobile-button-primary w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
         >
           {isSubmitting ? 'Logging...' : 'Log Workout'}
         </button>

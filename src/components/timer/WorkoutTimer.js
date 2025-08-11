@@ -201,9 +201,9 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
   // Minimized view
   if (isMinimized) {
     return (
-      <div className="fixed bottom-4 right-4 bg-blue-600 text-white rounded-lg shadow-lg p-3 z-50">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
+      <div className="mobile-timer-minimized touch-manipulation">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <div className={`w-2 h-2 rounded-full ${
               timerState === TIMER_STATES.RUNNING ? 'bg-green-400 animate-pulse' :
               timerState === TIMER_STATES.PAUSED ? 'bg-yellow-400' :
@@ -212,14 +212,14 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
             <span className="text-sm font-mono">{formatDuration(elapsedTime)}</span>
           </div>
           {restTime > 0 && (
-            <span className="text-xs bg-blue-500 px-2 py-1 rounded">
+            <span className="text-xs bg-blue-500 px-2 py-1 rounded hidden sm:inline">
               Rest: {formatDuration(restTime)}
             </span>
           )}
           <button
             type="button"
             onClick={() => setIsMinimized(false)}
-            className="text-xs hover:text-blue-200 transition-colors"
+            className="text-xs hover:text-blue-200 transition-colors touch-target"
           >
             ▲
           </button>
@@ -229,14 +229,14 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-md p-6 text-white">
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-md p-4 sm:p-6 text-white mobile-timer">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg font-semibold">Workout Timer</h3>
+        <h3 className="text-base sm:text-lg font-semibold mobile-subheading">Workout Timer</h3>
         <div className="flex space-x-2">
           <button
             type="button"
             onClick={() => setIsMinimized(true)}
-            className="text-sm text-blue-200 hover:text-white transition-colors"
+            className="text-sm text-blue-200 hover:text-white transition-colors touch-target"
           >
             ▼
           </button>
@@ -244,8 +244,8 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
       </div>
 
       {/* Main Timer Display */}
-      <div className="text-center mb-6">
-        <div className="text-4xl font-mono font-bold mb-2">
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="text-2xl sm:text-4xl font-mono font-bold mb-2">
           {formatDuration(elapsedTime)}
         </div>
         <div className="flex items-center justify-center space-x-2">
@@ -260,14 +260,15 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
       </div>
 
       {/* Control Buttons */}
-      <div className="flex justify-center space-x-3 mb-4">
+      <div className="flex justify-center flex-wrap gap-2 sm:gap-3 mb-4">
         {timerState === TIMER_STATES.IDLE && (
           <button
             type="button"
             onClick={handleStart}
-            className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button bg-green-500 hover:bg-green-600 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors touch-manipulation"
           >
-            ▶ Start Workout
+            <span className="sm:hidden">▶ Start</span>
+            <span className="hidden sm:inline">▶ Start Workout</span>
           </button>
         )}
 
@@ -275,7 +276,7 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
           <button
             type="button"
             onClick={handlePause}
-            className="bg-yellow-500 hover:bg-yellow-600 px-6 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button bg-yellow-500 hover:bg-yellow-600 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors touch-manipulation"
           >
             ⏸ Pause
           </button>
@@ -285,7 +286,7 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
           <button
             type="button"
             onClick={handleStart}
-            className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button bg-green-500 hover:bg-green-600 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors touch-manipulation"
           >
             ▶ Resume
           </button>
@@ -295,9 +296,10 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
           <button
             type="button"
             onClick={handleStop}
-            className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button bg-red-500 hover:bg-red-600 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors touch-manipulation"
           >
-            ⏹ Finish
+            <span className="sm:hidden">⏹ End</span>
+            <span className="hidden sm:inline">⏹ Finish</span>
           </button>
         )}
 
@@ -305,7 +307,7 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
           <button
             type="button"
             onClick={handleReset}
-            className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button bg-gray-500 hover:bg-gray-600 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors touch-manipulation"
           >
             🔄 Reset
           </button>
@@ -315,14 +317,14 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
       {/* Rest Timer */}
       {restTime > 0 && (
         <div className="bg-blue-500 bg-opacity-50 rounded-lg p-3 mb-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm">Rest Time:</span>
-            <div className="flex items-center space-x-3">
-              <span className="font-mono text-lg">{formatDuration(restTime)}</span>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+            <span className="text-sm mobile-text">Rest Time:</span>
+            <div className="flex items-center justify-between sm:justify-end sm:space-x-3">
+              <span className="font-mono text-base sm:text-lg">{formatDuration(restTime)}</span>
               <button
                 type="button"
                 onClick={handleEndRest}
-                className="bg-blue-400 hover:bg-blue-300 text-blue-900 px-3 py-1 rounded text-sm font-medium transition-colors"
+                className="mobile-button bg-blue-400 hover:bg-blue-300 text-blue-900 px-3 py-2 rounded text-sm font-medium transition-colors touch-manipulation"
               >
                 End Rest
               </button>
@@ -334,19 +336,19 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
       {/* Set Tracking Controls */}
       {timerState === TIMER_STATES.RUNNING && currentExercise && (
         <div className="bg-purple-500 bg-opacity-50 rounded-lg p-3">
-          <div className="text-sm mb-2">Current: {currentExercise}</div>
-          <div className="flex space-x-2">
+          <div className="text-sm mb-2 mobile-text">Current: {currentExercise}</div>
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => handleStartSet(currentExercise)}
-              className="bg-purple-400 hover:bg-purple-300 text-purple-900 px-3 py-1 rounded text-sm font-medium transition-colors"
+              className="mobile-button bg-purple-400 hover:bg-purple-300 text-purple-900 px-3 py-2 rounded text-sm font-medium transition-colors touch-manipulation"
             >
               Start Set
             </button>
             <button
               type="button"
               onClick={() => handleEndSet()}
-              className="bg-purple-400 hover:bg-purple-300 text-purple-900 px-3 py-1 rounded text-sm font-medium transition-colors"
+              className="mobile-button bg-purple-400 hover:bg-purple-300 text-purple-900 px-3 py-2 rounded text-sm font-medium transition-colors touch-manipulation"
             >
               End Set
             </button>
@@ -357,20 +359,20 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
       {/* Quick Stats */}
       {timer && timer.sets.length > 0 && (
         <div className="mt-4 pt-4 border-t border-blue-400">
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-sm">
             <div className="text-center">
-              <div className="font-semibold">{timer.sets.length}</div>
-              <div className="text-blue-200">Sets</div>
+              <div className="font-semibold text-base sm:text-lg">{timer.sets.length}</div>
+              <div className="text-blue-200 mobile-text-sm">Sets</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold">{timer.exercises.length + (timer.currentExercise ? 1 : 0)}</div>
-              <div className="text-blue-200">Exercises</div>
+              <div className="font-semibold text-base sm:text-lg">{timer.exercises.length + (timer.currentExercise ? 1 : 0)}</div>
+              <div className="text-blue-200 mobile-text-sm">Exercises</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold">
+              <div className="font-semibold text-base sm:text-lg">
                 {timer.getWorkoutSummary().efficiency}%
               </div>
-              <div className="text-blue-200">Efficiency</div>
+              <div className="text-blue-200 mobile-text-sm">Efficiency</div>
             </div>
           </div>
         </div>
@@ -382,8 +384,8 @@ const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onT
 // Workout Summary Modal Component
 const WorkoutSummaryModal = ({ summary, onComplete, onDiscard }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full m-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-900 mb-4">🎉 Workout Complete!</h3>
         
         <div className="space-y-4 mb-6">
@@ -433,16 +435,16 @@ const WorkoutSummaryModal = ({ summary, onComplete, onDiscard }) => {
           )}
         </div>
 
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             onClick={onComplete}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors touch-manipulation"
           >
             Save Workout
           </button>
           <button
             onClick={onDiscard}
-            className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+            className="mobile-button flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors touch-manipulation"
           >
             Discard
           </button>
