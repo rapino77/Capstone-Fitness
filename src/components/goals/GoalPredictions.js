@@ -7,29 +7,121 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [usingClientSide, setUsingClientSide] = useState(false);
+
+  const generateClientSidePredictions = useCallback((goals) => {
+    const activeGoals = goals.filter(g => g.status === 'Active');
+    const predictions = activeGoals.map(goal => {
+      const currentProgress = goal.progressPercentage || 0;
+      const daysRemaining = goal.daysRemaining || 0;
+      const timeElapsedRatio = goal.timeElapsedRatio || 0.5; // Assume halfway if not available
+      
+      // Simple prediction algorithm based on current progress and time remaining
+      let likelihood, confidence;
+      const progressRate = currentProgress / Math.max(timeElapsedRatio, 0.1);
+      const projectedProgress = Math.min(progressRate, 100);
+      
+      if (projectedProgress >= 95) {
+        likelihood = 'very_likely';
+        confidence = 'high';
+      } else if (projectedProgress >= 80) {
+        likelihood = 'likely';
+        confidence = 'medium';
+      } else if (projectedProgress >= 60) {
+        likelihood = 'possible';
+        confidence = 'medium';
+      } else if (projectedProgress >= 30) {
+        likelihood = 'unlikely';
+        confidence = 'medium';
+      } else {
+        likelihood = 'unlikely';
+        confidence = 'high';
+      }
+      
+      // Generate insights based on progress
+      const insights = [];
+      if (currentProgress < 25 && daysRemaining < 30) {
+        insights.push('Goal deadline is approaching with limited progress. Consider adjusting timeline or increasing effort.');
+      } else if (currentProgress > 75) {
+        insights.push('Great progress! Stay consistent to achieve your goal.');
+      } else if (currentProgress < timeElapsedRatio * 100 - 20) {
+        insights.push('Progress is behind schedule. Consider reviewing your strategy.');
+      } else {
+        insights.push('Progress is on track. Keep up the good work!');
+      }
+      
+      // Add goal-specific insights
+      switch (goal.goalType) {
+        case 'Body Weight':
+          insights.push('Track weight daily for better trend analysis.');
+          break;
+        case 'Exercise PR':
+          insights.push('Focus on progressive overload in your training.');
+          break;
+        case 'Frequency':
+          insights.push('Consistency is key - aim for regular workout schedule.');
+          break;
+        default:
+          insights.push('Regular tracking will improve prediction accuracy.');
+      }
+      
+      return {
+        goalId: goal.id,
+        goalTitle: goal.goalTitle,
+        goalType: goal.goalType,
+        targetDate: goal.targetDate,
+        daysRemaining,
+        currentProgress,
+        timeElapsedRatio,
+        likelihood,
+        confidence,
+        projectedProgress: Math.round(projectedProgress),
+        insights,
+        predictedDate: null // Could calculate based on current rate
+      };
+    });
+    
+    const summary = {
+      totalActiveGoals: activeGoals.length,
+      predictionsGenerated: predictions.length,
+      likelyToSucceed: predictions.filter(p => p.likelihood === 'very_likely' || p.likelihood === 'likely').length,
+      needsAttention: predictions.filter(p => p.likelihood === 'unlikely' || p.likelihood === 'possible').length,
+      insufficientData: 0
+    };
+    
+    return { predictions, summary };
+  }, []);
 
   const fetchPredictions = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
+      // Try to fetch from API first
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-goal-predictions`, {
         params: {
           userId: 'default-user'
-        }
+        },
+        timeout: 3000 // 3 second timeout
       });
 
       if (response.data.success) {
         setPredictions(response.data.data.predictions || []);
         setSummary(response.data.data.summary || null);
+        setUsingClientSide(false);
+        return;
       }
     } catch (error) {
-      console.error('Failed to fetch goal predictions:', error);
-      setError('Failed to load predictions. API endpoint may not be available.');
+      console.log('API not available, using client-side predictions');
+      // Fall back to client-side predictions
+      const { predictions: clientPredictions, summary: clientSummary } = generateClientSidePredictions(goals);
+      setPredictions(clientPredictions);
+      setSummary(clientSummary);
+      setUsingClientSide(true);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [goals, generateClientSidePredictions]);
 
   useEffect(() => {
     if (goals && goals.filter(g => g.status === 'Active').length > 0) {
@@ -93,23 +185,6 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Goal Achievement Predictions</h3>
-        <div className="text-center py-8">
-          <div className="text-red-500 mb-2">⚠️</div>
-          <p className="text-gray-500">{error}</p>
-          <button
-            onClick={fetchPredictions}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (!goals || goals.filter(g => g.status === 'Active').length === 0) {
     return (
@@ -299,7 +374,11 @@ const GoalPredictions = ({ goals, refreshTrigger = 0 }) => {
 
       {/* Last Updated */}
       <div className="text-xs text-gray-400 mt-4 text-center">
-        Predictions are updated in real-time based on your workout and weight data
+        {usingClientSide ? (
+          <span>Predictions based on current goal progress • Run 'netlify dev' for advanced AI predictions</span>
+        ) : (
+          <span>Predictions are updated in real-time based on your workout and weight data</span>
+        )}
       </div>
     </div>
   );
