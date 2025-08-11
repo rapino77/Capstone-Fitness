@@ -176,7 +176,6 @@ export function generateRotationSuggestions(currentExercise, workoutHistory, opt
   } = options;
 
   const currentCategory = getExerciseCategory(currentExercise);
-  const suggestions = [];
 
   // Get all possible alternatives
   let alternatives = [];
@@ -298,7 +297,8 @@ export function determineCurrentPhase(workoutHistory, startDate = null) {
 // Generate phase-specific recommendations
 function generatePhaseRecommendation(phase, weekInPhase, totalWeeks) {
   const phaseData = PERIODIZATION_PHASES[phase];
-  const progressPercent = (weekInPhase / totalWeeks) * 100;
+  // Calculate progress through phase
+  // const progressPercent = (weekInPhase / totalWeeks) * 100;
 
   let recommendation = '';
   
@@ -351,7 +351,8 @@ export function generatePeriodizedWorkout(exercise, currentPhase, lastWorkout = 
   let weight = 0;
   if (lastWorkout && lastWorkout.weight) {
     const lastWeight = parseFloat(lastWorkout.weight);
-    const intensityMultiplier = (phaseData.intensityPercent[0] + phaseData.intensityPercent[1]) / 200; // Average as decimal
+    // Calculate intensity multiplier for future use
+    // const intensityMultiplier = (phaseData.intensityPercent[0] + phaseData.intensityPercent[1]) / 200; // Average as decimal
     
     if (currentPhase === 'DELOAD') {
       // Deload: reduce weight significantly
@@ -381,8 +382,8 @@ export function generatePeriodizedWorkout(exercise, currentPhase, lastWorkout = 
 export function shouldRotateExercise(exercise, workoutHistory, options = {}) {
   const { 
     rotationThreshold = 70,
-    forceRotationAfterWeeks = 8,
-    considerStagnation = true 
+    forceRotationAfterWeeks = 8
+    // considerStagnation = true // Reserved for future stagnation analysis
   } = options;
 
   if (!workoutHistory || workoutHistory.length === 0) {

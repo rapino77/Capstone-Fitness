@@ -24,6 +24,11 @@ const useSwipeNavigation = (tabs, activeTab, onTabChange) => {
     setTouchEnd(e.targetTouches[0].clientX);
   }, []);
 
+  const showSwipeIndicator = useCallback(() => {
+    setIsSwipeIndicatorVisible(true);
+    setTimeout(() => setIsSwipeIndicatorVisible(false), 1000);
+  }, []);
+
   const onTouchEnd = useCallback(() => {
     if (!touchStart || !touchEnd || !touchStartTime) return;
     
@@ -45,11 +50,6 @@ const useSwipeNavigation = (tabs, activeTab, onTabChange) => {
       }
     }
   }, [touchStart, touchEnd, touchStartTime, tabs, activeTab, onTabChange, showSwipeIndicator]);
-
-  const showSwipeIndicator = useCallback(() => {
-    setIsSwipeIndicatorVisible(true);
-    setTimeout(() => setIsSwipeIndicatorVisible(false), 1000);
-  }, []);
 
   useEffect(() => {
     // Show swipe hint on first load for mobile users
