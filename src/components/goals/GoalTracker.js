@@ -10,10 +10,39 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [progressValue, setProgressValue] = useState('');
   const [progressNotes, setProgressNotes] = useState('');
+  const [progressPhotos, setProgressPhotos] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const { celebrateMilestone, celebrateGoalCompletion } = useCelebration();
+
+  const handlePhotoUpload = useCallback((files) => {
+    const newPhotos = Array.from(files).map(file => {
+      if (file.type.startsWith('image/')) {
+        return {
+          id: Date.now() + Math.random(),
+          file,
+          url: URL.createObjectURL(file),
+          date: new Date().toISOString().split('T')[0],
+          notes: '',
+          type: 'progress'
+        };
+      }
+      return null;
+    }).filter(Boolean);
+
+    setProgressPhotos(prev => [...prev, ...newPhotos]);
+  }, []);
+
+  const handlePhotoRemove = (photoId) => {
+    setProgressPhotos(prev => {
+      const photoToRemove = prev.find(p => p.id === photoId);
+      if (photoToRemove?.url) {
+        URL.revokeObjectURL(photoToRemove.url);
+      }
+      return prev.filter(p => p.id !== photoId);
+    });
+  };
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -84,6 +113,11 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
         setSelectedGoal(null);
         setProgressValue('');
         setProgressNotes('');
+        // Clean up photo URLs and reset photos
+        progressPhotos.forEach(photo => {
+          if (photo.url) URL.revokeObjectURL(photo.url);
+        });
+        setProgressPhotos([]);
         
         // Check for milestone achievements
         console.log('Progress:', oldProgressPercentage.toFixed(1), '% →', newProgressPercentage.toFixed(1), '%');
@@ -532,6 +566,77 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
                         />
                       </div>
                     </div>
+                    
+                    {/* Progress Photos Section */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Progress Photos (Optional)
+                      </label>
+                      
+                      {/* Photo Upload Area */}
+                      <div 
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors"
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const files = e.dataTransfer.files;
+                          if (files) handlePhotoUpload(files);
+                        }}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDragEnter={(e) => e.preventDefault()}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              handlePhotoUpload(e.target.files);
+                            }
+                          }}
+                          className="hidden"
+                          id={`photo-upload-${goal.id}`}
+                        />
+                        <label htmlFor={`photo-upload-${goal.id}`} className="cursor-pointer">
+                          <div className="flex flex-col items-center">
+                            <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p className="text-sm text-gray-600">
+                              Click to upload or drag and drop progress photos
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              PNG, JPG, GIF up to 10MB each
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                      
+                      {/* Photo Preview Grid */}
+                      {progressPhotos.length > 0 && (
+                        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {progressPhotos.map((photo) => (
+                            <div key={photo.id} className="relative group">
+                              <img
+                                src={photo.url}
+                                alt="Progress update"
+                                className="w-full h-24 object-cover rounded-lg border border-gray-300"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handlePhotoRemove(photo.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
+                                {format(new Date(photo.date), 'MMM d')}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex space-x-3 mt-4">
                       <button
                         onClick={() => handleProgressUpdate(goal.id)}
@@ -545,6 +650,11 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
                           setSelectedGoal(null);
                           setProgressValue('');
                           setProgressNotes('');
+                          // Clean up photo URLs
+                          progressPhotos.forEach(photo => {
+                            if (photo.url) URL.revokeObjectURL(photo.url);
+                          });
+                          setProgressPhotos([]);
                         }}
                         className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                       >
