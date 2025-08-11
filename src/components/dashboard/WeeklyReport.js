@@ -40,7 +40,15 @@ const WeeklyReport = () => {
       // Try to fetch real data from existing endpoints
       const reportData = await fetchRealWeeklyData(weekStart, weekEnd);
       console.log('📊 Weekly report data:', reportData);
-      setReportData(reportData);
+      
+      // FOR TESTING: Always use sample data to confirm rendering works
+      console.log('🧪 TESTING MODE: Using sample data instead of API data');
+      const sampleData = generateEmptyWeeklyReport(weekStart, weekEnd);
+      setReportData(sampleData);
+      setError('Testing mode: Showing sample data instead of real API data');
+      
+      // TODO: Remove this and uncomment the line below when APIs are working
+      // setReportData(reportData);
     } catch (err) {
       console.error('Failed to fetch weekly report:', err);
       // Set error message for user visibility
