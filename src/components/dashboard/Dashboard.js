@@ -10,10 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell
+  Bar
 } from 'recharts';
 import WeeklyReport from './WeeklyReport';
 import StrengthProgressionSection from './StrengthProgressionSection';
@@ -94,7 +91,7 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
 
 
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
 
   if (isLoading) {
     return (
