@@ -15,40 +15,79 @@ const generateSummaryInsights = async (base, userId, period = 'weekly') => {
   console.log(`Generating ${period} summary from ${currentPeriodStart} to ${now.toISOString().split('T')[0]}`);
 
   // Fetch data for current and previous periods
-  const [currentWorkouts, previousWorkouts, currentWeights, previousWeights, goals, prs] = await Promise.all([
-    fetchWorkouts(base, userId, currentPeriodStart),
-    fetchWorkouts(base, userId, previousPeriodStartStr, currentPeriodStartStr),
-    fetchWeights(base, userId, currentPeriodStart),
-    fetchWeights(base, userId, previousPeriodStartStr, currentPeriodStartStr),
-    fetchGoals(base, userId),
-    fetchPRs(base, userId, currentPeriodStart)
-  ]);
+  try {
+    console.log('Fetching data for summary insights...');
+    const [currentWorkouts, previousWorkouts, currentWeights, previousWeights, goals, prs] = await Promise.all([
+      fetchWorkouts(base, userId, currentPeriodStart),
+      fetchWorkouts(base, userId, previousPeriodStartStr, currentPeriodStartStr),
+      fetchWeights(base, userId, currentPeriodStart),
+      fetchWeights(base, userId, previousPeriodStartStr, currentPeriodStartStr),
+      fetchGoals(base, userId),
+      fetchPRs(base, userId, currentPeriodStart)
+    ]);
 
-  // Calculate metrics for current period
-  const currentMetrics = calculatePeriodMetrics(currentWorkouts, currentWeights, goals, prs);
-  const previousMetrics = calculatePeriodMetrics(previousWorkouts, previousWeights, goals, []);
+    console.log(`Fetched: ${currentWorkouts.length} current workouts, ${currentWeights.length} current weights, ${goals.length} goals, ${prs.length} PRs`);
 
-  // Generate insights and recommendations
-  const insights = generateInsights(currentMetrics, previousMetrics, period);
-  const recommendations = generateRecommendations(currentMetrics, previousMetrics, goals);
+    // Calculate metrics for current period - ensure arrays are not null
+    const currentMetrics = calculatePeriodMetrics(
+      currentWorkouts || [], 
+      currentWeights || [], 
+      goals || [], 
+      prs || []
+    );
+    const previousMetrics = calculatePeriodMetrics(
+      previousWorkouts || [], 
+      previousWeights || [], 
+      goals || [], 
+      []
+    );
 
-  // Create summary cards
-  const summaryCards = createSummaryCards(currentMetrics, previousMetrics, period);
+    // Generate insights and recommendations
+    const insights = generateInsights(currentMetrics, previousMetrics, period);
+    const recommendations = generateRecommendations(currentMetrics, previousMetrics, goals || []);
 
-  return {
-    period: period,
-    dateRange: {
-      start: currentPeriodStart,
-      end: now.toISOString().split('T')[0]
-    },
-    metrics: currentMetrics,
-    previousMetrics: previousMetrics,
-    summaryCards,
-    insights,
-    recommendations,
-    highlights: generateHighlights(currentMetrics, prs),
-    trends: calculateTrends(currentMetrics, previousMetrics)
-  };
+    // Create summary cards
+    const summaryCards = createSummaryCards(currentMetrics, previousMetrics, period);
+
+    return {
+      period: period,
+      dateRange: {
+        start: currentPeriodStart,
+        end: now.toISOString().split('T')[0]
+      },
+      metrics: currentMetrics,
+      previousMetrics: previousMetrics,
+      summaryCards,
+      insights,
+      recommendations,
+      highlights: generateHighlights(currentMetrics, prs || []),
+      trends: calculateTrends(currentMetrics, previousMetrics)
+    };
+  } catch (error) {
+    console.error('Error in generateSummaryInsights:', error);
+    
+    // Return a minimal response with empty data if there's an error
+    return {
+      period: period,
+      dateRange: {
+        start: currentPeriodStart,
+        end: now.toISOString().split('T')[0]
+      },
+      metrics: { workouts: { total: 0 }, weight: { entries: 0 }, goals: { active: 0 }, prs: { total: 0 } },
+      previousMetrics: { workouts: { total: 0 }, weight: { entries: 0 }, goals: { active: 0 }, prs: { total: 0 } },
+      summaryCards: [],
+      insights: [{
+        type: 'warning',
+        category: 'system',
+        title: 'Unable to Load Data',
+        message: 'There was an issue loading your summary data. Please try again later.',
+        priority: 'high'
+      }],
+      recommendations: [],
+      highlights: [],
+      trends: {}
+    };
+  }
 };
 
 const fetchWorkouts = async (base, userId, startDate, endDate = null) => {
@@ -59,24 +98,33 @@ const fetchWorkouts = async (base, userId, startDate, endDate = null) => {
     filterFormula = `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date}, '${startDate}'), IS_BEFORE({Date}, '${endDate}'))`;
   }
 
-  await base('Workouts')
-    .select({
-      filterByFormula: filterFormula,
-      sort: [{ field: 'Date', direction: 'asc' }]
-    })
-    .eachPage((pageRecords, fetchNextPage) => {
-      pageRecords.forEach(record => {
-        workouts.push({
-          date: record.get('Date'),
-          exercise: record.get('Exercise'),
-          sets: record.get('Sets') || 0,
-          reps: record.get('Reps') || 0,
-          weight: record.get('Weight') || 0,
-          duration: record.get('Duration') || 0
+  try {
+    await base('Workouts')
+      .select({
+        filterByFormula: filterFormula,
+        sort: [{ field: 'Date', direction: 'asc' }]
+      })
+      .eachPage((pageRecords, fetchNextPage) => {
+        pageRecords.forEach(record => {
+          try {
+            workouts.push({
+              date: record.get('Date'),
+              exercise: record.get('Exercise'),
+              sets: record.get('Sets') || 0,
+              reps: record.get('Reps') || 0,
+              weight: record.get('Weight') || 0,
+              duration: record.get('Duration') || 0
+            });
+          } catch (error) {
+            console.error('Error processing workout record:', error);
+          }
         });
+        fetchNextPage();
       });
-      fetchNextPage();
-    });
+  } catch (error) {
+    console.error('Error fetching workouts:', error);
+    // Return empty array if there's an error
+  }
 
   return workouts;
 };
@@ -89,66 +137,94 @@ const fetchWeights = async (base, userId, startDate, endDate = null) => {
     filterFormula = `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date}, '${startDate}'), IS_BEFORE({Date}, '${endDate}'))`;
   }
 
-  await base('BodyWeight')
-    .select({
-      filterByFormula: filterFormula,
-      sort: [{ field: 'Date', direction: 'asc' }]
-    })
-    .eachPage((pageRecords, fetchNextPage) => {
-      pageRecords.forEach(record => {
-        weights.push({
-          date: record.get('Date'),
-          weight: record.get('Weight')
+  try {
+    await base('BodyWeight')
+      .select({
+        filterByFormula: filterFormula,
+        sort: [{ field: 'Date', direction: 'asc' }]
+      })
+      .eachPage((pageRecords, fetchNextPage) => {
+        pageRecords.forEach(record => {
+          try {
+            const weight = record.get('Weight');
+            if (weight) {
+              weights.push({
+                date: record.get('Date'),
+                weight: weight
+              });
+            }
+          } catch (error) {
+            console.error('Error processing weight record:', error);
+          }
         });
+        fetchNextPage();
       });
-      fetchNextPage();
-    });
+  } catch (error) {
+    console.error('Error fetching weights:', error);
+    // Return empty array if there's an error
+  }
 
   return weights;
 };
 
 const fetchGoals = async (base, userId) => {
   const goals = [];
-  await base('Goals')
-    .select({
-      filterByFormula: `AND({User ID} = '${userId}', {Status} = 'Active')`,
-      sort: [{ field: 'Target Date', direction: 'asc' }]
-    })
-    .eachPage((pageRecords, fetchNextPage) => {
-      pageRecords.forEach(record => {
-        goals.push({
-          id: record.id,
-          title: record.get('Goal Title'),
-          type: record.get('Goal Type'),
-          progress: record.get('Progress Percentage') || 0,
-          targetDate: record.get('Target Date'),
-          daysRemaining: record.get('Days Remaining') || 0
+  try {
+    await base('Goals')
+      .select({
+        filterByFormula: `AND({User ID} = '${userId}', {Status} = 'Active')`,
+        sort: [{ field: 'Target Date', direction: 'asc' }]
+      })
+      .eachPage((pageRecords, fetchNextPage) => {
+        pageRecords.forEach(record => {
+          try {
+            goals.push({
+              id: record.id,
+              title: record.get('Goal Title'),
+              type: record.get('Goal Type'),
+              progress: record.get('Progress Percentage') || 0,
+              targetDate: record.get('Target Date'),
+              daysRemaining: record.get('Days Remaining') || 0
+            });
+          } catch (error) {
+            console.error('Error processing goal record:', error);
+          }
         });
+        fetchNextPage();
       });
-      fetchNextPage();
-    });
+  } catch (error) {
+    console.error('Error fetching goals:', error);
+  }
 
   return goals;
 };
 
 const fetchPRs = async (base, userId, startDate) => {
   const prs = [];
-  await base('Progress Records')
-    .select({
-      filterByFormula: `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date Achieved}, '${startDate}'))`,
-      sort: [{ field: 'Date Achieved', direction: 'desc' }]
-    })
-    .eachPage((pageRecords, fetchNextPage) => {
-      pageRecords.forEach(record => {
-        prs.push({
-          exercise: record.get('Exercise Name'),
-          weight: record.get('Max Weight'),
-          improvement: record.get('Improvement'),
-          date: record.get('Date Achieved')
+  try {
+    await base('Progress Records')
+      .select({
+        filterByFormula: `AND({User ID} = '${userId}', IS_SAME_OR_AFTER({Date Achieved}, '${startDate}'))`,
+        sort: [{ field: 'Date Achieved', direction: 'desc' }]
+      })
+      .eachPage((pageRecords, fetchNextPage) => {
+        pageRecords.forEach(record => {
+          try {
+            prs.push({
+              exercise: record.get('Exercise Name'),
+              weight: record.get('Max Weight'),
+              improvement: record.get('Improvement'),
+              date: record.get('Date Achieved')
+            });
+          } catch (error) {
+            console.error('Error processing PR record:', error);
+          }
         });
+        fetchNextPage();
       });
-      fetchNextPage();
-    });
+  } catch (error) {
+    console.error('Error fetching PRs:', error);
+  }
 
   return prs;
 };
@@ -546,6 +622,7 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log(`Processing summary for user: ${userId}, period: ${period}`);
     const summary = await generateSummaryInsights(base, userId, period);
 
     return {

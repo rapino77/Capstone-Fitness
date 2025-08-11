@@ -5,6 +5,7 @@ import { useCelebration } from '../../context/CelebrationContext';
 
 const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
   const [goals, setGoals] = useState([]);
+  const [goalPredictions, setGoalPredictions] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('Active');
   const [selectedGoal, setSelectedGoal] = useState(null);
@@ -13,24 +14,42 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showPredictions, setShowPredictions] = useState(true);
   const { celebrateMilestone, celebrateGoalCompletion } = useCelebration();
+
+  const fetchGoalPredictions = useCallback(async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-goal-predictions`);
+      if (response.data.success) {
+        setGoalPredictions(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch goal predictions:', error);
+      setGoalPredictions(null);
+    }
+  }, []);
 
   const fetchGoals = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
-        params: {
-          status: 'all', // Always fetch all goals, we'll filter in the component
-          sortBy: 'Created Date',
-          sortDirection: 'desc'
-        }
-      });
       
-      if (response.data.success) {
-        setGoals(response.data.data);
+      // Fetch both goals and predictions in parallel
+      const [goalsResponse] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_API_URL}/goals`, {
+          params: {
+            status: 'all', // Always fetch all goals, we'll filter in the component
+            sortBy: 'Created Date',
+            sortDirection: 'desc'
+          }
+        }),
+        fetchGoalPredictions()
+      ]);
+      
+      if (goalsResponse.data.success) {
+        setGoals(goalsResponse.data.data);
         // Share goals data with parent
         if (onGoalsLoaded) {
-          onGoalsLoaded(response.data.data);
+          onGoalsLoaded(goalsResponse.data.data);
         }
       }
     } catch (error) {
@@ -38,7 +57,7 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [onGoalsLoaded]);
+  }, [onGoalsLoaded, fetchGoalPredictions]);
 
   useEffect(() => {
     fetchGoals();
@@ -257,6 +276,44 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
     return { text: `${daysRemaining} days left`, color: 'text-gray-600' };
   };
 
+  const getGoalPrediction = (goalId) => {
+    return goalPredictions?.predictions?.find(prediction => prediction.goalId === goalId);
+  };
+
+  const getPredictionColor = (likelihood) => {
+    switch (likelihood) {
+      case 'very_likely':
+        return 'bg-green-50 border-green-200 text-green-700';
+      case 'likely':
+        return 'bg-blue-50 border-blue-200 text-blue-700';
+      case 'possible':
+        return 'bg-yellow-50 border-yellow-200 text-yellow-700';
+      case 'unlikely':
+        return 'bg-red-50 border-red-200 text-red-700';
+      case 'insufficient_data':
+        return 'bg-gray-50 border-gray-200 text-gray-700';
+      default:
+        return 'bg-gray-50 border-gray-200 text-gray-700';
+    }
+  };
+
+  const getPredictionIcon = (likelihood) => {
+    switch (likelihood) {
+      case 'very_likely':
+        return '🎯';
+      case 'likely':
+        return '📈';
+      case 'possible':
+        return '⚠️';
+      case 'unlikely':
+        return '🔄';
+      case 'insufficient_data':
+        return '📊';
+      default:
+        return '❓';
+    }
+  };
+
   const filteredGoals = goals.filter(goal => {
     if (showArchived) {
       return goal.status === 'Archived';
@@ -286,6 +343,21 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
           </h2>
           
           <div className="flex items-center space-x-4">
+            {/* Predictions Toggle - only show for active goals */}
+            {!showArchived && (
+              <button
+                onClick={() => setShowPredictions(!showPredictions)}
+                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-2 ${
+                  showPredictions 
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span>🔮</span>
+                <span>{showPredictions ? 'Hide Predictions' : 'Show Predictions'}</span>
+              </button>
+            )}
+
             {/* Archive Toggle */}
             <button
               onClick={() => setShowArchived(!showArchived)}
@@ -341,6 +413,46 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
               These are your completed goals that have been automatically archived. 
               You can review your past achievements and the progress you made.
             </p>
+          </div>
+        )}
+
+        {/* Goal Predictions Summary - only for active goals */}
+        {!showArchived && showPredictions && goalPredictions && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-gray-900 flex items-center space-x-2">
+                <span>🔮</span>
+                <span>Goal Achievement Predictions</span>
+              </h4>
+              <button
+                onClick={fetchGoalPredictions}
+                className="text-xs text-purple-600 hover:text-purple-800"
+              >
+                Refresh Predictions
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div className="bg-white bg-opacity-60 rounded p-2">
+                <div className="text-lg font-bold text-green-600">{goalPredictions.summary.likelyToSucceed}</div>
+                <div className="text-xs text-green-700">On Track</div>
+              </div>
+              <div className="bg-white bg-opacity-60 rounded p-2">
+                <div className="text-lg font-bold text-yellow-600">{goalPredictions.summary.needsAttention}</div>
+                <div className="text-xs text-yellow-700">Need Focus</div>
+              </div>
+              <div className="bg-white bg-opacity-60 rounded p-2">
+                <div className="text-lg font-bold text-gray-600">{goalPredictions.summary.insufficientData}</div>
+                <div className="text-xs text-gray-700">Need More Data</div>
+              </div>
+              <div className="bg-white bg-opacity-60 rounded p-2">
+                <div className="text-lg font-bold text-purple-600">{goalPredictions.summary.totalActiveGoals}</div>
+                <div className="text-xs text-purple-700">Total Active</div>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-gray-600">
+              <span className="font-medium">💡 Tip:</span> Predictions are based on your current progress trends and workout data. 
+              Keep logging workouts and progress for more accurate predictions!
+            </div>
           </div>
         )}
       </div>
@@ -551,6 +663,65 @@ const GoalTracker = ({ onUpdateGoal, refreshTrigger = 0, onGoalsLoaded }) => {
                     </div>
                   </div>
                 )}
+
+                {/* Goal Achievement Prediction */}
+                {!showArchived && showPredictions && filter === 'Active' && goal.status === 'Active' && (() => {
+                  const prediction = getGoalPrediction(goal.id);
+                  if (!prediction) return null;
+                  
+                  return (
+                    <div className={`mt-4 p-3 rounded-lg border ${getPredictionColor(prediction.likelihood)}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg">{getPredictionIcon(prediction.likelihood)}</span>
+                          <div>
+                            <h5 className="font-medium text-sm">Achievement Prediction</h5>
+                            <div className="flex items-center space-x-2 text-xs">
+                              <span className="font-medium capitalize">
+                                {prediction.likelihood.replace('_', ' ')}
+                              </span>
+                              <span>•</span>
+                              <span>{prediction.confidence} confidence</span>
+                            </div>
+                          </div>
+                        </div>
+                        {prediction.predictedDate && (
+                          <div className="text-xs text-right">
+                            <div className="font-medium">Estimated</div>
+                            <div>{format(new Date(prediction.predictedDate), 'MMM dd, yyyy')}</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {prediction.insights && prediction.insights.length > 0 && (
+                        <div className="text-xs opacity-90 bg-white bg-opacity-50 rounded p-2">
+                          {prediction.insights[0]}
+                        </div>
+                      )}
+                      
+                      {/* Prediction Details */}
+                      {(prediction.weeklyChangeNeeded || prediction.weeklyProgressNeeded || prediction.workoutsPerWeekNeeded || prediction.weeklyVolumeNeeded) && (
+                        <div className="mt-2 text-xs">
+                          <div className="font-medium mb-1">To achieve this goal:</div>
+                          <div className="space-y-1">
+                            {prediction.weeklyChangeNeeded && (
+                              <div>• Need {prediction.weeklyChangeNeeded} lbs/week change (current: {prediction.currentWeeklyTrend} lbs/week)</div>
+                            )}
+                            {prediction.weeklyProgressNeeded && (
+                              <div>• Need {prediction.weeklyProgressNeeded} lbs/week strength gain (current: {prediction.currentProgressionRate} lbs/week)</div>
+                            )}
+                            {prediction.workoutsPerWeekNeeded && (
+                              <div>• Target {prediction.workoutsPerWeekNeeded} workouts/week (current: {prediction.currentFrequency}/week)</div>
+                            )}
+                            {prediction.weeklyVolumeNeeded && (
+                              <div>• Need {prediction.weeklyVolumeNeeded} lbs weekly volume (current: {prediction.currentWeeklyVolume})</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Goal Notes */}
                 {goal.notes && (

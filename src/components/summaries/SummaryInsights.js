@@ -21,7 +21,8 @@ const SummaryInsights = ({ refreshTrigger = 0 }) => {
       }
     } catch (error) {
       console.error('Failed to fetch summary insights:', error);
-      setError('Failed to load summary insights');
+      console.error('Error details:', error.response?.data || error.message);
+      setError(`Failed to load summary insights: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +78,34 @@ const SummaryInsights = ({ refreshTrigger = 0 }) => {
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
         <p className="text-gray-600">No summary data available</p>
         <p className="text-sm text-gray-500">Start logging workouts to see your progress summary</p>
+        <button 
+          onClick={fetchSummaryInsights}
+          className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Try Loading Again
+        </button>
+      </div>
+    );
+  }
+
+  // Handle empty summary data gracefully
+  if (summaryData && summaryData.summaryCards?.length === 0 && summaryData.insights?.length <= 1) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+        <div className="text-4xl mb-3">📊</div>
+        <p className="text-blue-800 font-medium">Getting Started with Progress Tracking</p>
+        <p className="text-sm text-blue-600 mt-2">
+          Your progress summary will appear here once you start logging workouts and tracking your fitness journey.
+        </p>
+        <div className="mt-4 text-xs text-blue-600">
+          <p className="font-medium">To see insights:</p>
+          <ul className="mt-2 space-y-1 text-left max-w-md mx-auto">
+            <li>• Log your workouts with exercises, sets, and weights</li>
+            <li>• Track your body weight regularly</li>
+            <li>• Create fitness goals to work towards</li>
+            <li>• Check back here for personalized insights!</li>
+          </ul>
+        </div>
       </div>
     );
   }
