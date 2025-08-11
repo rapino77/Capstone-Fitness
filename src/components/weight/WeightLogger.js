@@ -705,10 +705,14 @@ const WeightLogger = ({ onSuccess }) => {
                   return [value, name];
                 }}
                 contentStyle={{
-                  backgroundColor: theme.colors.background,
-                  border: `1px solid ${theme.colors.border}`,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
                   borderRadius: '8px',
-                  color: theme.colors.text
+                  color: '#111827',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+                labelStyle={{
+                  color: '#374151'
                 }}
               />
               <Legend 
@@ -820,10 +824,14 @@ const WeightLogger = ({ onSuccess }) => {
                       return [value, name];
                     }}
                     contentStyle={{
-                      backgroundColor: theme.colors.background,
-                      border: `1px solid ${theme.colors.border}`,
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
                       borderRadius: '8px',
-                      color: theme.colors.text
+                      color: '#111827',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelStyle={{
+                      color: '#374151'
                     }}
                   />
                   <Legend 
