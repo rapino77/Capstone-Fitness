@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import axios from 'axios';
@@ -24,6 +24,7 @@ const WorkoutForm = ({ onSuccess }) => {
   const [periodizationEnabled, setPeriodizationEnabled] = useState(true);
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [workoutTimerData, setWorkoutTimerData] = useState(null);
+  const timerRef = useRef(null);
   const { celebratePR } = useCelebration();
   
   const {
@@ -279,6 +280,7 @@ const WorkoutForm = ({ onSuccess }) => {
   // Timer handlers
   const handleTimerData = (timerData) => {
     console.log('🎯 Timer data received in WorkoutForm:', timerData);
+    console.log('🎯 Previous timer data was:', workoutTimerData);
     setWorkoutTimerData(timerData);
     // Note: This is just updating timer data, NOT submitting the workout
     // Deload detection should only happen during actual form submission
@@ -301,6 +303,16 @@ const WorkoutForm = ({ onSuccess }) => {
     setSubmitMessage({ type: '', text: '' });
 
     try {
+      // Get fresh timer data at submission time
+      let currentTimerData = workoutTimerData;
+      if (timerRef.current && timerRef.current.getCurrentTimerData) {
+        const freshTimerData = timerRef.current.getCurrentTimerData();
+        console.log('🔄 Got fresh timer data from ref:', freshTimerData);
+        if (freshTimerData && freshTimerData.totalDuration > 0) {
+          currentTimerData = freshTimerData;
+        }
+      }
+      
       // Include progression tracking info, timer data, and userId
       const submissionData = {
         ...data,
@@ -310,22 +322,28 @@ const WorkoutForm = ({ onSuccess }) => {
           data.reps === progressionSuggestion.suggestion.reps &&
           data.weight === progressionSuggestion.suggestion.weight,
         // Include timer data if available (with fallback for basic timing)
-        ...(workoutTimerData && workoutTimerData.totalDuration > 0 && {
-          totalDuration: workoutTimerData.totalDuration,
-          workTime: workoutTimerData.workTime || 0,
-          restTime: workoutTimerData.restTime || 0,
-          setCount: workoutTimerData.setCount || 0,
-          avgSetDuration: workoutTimerData.avgSetDuration || 0,
-          avgRestDuration: workoutTimerData.avgRestDuration || 0,
-          efficiency: workoutTimerData.efficiency || 0,
-          startTime: new Date(Date.now() - (workoutTimerData.totalDuration * 1000)).toISOString(),
+        ...(currentTimerData && currentTimerData.totalDuration > 0 && {
+          totalDuration: currentTimerData.totalDuration,
+          workTime: currentTimerData.workTime || 0,
+          restTime: currentTimerData.restTime || 0,
+          setCount: currentTimerData.setCount || 0,
+          avgSetDuration: currentTimerData.avgSetDuration || 0,
+          avgRestDuration: currentTimerData.avgRestDuration || 0,
+          efficiency: currentTimerData.efficiency || 0,
+          startTime: new Date(Date.now() - (currentTimerData.totalDuration * 1000)).toISOString(),
           endTime: new Date().toISOString()
         })
       };
 
       console.log('💾 Submitting workout data:', submissionData);
-      console.log('🎯 Current workoutTimerData state:', workoutTimerData);
-      console.log('🎯 Timer data included in submission:', workoutTimerData ? 'YES' : 'NO');
+      console.log('🎯 State timer data:', workoutTimerData);
+      console.log('🎯 Current timer data used:', currentTimerData);
+      console.log('🎯 Timer data included in submission:', currentTimerData ? 'YES' : 'NO');
+      console.log('🎯 Timer data condition check:', {
+        hasCurrentTimerData: !!currentTimerData,
+        hasTotalDuration: currentTimerData?.totalDuration > 0,
+        conditionPassed: !!(currentTimerData && currentTimerData.totalDuration > 0)
+      });
 
       // Check for PR before submitting
       console.log('🔍 Checking for PR...', submissionData);
@@ -860,6 +878,7 @@ const WorkoutForm = ({ onSuccess }) => {
         {timerEnabled && (
           <>
             <WorkoutTimer
+              ref={timerRef}
               currentExercise={selectedExercise}
               onWorkoutComplete={handleWorkoutComplete}
               onTimerData={handleTimerData}

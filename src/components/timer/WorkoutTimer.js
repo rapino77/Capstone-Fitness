@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useImperativeHandle } from 'react';
 import { WorkoutTimer as Timer, formatDuration, saveTimerState, loadTimerState, clearTimerState, TIMER_STATES } from '../../utils/workoutTimer';
 
-const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
+const WorkoutTimer = React.forwardRef(({ onWorkoutComplete, currentExercise, onTimerData }, ref) => {
   const [timer, setTimer] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerState, setTimerState] = useState(TIMER_STATES.IDLE);
@@ -9,6 +9,18 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
   const [workoutSummary, setWorkoutSummary] = useState(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    getCurrentTimerData: () => {
+      if (timer) {
+        const data = timer.getWorkoutSummary();
+        console.log('📥 getCurrentTimerData called, returning:', data);
+        return data;
+      }
+      return null;
+    }
+  }), [timer]);
 
   // Initialize timer
   useEffect(() => {
@@ -365,7 +377,7 @@ const WorkoutTimer = ({ onWorkoutComplete, currentExercise, onTimerData }) => {
       )}
     </div>
   );
-};
+});
 
 // Workout Summary Modal Component
 const WorkoutSummaryModal = ({ summary, onComplete, onDiscard }) => {
