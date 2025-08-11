@@ -21,6 +21,7 @@ import WorkoutStreak from '../streaks/WorkoutStreak';
 import SummaryInsights from '../summaries/SummaryInsights';
 import ExportProgressReport from '../export/ExportProgressReport';
 import ProgressPhotos from '../photos/ProgressPhotos';
+import ApiDebugger from '../debug/ApiDebugger';
 
 const Dashboard = ({ refreshTrigger = 0 }) => {
   const [analytics, setAnalytics] = useState(null);
@@ -151,6 +152,9 @@ const Dashboard = ({ refreshTrigger = 0 }) => {
 
   return (
     <div className="mobile-space-y space-y-4 sm:space-y-6">
+      {/* API Debugger - Temporary for troubleshooting */}
+      <ApiDebugger />
+      
       {/* Workout Streak Section */}
       <WorkoutStreak userId="default-user" refreshTrigger={refreshTrigger} />
       
