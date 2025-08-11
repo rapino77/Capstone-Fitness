@@ -101,7 +101,8 @@ exports.handler = async (event, context) => {
 
     // Create record in Airtable - start with minimal fields that work
     const recordData = {
-      Weight: weight
+      Weight: weight,
+      'User ID': data.userId || 'default-user'  // Always include User ID
     };
     
     // Add optional fields only if they're provided and non-empty

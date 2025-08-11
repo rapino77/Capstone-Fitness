@@ -170,6 +170,7 @@ exports.handler = async (event, context) => {
     // Parse query parameters
     const params = event.queryStringParameters || {};
     const { 
+      userId = 'default-user',
       startDate, 
       endDate,
       limit = '365',  // Default to 1 year of data
@@ -183,6 +184,9 @@ exports.handler = async (event, context) => {
 
     // Build filter formula
     let filterFormulas = [];
+    
+    // Always filter by User ID
+    filterFormulas.push(`{User ID} = '${userId}'`);
     
     if (startDate) {
       filterFormulas.push(`IS_AFTER({Date}, '${startDate}')`);
