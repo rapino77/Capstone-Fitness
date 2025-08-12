@@ -100,7 +100,8 @@ export const useOptimizedFetch = (url, options = {}) => {
     if (enabled && refetchOnMount) {
       fetchData();
     }
-  }, [fetchData, enabled, refetchOnMount, ...dependencies]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchData, enabled, refetchOnMount, dependencies]);
   
   // Polling interval
   useEffect(() => {

@@ -132,7 +132,6 @@ export const DynamicVirtualScrollList = ({
 }) => {
   const [itemHeights, setItemHeights] = useState(new Map());
   const [scrollTop, setScrollTop] = useState(0);
-  const itemRefs = useRef(new Map());
   
   // Measure item heights
   const measureItem = useCallback((index, element) => {

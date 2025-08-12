@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { format, subDays } from 'date-fns';
 import axios from 'axios';
-import VirtualScrollList from '../common/VirtualScrollList';
-import { useOptimizedFetch } from '../../hooks/useOptimizedFetch';
 
 const WorkoutHistory = () => {
   const [workouts, setWorkouts] = useState([]);
