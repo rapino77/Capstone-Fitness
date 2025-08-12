@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import WorkoutForm from './WorkoutForm';
+import MobileWorkoutInterface from './MobileWorkoutInterface';
 import WorkoutTemplates from '../templates/WorkoutTemplates';
 import RestDayScheduler from '../scheduler/RestDayScheduler';
 import WorkoutSummaries from '../summaries/WorkoutSummaries';
@@ -7,6 +8,18 @@ import Sidebar from '../common/Sidebar';
 
 const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }) => {
   const [activeSection, setActiveSection] = useState(initialSection);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Update section when initialSection changes (from search navigation)
   React.useEffect(() => {
@@ -27,6 +40,12 @@ const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }
       name: 'Log Workout',
       icon: '📝',
       description: 'Record your workout session'
+    },
+    {
+      id: 'mobile',
+      name: 'Mobile Workout',
+      icon: '📱',
+      description: 'Mobile-first workout interface'
     },
     {
       id: 'templates',
@@ -58,6 +77,8 @@ const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }
     switch (activeSection) {
       case 'log':
         return <WorkoutForm onSuccess={onSuccess} />;
+      case 'mobile':
+        return <MobileWorkoutInterface onSuccess={onSuccess} />;
       case 'templates':
         return <WorkoutTemplates />;
       case 'scheduler':
@@ -70,6 +91,11 @@ const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }
         return <WorkoutForm onSuccess={onSuccess} />;
     }
   };
+
+  // On mobile, show mobile interface for workout logging by default
+  if (isMobile && (activeSection === 'log' || activeSection === 'mobile')) {
+    return <MobileWorkoutInterface onSuccess={onSuccess} />;
+  }
 
   return (
     <div className="flex gap-6">
