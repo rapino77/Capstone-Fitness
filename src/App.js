@@ -96,7 +96,7 @@ const AppContent = () => {
   ];
 
   // Swipe navigation hook
-  const { onTouchStart, onTouchMove, onTouchEnd, isSwipeIndicatorVisible } = useSwipeNavigation(
+  const { onTouchStart, onTouchMove, onTouchEnd, isSwipeIndicatorVisible, isSwipeActive, swipeProgress } = useSwipeNavigation(
     tabs, 
     activeTab, 
     handleTabChange
@@ -156,14 +156,25 @@ const AppContent = () => {
       <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-8">
         {/* Tab Navigation - Mobile Optimized */}
         <div 
-          className="rounded-lg sm:rounded-xl shadow-sm mb-3 sm:mb-8 border transition-colors duration-200 sticky top-12 sm:top-20 z-30 backdrop-blur-sm mx-1 sm:mx-0"
+          className={`rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-8 border transition-all duration-200 sticky top-12 sm:top-20 z-30 backdrop-blur-sm mx-1 sm:mx-0 ${
+            isSwipeActive ? 'shadow-xl scale-[1.02] border-blue-300' : ''
+          }`}
           style={{ 
             backgroundColor: theme.colors.background,
-            borderColor: theme.colors.border
+            borderColor: isSwipeActive ? theme.colors.primary : theme.colors.border,
+            transform: isSwipeActive ? `translateX(${Math.min(swipeProgress * 2, 10)}px)` : 'none'
           }}
         >
+          {/* Mobile swipe progress indicator */}
+          <div className="sm:hidden h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-lg opacity-0 transition-opacity duration-200"
+               style={{ 
+                 opacity: isSwipeActive ? Math.min(swipeProgress, 1) : 0,
+                 width: `${Math.min(swipeProgress * 100, 100)}%`
+               }}
+          />
+          
           <nav 
-            className="flex overflow-x-auto"
+            className="flex overflow-x-auto scrollbar-hide"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -174,33 +185,54 @@ const AppContent = () => {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`hover-lift flex-shrink-0 py-4 sm:py-4 px-1 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-200 main-section-header touch-manipulation ${
+                className={`hover-lift mobile-button flex-shrink-0 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium whitespace-nowrap transition-all duration-300 main-section-header touch-manipulation ${
                   index !== tabs.length - 1 ? 'border-r' : ''
-                } min-w-0 flex-1 sm:flex-initial rounded-t-lg sm:rounded-t-xl`}
+                } min-w-0 flex-1 sm:flex-initial rounded-t-lg sm:rounded-t-xl group relative overflow-hidden`}
                 style={{
                   color: activeTab === tab.id ? theme.colors.primary : theme.colors.textSecondary,
                   backgroundColor: activeTab === tab.id ? `${theme.colors.primary}15` : 'transparent',
                   borderColor: theme.colors.border,
                   borderBottomWidth: activeTab === tab.id ? '3px' : '0px',
                   borderBottomColor: activeTab === tab.id ? theme.colors.primary : 'transparent',
-                  minHeight: '68px', // Larger for mobile
-                  minWidth: '60px' // Adequate width
+                  minHeight: '72px', // Even larger for mobile
+                  minWidth: '65px' // Adequate width
+                }}
+                onTouchStart={(e) => {
+                  e.target.style.transform = 'scale(0.95)';
+                  e.target.style.backgroundColor = `${theme.colors.primary}10`;
+                }}
+                onTouchEnd={(e) => {
+                  e.target.style.transform = 'scale(1)';
+                  if (activeTab !== tab.id) {
+                    e.target.style.backgroundColor = 'transparent';
+                  }
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== tab.id) {
-                    e.target.style.backgroundColor = `${theme.colors.primary}05`;
+                    e.target.style.backgroundColor = `${theme.colors.primary}08`;
                     e.target.style.color = theme.colors.text;
+                    e.target.style.transform = 'translateY(-1px)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (activeTab !== tab.id) {
                     e.target.style.backgroundColor = 'transparent';
                     e.target.style.color = theme.colors.textSecondary;
+                    e.target.style.transform = 'translateY(0)';
                   }
                 }}
               >
-                <div className="flex flex-col items-center justify-center space-y-1.5">
-                  <span className="text-xl sm:text-xl">{tab.icon}</span>
+                {/* Animated background for active tab */}
+                {activeTab === tab.id && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-t-lg animate-pulse" />
+                )}
+                
+                <div className="flex flex-col items-center justify-center space-y-1.5 relative z-10">
+                  <span className={`text-xl sm:text-xl transition-transform duration-200 ${
+                    activeTab === tab.id ? 'scale-110' : 'group-hover:scale-105'
+                  }`}>
+                    {tab.icon}
+                  </span>
                   <span className="transition-colors duration-200 text-xs sm:text-sm font-bold leading-tight text-center">
                     {/* Show appropriate names for mobile */}
                     <span className="sm:hidden">
@@ -223,12 +255,23 @@ const AppContent = () => {
 
         {/* Tab Content - With Swipe Support */}
         <div 
-          className="tab-content smooth-transition relative"
+          className={`tab-content smooth-transition relative overflow-hidden ${
+            isSwipeActive ? 'select-none' : ''
+          }`}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
-          style={{ touchAction: 'pan-y' }} // Allow vertical scrolling but capture horizontal swipes
+          style={{ 
+            touchAction: 'pan-y', // Allow vertical scrolling but capture horizontal swipes
+            transform: isSwipeActive ? `scale(${1 - swipeProgress * 0.02})` : 'scale(1)',
+            filter: isSwipeActive ? `brightness(${1 + swipeProgress * 0.1})` : 'brightness(1)',
+            transition: isSwipeActive ? 'none' : 'all 0.3s ease'
+          }}
         >
+          {/* Mobile swipe visual feedback overlay */}
+          {isSwipeActive && (
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 z-10 pointer-events-none sm:hidden animate-pulse" />
+          )}
             {activeTab === 'dashboard' && (
               <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
             )}

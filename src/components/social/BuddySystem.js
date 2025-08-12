@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { MobileButton } from '../common/MobileOptimized';
+import { MobileToast } from '../common/MobileStatusBar';
+import useMobileEnhancements from '../../hooks/useMobileEnhancements';
 import axios from 'axios';
 
 const BuddySystem = ({ userId = 'default-user' }) => {
   const { theme } = useTheme();
+  const { hapticFeedback } = useMobileEnhancements();
   const [activeTab, setActiveTab] = useState('connections');
   const [connections, setConnections] = useState([]);
   const [requests, setRequests] = useState({ sent: [], received: [] });
@@ -11,8 +15,24 @@ const BuddySystem = ({ userId = 'default-user' }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showInviteLinkModal, setShowInviteLinkModal] = useState(false);
   const [newRequestUserId, setNewRequestUserId] = useState('');
   const [newRequestMessage, setNewRequestMessage] = useState('');
+  const [invitationLink, setInvitationLink] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('info');
+  
+  // Check for invitation token in URL on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('buddy_invite');
+    const fromUser = urlParams.get('from');
+    
+    if (inviteToken && fromUser) {
+      handleInvitationFromLink(inviteToken, fromUser);
+    }
+  }, []);
 
   const fetchBuddyData = useCallback(async () => {
     setIsLoading(true);
@@ -128,11 +148,133 @@ const BuddySystem = ({ userId = 'default-user' }) => {
 
       if (response.data.success) {
         // Show success feedback
-        alert('Encouragement sent! 🎉');
+        showToastMessage('Encouragement sent! 🎉', 'success');
+        hapticFeedback.success();
       }
     } catch (err) {
       console.error('Error sending encouragement:', err);
       setError(err.response?.data?.error || 'Failed to send encouragement');
+    }
+  };
+
+  // Generate invitation link
+  const generateInvitationLink = async () => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/buddy-system`, {
+        action: 'generate-invite-link'
+      }, {
+        params: { userId }
+      });
+
+      if (response.data.success) {
+        const { inviteToken } = response.data;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const link = `${baseUrl}?buddy_invite=${inviteToken}&from=${encodeURIComponent(userId)}`;
+        setInvitationLink(link);
+        setShowInviteLinkModal(true);
+        hapticFeedback.light();
+      } else {
+        showToastMessage('Failed to generate invitation link', 'error');
+      }
+    } catch (err) {
+      console.error('Error generating invitation link:', err);
+      showToastMessage('Failed to generate invitation link', 'error');
+    }
+  };
+
+  // Handle invitation from shared link
+  const handleInvitationFromLink = async (inviteToken, fromUser) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/buddy-system`, {
+        action: 'accept-invite-link',
+        inviteToken,
+        fromUser
+      }, {
+        params: { userId }
+      });
+
+      if (response.data.success) {
+        showToastMessage(`You're now buddies with ${fromUser}! 🤝`, 'success');
+        hapticFeedback.success();
+        fetchBuddyData(); // Refresh buddy data
+        
+        // Clean up URL
+        const url = new URL(window.location);
+        url.searchParams.delete('buddy_invite');
+        url.searchParams.delete('from');
+        window.history.replaceState({}, document.title, url);
+      } else {
+        showToastMessage(response.data.error || 'Failed to accept buddy invitation', 'error');
+      }
+    } catch (err) {
+      console.error('Error accepting invitation from link:', err);
+      showToastMessage('Failed to accept buddy invitation', 'error');
+    }
+  };
+
+  // Copy invitation link to clipboard
+  const copyInvitationLink = async () => {
+    try {
+      await navigator.clipboard.writeText(invitationLink);
+      showToastMessage('Invitation link copied to clipboard! 📋', 'success');
+      hapticFeedback.medium();
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = invitationLink;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showToastMessage('Invitation link copied! 📋', 'success');
+      hapticFeedback.medium();
+    }
+  };
+
+  // Share invitation link (Web Share API)
+  const shareInvitationLink = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join me as a Workout Buddy!',
+          text: `Hey! Join me as a workout buddy on Fitness Command Center. Let's motivate each other to reach our fitness goals! 💪`,
+          url: invitationLink
+        });
+        hapticFeedback.light();
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.log('Error sharing:', err);
+          copyInvitationLink(); // Fallback to copy
+        }
+      }
+    } else {
+      copyInvitationLink(); // Fallback to copy
+    }
+  };
+
+  // Show toast message helper
+  const showToastMessage = (message, type = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
+  // Copy user ID to clipboard
+  const copyUserId = async () => {
+    try {
+      await navigator.clipboard.writeText(userId);
+      showToastMessage('Your User ID copied to clipboard! 📋', 'success');
+      hapticFeedback.medium();
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = userId;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showToastMessage('User ID copied! 📋', 'success');
+      hapticFeedback.medium();
     }
   };
 
@@ -197,22 +339,34 @@ const BuddySystem = ({ userId = 'default-user' }) => {
           >
             🤝 Workout Buddies
           </h2>
-          <button
-            onClick={() => setShowRequestModal(true)}
-            className="px-4 py-2 rounded transition-colors"
-            style={{
-              backgroundColor: theme.colors.primary,
-              color: theme.colors.background
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = theme.colors.primaryHover;
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = theme.colors.primary;
-            }}
-          >
-            + Add Buddy
-          </button>
+          <div className="flex space-x-2">
+            <MobileButton
+              onClick={generateInvitationLink}
+              variant="secondary"
+              size="medium"
+              className="hidden sm:block"
+            >
+              🔗 Share Link
+            </MobileButton>
+            <button
+              onClick={generateInvitationLink}
+              className="sm:hidden px-3 py-2 rounded-full transition-all duration-200 hover:scale-105"
+              style={{
+                backgroundColor: `${theme.colors.primary}20`,
+                color: theme.colors.primary
+              }}
+            >
+              🔗
+            </button>
+            <MobileButton
+              onClick={() => setShowRequestModal(true)}
+              variant="primary"
+              size="medium"
+            >
+              <span className="hidden sm:inline">+ Add Buddy</span>
+              <span className="sm:hidden">+</span>
+            </MobileButton>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -252,6 +406,57 @@ const BuddySystem = ({ userId = 'default-user' }) => {
         </div>
       </div>
 
+      {/* User ID Display Section */}
+      <div 
+        className="border-b px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 transition-colors duration-200"
+        style={{ 
+          borderColor: theme.colors.border,
+          backgroundColor: theme.mode === 'dark' ? `${theme.colors.primary}10` : undefined
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+              style={{ backgroundColor: theme.colors.primary }}
+            >
+              {userId.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div 
+                className="text-sm font-medium transition-colors duration-200"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                Your User ID:
+              </div>
+              <div 
+                className="font-bold text-lg font-mono transition-colors duration-200"
+                style={{ color: theme.colors.text }}
+              >
+                {userId}
+              </div>
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <MobileButton
+              onClick={copyUserId}
+              variant="secondary"
+              size="small"
+              className="text-xs"
+            >
+              <span className="hidden sm:inline">📋 Copy ID</span>
+              <span className="sm:hidden">📋</span>
+            </MobileButton>
+          </div>
+        </div>
+        <div 
+          className="mt-3 text-xs text-center opacity-75 transition-colors duration-200"
+          style={{ color: theme.colors.textSecondary }}
+        >
+          💡 Share this ID with friends so they can add you manually using the "Add Buddy" button
+        </div>
+      </div>
+
       {/* Content */}
       <div className="p-6">
         {error && (
@@ -270,19 +475,78 @@ const BuddySystem = ({ userId = 'default-user' }) => {
         {activeTab === 'connections' && (
           <div className="space-y-4">
             {connections.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">👥</div>
-                <div 
-                  className="text-lg font-medium mb-2 transition-colors duration-200"
-                  style={{ color: theme.colors.text }}
-                >
-                  No workout buddies yet
+              <div className="text-center py-8 space-y-6">
+                <div>
+                  <div className="text-4xl mb-4">👥</div>
+                  <div 
+                    className="text-lg font-medium mb-2 transition-colors duration-200"
+                    style={{ color: theme.colors.text }}
+                  >
+                    No workout buddies yet
+                  </div>
+                  <div 
+                    className="text-sm transition-colors duration-200"
+                    style={{ color: theme.colors.textSecondary }}
+                  >
+                    Connect with friends to share goals and motivation!
+                  </div>
                 </div>
-                <div 
-                  className="text-sm transition-colors duration-200"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  Connect with friends to share goals and motivation!
+                
+                {/* Connection options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
+                  <div 
+                    className="p-4 rounded-xl border-2 border-dashed transition-colors duration-200"
+                    style={{ borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}05` }}
+                  >
+                    <div className="text-2xl mb-2">🔗</div>
+                    <div 
+                      className="font-semibold text-sm mb-1 transition-colors duration-200"
+                      style={{ color: theme.colors.text }}
+                    >
+                      Share Link
+                    </div>
+                    <div 
+                      className="text-xs transition-colors duration-200"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      Send a link that automatically adds you as buddies
+                    </div>
+                    <MobileButton
+                      onClick={generateInvitationLink}
+                      variant="primary"
+                      size="small"
+                      className="mt-3 w-full text-xs"
+                    >
+                      Generate Link
+                    </MobileButton>
+                  </div>
+                  
+                  <div 
+                    className="p-4 rounded-xl border-2 border-dashed transition-colors duration-200"
+                    style={{ borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}05` }}
+                  >
+                    <div className="text-2xl mb-2">🆔</div>
+                    <div 
+                      className="font-semibold text-sm mb-1 transition-colors duration-200"
+                      style={{ color: theme.colors.text }}
+                    >
+                      Manual Add
+                    </div>
+                    <div 
+                      className="text-xs transition-colors duration-200"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      Enter your friend's User ID to send a request
+                    </div>
+                    <MobileButton
+                      onClick={() => setShowRequestModal(true)}
+                      variant="secondary"
+                      size="small"
+                      className="mt-3 w-full text-xs"
+                    >
+                      Add by ID
+                    </MobileButton>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -559,31 +823,43 @@ const BuddySystem = ({ userId = 'default-user' }) => {
             style={{ backgroundColor: theme.colors.background }}
           >
             <h3 
-              className="text-lg font-bold mb-4 transition-colors duration-200"
+              className="text-lg font-bold mb-2 transition-colors duration-200"
               style={{ color: theme.colors.text }}
             >
-              Send Buddy Request
+              Add Workout Buddy
             </h3>
+            <p 
+              className="text-sm mb-4 opacity-75 transition-colors duration-200"
+              style={{ color: theme.colors.textSecondary }}
+            >
+              Enter your friend's User ID to send them a buddy request
+            </p>
             <div className="space-y-4">
               <div>
                 <label 
                   className="block text-sm font-medium mb-2 transition-colors duration-200"
                   style={{ color: theme.colors.text }}
                 >
-                  Buddy ID/Username
+                  Friend's User ID
                 </label>
                 <input
                   type="text"
                   value={newRequestUserId}
                   onChange={(e) => setNewRequestUserId(e.target.value)}
-                  className="w-full px-3 py-2 border rounded transition-colors"
+                  className="w-full px-3 py-3 border rounded-lg transition-colors font-mono"
                   style={{
                     borderColor: theme.colors.border,
                     backgroundColor: theme.colors.background,
                     color: theme.colors.text
                   }}
-                  placeholder="Enter their user ID"
+                  placeholder="e.g., default-user"
                 />
+                <div 
+                  className="mt-1 text-xs opacity-60 transition-colors duration-200"
+                  style={{ color: theme.colors.textSecondary }}
+                >
+                  💡 Ask your friend for their User ID from the Buddies section
+                </div>
               </div>
               <div>
                 <label 
@@ -635,6 +911,120 @@ const BuddySystem = ({ userId = 'default-user' }) => {
           </div>
         </div>
       )}
+
+      {/* Invitation Link Modal */}
+      {showInviteLinkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
+            style={{ backgroundColor: theme.colors.background }}
+          >
+            {/* Header */}
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white text-center"
+            >
+              <div className="text-4xl mb-2">🔗</div>
+              <h3 className="text-xl font-bold mb-2">Share Your Buddy Link!</h3>
+              <p className="text-sm opacity-90">
+                Send this link to friends to instantly connect as workout buddies
+              </p>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label 
+                  className="block text-sm font-semibold mb-2 transition-colors duration-200"
+                  style={{ color: theme.colors.text }}
+                >
+                  Your Invitation Link:
+                </label>
+                <div 
+                  className="p-3 rounded-xl border-2 border-dashed break-all text-sm font-mono"
+                  style={{ 
+                    backgroundColor: `${theme.colors.primary}08`,
+                    borderColor: theme.colors.primary,
+                    color: theme.colors.text
+                  }}
+                >
+                  {invitationLink}
+                </div>
+              </div>
+              
+              <div className="text-xs text-center opacity-70" style={{ color: theme.colors.textSecondary }}>
+                ✨ Anyone who clicks this link will automatically be added as your workout buddy!
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                <MobileButton
+                  onClick={shareInvitationLink}
+                  variant="primary"
+                  size="medium"
+                  fullWidth
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                >
+                  📱 Share Link
+                </MobileButton>
+                <MobileButton
+                  onClick={copyInvitationLink}
+                  variant="secondary"
+                  size="medium"
+                  fullWidth
+                >
+                  📋 Copy Link
+                </MobileButton>
+              </div>
+              
+              {/* Popular sharing options */}
+              <div className="border-t pt-4 mt-4" style={{ borderColor: theme.colors.border }}>
+                <p className="text-xs font-semibold mb-3 text-center" style={{ color: theme.colors.textSecondary }}>
+                  Quick Share Options:
+                </p>
+                <div className="flex justify-center space-x-4">
+                  {[
+                    { icon: '💬', label: 'Message', action: () => window.open(`sms:?body=${encodeURIComponent(`Hey! Join me as a workout buddy: ${invitationLink}`)}`) },
+                    { icon: '📧', label: 'Email', action: () => window.open(`mailto:?subject=${encodeURIComponent('Join me as a workout buddy!')}&body=${encodeURIComponent(`Hey! Join me as a workout buddy on Fitness Command Center. Let's motivate each other to reach our fitness goals! 💪\n\n${invitationLink}`)}`) },
+                    { icon: '📋', label: 'Copy', action: copyInvitationLink }
+                  ].map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={option.action}
+                      className="flex flex-col items-center space-y-1 p-2 rounded-xl transition-all duration-200 hover:scale-110 hover:bg-opacity-20"
+                      style={{ backgroundColor: `${theme.colors.primary}10` }}
+                    >
+                      <span className="text-lg">{option.icon}</span>
+                      <span className="text-xs font-medium" style={{ color: theme.colors.textSecondary }}>
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 border-t flex justify-center" style={{ borderColor: theme.colors.border }}>
+              <MobileButton
+                onClick={() => setShowInviteLinkModal(false)}
+                variant="outline"
+                size="medium"
+              >
+                Close
+              </MobileButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Toast Notification */}
+      <MobileToast
+        message={toastMessage}
+        type={toastType}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={3000}
+      />
     </div>
   );
 };
