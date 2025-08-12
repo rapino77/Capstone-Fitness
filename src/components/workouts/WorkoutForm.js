@@ -84,13 +84,9 @@ const WorkoutForm = ({ onSuccess }) => {
   
   // Update completed sets when sets change
   useEffect(() => {
-    console.log('useEffect triggered - watchedSets:', watchedSets);
     if (watchedSets && watchedSets > 0) {
-      const newArray = new Array(parseInt(watchedSets)).fill(0);
-      console.log('Creating new completedSets array:', newArray);
-      setCompletedSets(newArray);
+      setCompletedSets(new Array(parseInt(watchedSets)).fill(0));
     } else {
-      console.log('Setting empty completedSets array');
       setCompletedSets([]);
     }
   }, [watchedSets]);
@@ -109,11 +105,11 @@ const WorkoutForm = ({ onSuccess }) => {
       type="button"
       onClick={() => onClick(setIndex)}
       disabled={!isActive}
-      className={`w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold transition-all border-2 ${
+      className={`w-20 h-20 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl md:text-lg font-bold transition-all border-3 md:border-2 shadow-lg active:scale-95 ${
         isCompleted 
-          ? 'bg-blue-600 text-white border-blue-500 shadow-lg' 
+          ? 'bg-blue-600 text-white border-blue-500 shadow-xl' 
           : isActive 
-            ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' 
+            ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 hover:shadow-xl' 
             : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
       }`}
     >
@@ -122,35 +118,19 @@ const WorkoutForm = ({ onSuccess }) => {
   );
   
   const renderSetCircles = () => {
-    console.log('renderSetCircles called', {
-      watchedSets,
-      completedSets,
-      completedSetsLength: completedSets.length,
-      watchedReps
-    });
-    
     if (!watchedSets || watchedSets <= 0) {
-      console.log('Returning null: no watchedSets');
-      return <div className="text-red-300 text-xs">No watchedSets: {watchedSets}</div>;
+      return null;
     }
     
     if (!completedSets || completedSets.length === 0) {
-      console.log('Returning null: no completedSets');
-      return <div className="text-red-300 text-xs">No completedSets: length={completedSets?.length}</div>;
+      return null;
     }
     
-    console.log('Rendering circles for:', completedSets);
-    
     return (
-      <div className="flex flex-wrap gap-3 justify-center">
-        <div className="text-xs text-green-300 w-full text-center mb-2">
-          Rendering {completedSets.length} circles
-        </div>
+      <div className="flex flex-wrap gap-4 md:gap-3 justify-center">
         {completedSets.map((reps, index) => {
           const isCompleted = reps > 0;
           const isActive = index === 0 || completedSets[index - 1] > 0;
-          
-          console.log(`Circle ${index}:`, { reps, isCompleted, isActive });
           
           return (
             <SetCircle
@@ -1302,15 +1282,15 @@ const WorkoutForm = ({ onSuccess }) => {
         )}
       </div>
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label className="block text-base font-semibold text-white mb-3">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 md:space-y-6">
+        <div className="bg-blue-600 bg-opacity-10 rounded-2xl p-6 md:p-4">
+          <label className="block text-lg md:text-base font-bold text-white mb-4 md:mb-3">
             Exercise
           </label>
           <select
             {...register('exercise', { required: 'Exercise is required' })}
-            className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
-            style={{ minHeight: '52px' }}
+            className="w-full px-6 py-5 md:px-5 md:py-4 text-lg md:text-base border-2 border-gray-300 rounded-2xl md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-lg"
+            style={{ minHeight: '60px' }}
           >
             <option value="">
               {workoutMode === 'program' ? 'Select from program exercises' : 'Select an exercise'}
@@ -1320,7 +1300,7 @@ const WorkoutForm = ({ onSuccess }) => {
             ))}
           </select>
           {errors.exercise && (
-            <p className="mt-1 text-sm text-red-600">{errors.exercise.message}</p>
+            <p className="mt-2 text-base md:text-sm text-red-400 font-medium">{errors.exercise.message}</p>
           )}
         </div>
 
@@ -1855,16 +1835,12 @@ const WorkoutForm = ({ onSuccess }) => {
             
             {selectedExercise && (
               <div>
-                <div className="text-xs text-yellow-300 mb-2">
-                  Debug: About to render circles - completedSets: [{completedSets.join(', ')}], length: {completedSets.length}, watchedSets: {watchedSets}
-                </div>
                 {(() => {
                   // Force initialize completedSets if it's empty but we have watchedSets
                   if (watchedSets > 0 && completedSets.length === 0) {
-                    console.log('Force initializing completedSets array');
                     const forceArray = new Array(parseInt(watchedSets)).fill(0);
                     setCompletedSets(forceArray);
-                    return <div className="text-blue-300 text-xs">Initializing circles...</div>;
+                    return <div className="text-blue-300 text-sm text-center">Initializing circles...</div>;
                   }
                   return renderSetCircles();
                 })()}
@@ -1883,68 +1859,70 @@ const WorkoutForm = ({ onSuccess }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-base font-semibold text-white mb-3">
-              Sets
-            </label>
-            <input
-              type="number"
-              {...register('sets', { 
-                required: 'Sets is required',
-                min: { value: 1, message: 'Minimum 1 set' },
-                max: { value: 100, message: 'Maximum 100 sets' }
-              })}
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
-              style={{ minHeight: '52px' }}
-            />
-            {errors.sets && (
-              <p className="mt-1 text-sm text-red-600">{errors.sets.message}</p>
-            )}
-          </div>
+        <div className="bg-blue-600 bg-opacity-10 rounded-2xl p-6 md:p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
+            <div>
+              <label className="block text-lg md:text-base font-bold text-white mb-4 md:mb-3">
+                Sets
+              </label>
+              <input
+                type="number"
+                {...register('sets', { 
+                  required: 'Sets is required',
+                  min: { value: 1, message: 'Minimum 1 set' },
+                  max: { value: 100, message: 'Maximum 100 sets' }
+                })}
+                className="w-full px-6 py-5 md:px-5 md:py-4 text-lg md:text-base border-2 border-gray-300 rounded-2xl md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-lg text-center font-bold"
+                style={{ minHeight: '60px' }}
+              />
+              {errors.sets && (
+                <p className="mt-2 text-base md:text-sm text-red-400 font-medium">{errors.sets.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-base font-semibold text-white mb-3">
-              Reps
-            </label>
-            <input
-              type="number"
-              {...register('reps', { 
-                required: 'Reps is required',
-                min: { value: 1, message: 'Minimum 1 rep' },
-                max: { value: 1000, message: 'Maximum 1000 reps' }
-              })}
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
-              style={{ minHeight: '52px' }}
-            />
-            {errors.reps && (
-              <p className="mt-1 text-sm text-red-600">{errors.reps.message}</p>
-            )}
-          </div>
+            <div>
+              <label className="block text-lg md:text-base font-bold text-white mb-4 md:mb-3">
+                Reps
+              </label>
+              <input
+                type="number"
+                {...register('reps', { 
+                  required: 'Reps is required',
+                  min: { value: 1, message: 'Minimum 1 rep' },
+                  max: { value: 1000, message: 'Maximum 1000 reps' }
+                })}
+                className="w-full px-6 py-5 md:px-5 md:py-4 text-lg md:text-base border-2 border-gray-300 rounded-2xl md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-lg text-center font-bold"
+                style={{ minHeight: '60px' }}
+              />
+              {errors.reps && (
+                <p className="mt-2 text-base md:text-sm text-red-400 font-medium">{errors.reps.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-base font-semibold text-white mb-3">
-              Weight (lbs)
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              {...register('weight', { 
-                required: 'Weight is required',
-                min: { value: 0, message: 'Weight cannot be negative' },
-                max: { value: 2000, message: 'Maximum 2000 lbs' }
-              })}
-              className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
-              style={{ minHeight: '52px' }}
-            />
-            {errors.weight && (
-              <p className="mt-1 text-sm text-red-600">{errors.weight.message}</p>
-            )}
+            <div>
+              <label className="block text-lg md:text-base font-bold text-white mb-4 md:mb-3">
+                Weight (lbs)
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                {...register('weight', { 
+                  required: 'Weight is required',
+                  min: { value: 0, message: 'Weight cannot be negative' },
+                  max: { value: 2000, message: 'Maximum 2000 lbs' }
+                })}
+                className="w-full px-6 py-5 md:px-5 md:py-4 text-lg md:text-base border-2 border-gray-300 rounded-2xl md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-lg text-center font-bold"
+                style={{ minHeight: '60px' }}
+              />
+              {errors.weight && (
+                <p className="mt-2 text-base md:text-sm text-red-400 font-medium">{errors.weight.message}</p>
+              )}
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-base font-semibold text-white mb-3">
+        <div className="bg-blue-600 bg-opacity-10 rounded-2xl p-6 md:p-4">
+          <label className="block text-lg md:text-base font-bold text-white mb-4 md:mb-3">
             Date
           </label>
           <input
@@ -1953,24 +1931,24 @@ const WorkoutForm = ({ onSuccess }) => {
               required: 'Date is required',
               validate: value => new Date(value) <= new Date() || 'Date cannot be in the future'
             })}
-            className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-sm"
-            style={{ minHeight: '52px' }}
+            className="w-full px-6 py-5 md:px-5 md:py-4 text-lg md:text-base border-2 border-gray-300 rounded-2xl md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-500 text-black bg-white shadow-lg"
+            style={{ minHeight: '60px' }}
           />
           {errors.date && (
-            <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
+            <p className="mt-2 text-base md:text-sm text-red-400 font-medium">{errors.date.message}</p>
           )}
         </div>
 
-        <div>
-          <label className="block text-base font-semibold text-white mb-3">
+        <div className="bg-blue-600 bg-opacity-10 rounded-2xl p-6 md:p-4">
+          <label className="block text-lg md:text-base font-bold text-white mb-4 md:mb-3">
             Notes (optional)
           </label>
           <textarea
             {...register('notes')}
-            rows="3"
-            className="w-full px-5 py-4 text-base border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500 text-black bg-white resize-none shadow-sm"
+            rows="4"
+            className="w-full px-6 py-5 md:px-5 md:py-4 text-lg md:text-base border-2 border-gray-300 rounded-2xl md:rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-500 text-black bg-white resize-none shadow-lg"
             placeholder="Any additional notes about your workout..."
-            style={{ minHeight: '96px' }}
+            style={{ minHeight: '120px' }}
           />
         </div>
 
@@ -1987,10 +1965,10 @@ const WorkoutForm = ({ onSuccess }) => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-5 px-8 rounded-xl text-lg transition-all duration-200 focus:outline-none focus:ring-3 focus:ring-blue-400 focus:ring-offset-2 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          style={{ minHeight: '60px' }}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-6 md:py-5 px-8 rounded-2xl md:rounded-xl text-xl md:text-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:-translate-y-1 active:transform active:scale-95"
+          style={{ minHeight: '70px' }}
         >
-          {isSubmitting ? 'Logging...' : 'Log Workout'}
+          {isSubmitting ? '⏳ Logging...' : '💪 Log Workout'}
         </button>
       </form>
 

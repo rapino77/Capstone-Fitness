@@ -130,24 +130,39 @@ const AppContent = () => {
           borderColor: theme.colors.border
         }}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-6">
-          <div className="flex items-center justify-between">
-            {/* Mobile-first logo - smaller on mobile */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="text-2xl sm:text-4xl icon-hover">⚡</div>
-              <h1 className="text-lg sm:text-2xl lg:text-4xl fitness-title hover-glow cursor-pointer font-bold">
-                <span className="sm:hidden">Fitness</span>
-                <span className="hidden sm:inline">Fitness Command Center</span>
-              </h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          {/* Mobile Layout: Stack vertically on small screens */}
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            
+            {/* Top Row on Mobile: Logo and Settings */}
+            <div className="flex items-center justify-between sm:justify-start">
+              {/* Logo Section */}
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="text-3xl sm:text-4xl icon-hover">⚡</div>
+                <h1 className="text-xl sm:text-2xl lg:text-4xl fitness-title hover-glow cursor-pointer font-bold">
+                  <span className="sm:hidden">FITNESS</span>
+                  <span className="hidden sm:inline">Fitness Command Center</span>
+                </h1>
+              </div>
+              
+              {/* Mobile Settings Icon (visible only on mobile) */}
+              <div className="sm:hidden">
+                <div 
+                  className="text-xs transition-colors duration-200"
+                  style={{ color: theme.colors.textSecondary }}
+                >
+                  ⚙️
+                </div>
+              </div>
             </div>
             
-            {/* Mobile-optimized search and tagline */}
+            {/* Bottom Row on Mobile: Search Bar */}
             <div className="flex items-center space-x-2 sm:space-x-6">
-              <div className="w-full max-w-xs sm:max-w-md">
+              <div className="flex-1 sm:flex-initial sm:w-80 lg:w-96">
                 <SearchBar onNavigate={handleSearchNavigation} />
               </div>
               <div 
-                className="text-xs sm:text-sm transition-colors duration-200 hidden md:block"
+                className="text-xs sm:text-sm transition-colors duration-200 hidden lg:block whitespace-nowrap"
                 style={{ color: theme.colors.textSecondary }}
               >
                 Your complete fitness solution

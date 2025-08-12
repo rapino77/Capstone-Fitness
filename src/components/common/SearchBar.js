@@ -105,19 +105,20 @@ const SearchBar = ({ onNavigate }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search sections, features..."
-          className="search-input w-64 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          className="search-input w-full pl-10 pr-4 py-3 md:py-2 border rounded-xl md:rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-base md:text-sm"
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
             color: '#ffffff !important',
-            WebkitTextFillColor: '#ffffff !important'
+            WebkitTextFillColor: '#ffffff !important',
+            minHeight: '48px'
           }}
           onFocus={() => {
             if (filteredResults.length > 0) setIsOpen(true);
           }}
         />
-        <div className="absolute left-3 top-2.5 text-gray-400">
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute left-3 top-3.5 md:top-2.5 text-gray-400">
+          <svg className="h-5 w-5 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
@@ -125,7 +126,7 @@ const SearchBar = ({ onNavigate }) => {
 
       {isOpen && filteredResults.length > 0 && (
         <div 
-          className="search-dropdown absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+          className="search-dropdown absolute top-full left-0 right-0 mt-2 bg-white border rounded-xl md:rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
@@ -136,7 +137,7 @@ const SearchBar = ({ onNavigate }) => {
             <button
               key={item.id}
               onClick={() => handleSelect(item)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center justify-between"
+              className="w-full px-4 py-4 md:py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center justify-between active:scale-95"
               style={{
                 ':hover': {
                   backgroundColor: `${theme.colors.primary}10`
@@ -150,10 +151,10 @@ const SearchBar = ({ onNavigate }) => {
               }}
             >
               <div className="flex items-center space-x-3">
-                <span className="text-lg">{item.icon}</span>
+                <span className="text-xl md:text-lg">{item.icon}</span>
                 <div>
                   <div 
-                    className="font-medium search-results-title"
+                    className="font-medium search-results-title text-base md:text-sm"
                     style={{ 
                       color: '#ffffff !important',
                       WebkitTextFillColor: '#ffffff !important'
@@ -162,7 +163,7 @@ const SearchBar = ({ onNavigate }) => {
                     {item.name}
                   </div>
                   <div 
-                    className="text-sm search-results-subtitle"
+                    className="text-sm md:text-xs search-results-subtitle"
                     style={{ 
                       color: '#e5e7eb !important',
                       WebkitTextFillColor: '#e5e7eb !important'
@@ -172,7 +173,7 @@ const SearchBar = ({ onNavigate }) => {
                   </div>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(item.type)}`}>
+              <div className={`px-2 py-1 rounded-full text-xs font-medium hidden sm:block ${getTypeColor(item.type)}`}>
                 {getTypeLabel(item.type)}
               </div>
             </button>
@@ -182,14 +183,14 @@ const SearchBar = ({ onNavigate }) => {
 
       {isOpen && query.length > 0 && filteredResults.length === 0 && (
         <div 
-          className="search-dropdown absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 p-4 text-center"
+          className="search-dropdown absolute top-full left-0 right-0 mt-2 bg-white border rounded-xl md:rounded-lg shadow-lg z-50 p-6 md:p-4 text-center"
           style={{
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border
           }}
         >
           <div 
-            className="text-sm search-results-no-results"
+            className="text-base md:text-sm search-results-no-results"
             style={{ 
               color: '#ffffff !important',
               WebkitTextFillColor: '#ffffff !important'
