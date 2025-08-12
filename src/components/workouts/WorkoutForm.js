@@ -84,9 +84,13 @@ const WorkoutForm = ({ onSuccess }) => {
   
   // Update completed sets when sets change
   useEffect(() => {
+    console.log('useEffect triggered - watchedSets:', watchedSets);
     if (watchedSets && watchedSets > 0) {
-      setCompletedSets(new Array(parseInt(watchedSets)).fill(0));
+      const newArray = new Array(parseInt(watchedSets)).fill(0);
+      console.log('Creating new completedSets array:', newArray);
+      setCompletedSets(newArray);
     } else {
+      console.log('Setting empty completedSets array');
       setCompletedSets([]);
     }
   }, [watchedSets]);
@@ -118,19 +122,35 @@ const WorkoutForm = ({ onSuccess }) => {
   );
   
   const renderSetCircles = () => {
+    console.log('renderSetCircles called', {
+      watchedSets,
+      completedSets,
+      completedSetsLength: completedSets.length,
+      watchedReps
+    });
+    
     if (!watchedSets || watchedSets <= 0) {
-      return null;
+      console.log('Returning null: no watchedSets');
+      return <div className="text-red-300 text-xs">No watchedSets: {watchedSets}</div>;
     }
     
     if (!completedSets || completedSets.length === 0) {
-      return null;
+      console.log('Returning null: no completedSets');
+      return <div className="text-red-300 text-xs">No completedSets: length={completedSets?.length}</div>;
     }
+    
+    console.log('Rendering circles for:', completedSets);
     
     return (
       <div className="flex flex-wrap gap-3 justify-center">
+        <div className="text-xs text-green-300 w-full text-center mb-2">
+          Rendering {completedSets.length} circles
+        </div>
         {completedSets.map((reps, index) => {
           const isCompleted = reps > 0;
           const isActive = index === 0 || completedSets[index - 1] > 0;
+          
+          console.log(`Circle ${index}:`, { reps, isCompleted, isActive });
           
           return (
             <SetCircle
@@ -1833,7 +1853,19 @@ const WorkoutForm = ({ onSuccess }) => {
               )}
             </div>
             
-            {selectedExercise && renderSetCircles()}
+            {selectedExercise && (
+              <div>
+                <div className="text-xs text-yellow-300 mb-2">
+                  Debug: About to render circles - completedSets: [{completedSets.join(', ')}], length: {completedSets.length}
+                </div>
+                {renderSetCircles()}
+                {!renderSetCircles() && (
+                  <div className="text-xs text-red-300">
+                    renderSetCircles() returned null
+                  </div>
+                )}
+              </div>
+            )}
             
             {selectedExercise && getCompletedSetsCount() > 0 && (
               <div className="mt-4 text-center">
@@ -1906,30 +1938,6 @@ const WorkoutForm = ({ onSuccess }) => {
             )}
           </div>
         </div>
-
-        {/* Set Tracking Circles */}
-        {selectedExercise && watchedSets > 0 && (
-          <div className="bg-blue-600 bg-opacity-20 rounded-xl p-6">
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-white mb-2">Track Your Sets</h3>
-              <p className="text-sm text-blue-100">
-                Tap circles to mark sets complete • {getCompletedSetsCount()}/{watchedSets} sets completed
-              </p>
-            </div>
-            
-            {renderSetCircles()}
-            
-            {getCompletedSetsCount() > 0 && (
-              <div className="mt-4 text-center">
-                <div className="inline-flex items-center px-4 py-2 bg-blue-600 bg-opacity-40 rounded-lg">
-                  <span className="text-sm text-blue-100">
-                    {selectedExercise}: {getCompletedSetsCount()} × {watchedReps} @ {watchedWeight}lbs
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         <div>
           <label className="block text-base font-semibold text-white mb-3">
