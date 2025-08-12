@@ -9,6 +9,7 @@ import { useCelebration } from '../../context/CelebrationContext';
 import DeloadPrompt from './DeloadPrompt';
 import PeriodizationPanel from '../rotation/PeriodizationPanel';
 import WorkoutTimer from '../timer/WorkoutTimer';
+import { workoutTemplates } from '../../utils/workoutTemplates';
 import { 
   getNextStrongLiftsWorkout, 
   getStrongLiftsWorkoutSuggestion,
@@ -40,6 +41,13 @@ const WorkoutForm = ({ onSuccess }) => {
   
   // Circle-based set tracking
   const [completedSets, setCompletedSets] = useState([]);
+  
+  // Template functionality
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [selectedTemplateWorkout, setSelectedTemplateWorkout] = useState('');
+  const [currentTemplateIndex, setCurrentTemplateIndex] = useState(0);
+  const [activeTemplate, setActiveTemplate] = useState(null);
   const { celebratePR } = useCelebration();
   
   // Workout Plan State
@@ -722,6 +730,31 @@ const WorkoutForm = ({ onSuccess }) => {
         setProgressionSuggestion(null);
         setWorkoutTimerData(null); // Clear timer data
         setCompletedSets([]); // Clear set circles
+        
+        // Check if we're in a template workout and should load next exercise
+        if (activeTemplate && currentTemplateIndex < activeTemplate.exercises.length - 1) {
+          const nextIndex = currentTemplateIndex + 1;
+          const nextExercise = activeTemplate.exercises[nextIndex];
+          
+          setTimeout(() => {
+            setCurrentTemplateIndex(nextIndex);
+            setValue('exercise', nextExercise.name);
+            setValue('sets', nextExercise.sets);
+            setValue('reps', nextExercise.reps.toString().split('-')[0] || '10');
+            setValue('weight', 0);
+          }, 1500);
+        } else if (activeTemplate) {
+          // Template completed
+          setActiveTemplate(null);
+          setCurrentTemplateIndex(0);
+          setTimeout(() => {
+            setSubmitMessage({ 
+              type: 'success', 
+              text: `🎉 Template workout "${activeTemplate.name}" completed! All ${activeTemplate.exercises.length} exercises logged.` 
+            });
+          }, 1500);
+        }
+        
         if (onSuccess) onSuccess(response.data);
         
         // Re-select the exercise and refresh suggestion for next workout
@@ -1263,6 +1296,123 @@ const WorkoutForm = ({ onSuccess }) => {
           )}
         </div>
 
+        {/* Template Selection */}
+        {selectedExercise === '' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-green-900">Use Workout Template</h3>
+              <button
+                type="button"
+                onClick={() => setShowTemplates(!showTemplates)}
+                className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+              >
+                {showTemplates ? 'Hide Templates' : 'Browse Templates'}
+              </button>
+            </div>
+            
+            {showTemplates && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-green-700 mb-1">Select Template</label>
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => {
+                      setSelectedTemplate(e.target.value);
+                      setSelectedTemplateWorkout('');
+                    }}
+                    className="w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  >
+                    <option value="">Choose a workout template...</option>
+                    {Object.entries(workoutTemplates).map(([key, template]) => (
+                      <option key={key} value={key}>{template.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {selectedTemplate && (
+                  <div>
+                    <label className="block text-xs font-medium text-green-700 mb-1">Select Workout</label>
+                    <select
+                      value={selectedTemplateWorkout}
+                      onChange={(e) => setSelectedTemplateWorkout(e.target.value)}
+                      className="w-full px-3 py-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    >
+                      <option value="">Choose a workout...</option>
+                      {Object.entries(workoutTemplates[selectedTemplate]?.templates || {}).map(([key, workout]) => (
+                        <option key={key} value={key}>{workout.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
+                {selectedTemplate && selectedTemplateWorkout && (
+                  <div className="bg-white rounded-lg p-3 border border-green-200">
+                    <h4 className="font-medium text-green-800 mb-2">
+                      {workoutTemplates[selectedTemplate].templates[selectedTemplateWorkout].name}
+                    </h4>
+                    <p className="text-xs text-green-700 mb-3">
+                      {workoutTemplates[selectedTemplate].templates[selectedTemplateWorkout].description}
+                    </p>
+                    <div className="space-y-2">
+                      {workoutTemplates[selectedTemplate].templates[selectedTemplateWorkout].exercises.map((exercise, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setValue('exercise', exercise.name);
+                            setValue('sets', exercise.sets);
+                            setValue('reps', exercise.reps.toString().split('-')[0] || '10');
+                            setValue('weight', 0);
+                            setShowTemplates(false);
+                            setSelectedTemplate('');
+                            setSelectedTemplateWorkout('');
+                          }}
+                          className="w-full text-left px-3 py-2 bg-green-100 hover:bg-green-200 rounded-md transition-colors text-sm"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-green-800">{exercise.name}</span>
+                            <span className="text-xs text-green-600">
+                              {exercise.sets} × {exercise.reps} • {exercise.priority}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const workout = workoutTemplates[selectedTemplate].templates[selectedTemplateWorkout];
+                          const exercises = workout.exercises;
+                          if (exercises.length > 0) {
+                            const firstExercise = exercises[0];
+                            setActiveTemplate(workout);
+                            setCurrentTemplateIndex(0);
+                            setValue('exercise', firstExercise.name);
+                            setValue('sets', firstExercise.sets);
+                            setValue('reps', firstExercise.reps.toString().split('-')[0] || '10');
+                            setValue('weight', 0);
+                            setShowTemplates(false);
+                            setSelectedTemplate('');
+                            setSelectedTemplateWorkout('');
+                            setSubmitMessage({ 
+                              type: 'success', 
+                              text: `Started ${workout.name} template! Exercise 1 of ${exercises.length} loaded.` 
+                            });
+                          }
+                        }}
+                        className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+                      >
+                        Start Template Workout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Last Workout Info */}
         {lastWorkout && selectedExercise && selectedExercise !== 'Other' && (
           <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-2">
@@ -1622,6 +1772,41 @@ const WorkoutForm = ({ onSuccess }) => {
               </div>
             )}
           </>
+        )}
+
+        {/* Template Progress Indicator */}
+        {activeTemplate && (
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">{activeTemplate.name}</h3>
+                <p className="text-sm text-green-100">
+                  Exercise {currentTemplateIndex + 1} of {activeTemplate.exercises.length}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">
+                  {Math.round(((currentTemplateIndex + 1) / activeTemplate.exercises.length) * 100)}%
+                </div>
+                <div className="text-xs text-green-100">Complete</div>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mt-3 h-2 bg-white bg-opacity-20 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-white transition-all duration-500"
+                style={{ width: `${((currentTemplateIndex + 1) / activeTemplate.exercises.length) * 100}%` }}
+              />
+            </div>
+            
+            {/* Upcoming Exercises */}
+            {currentTemplateIndex < activeTemplate.exercises.length - 1 && (
+              <div className="mt-3 text-xs text-green-100">
+                Next: {activeTemplate.exercises[currentTemplateIndex + 1]?.name}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Set Tracking Circles */}
