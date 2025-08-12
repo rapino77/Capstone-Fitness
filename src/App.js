@@ -1,25 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { CelebrationProvider } from './context/CelebrationContext';
-import WorkoutDashboard from './components/workouts/WorkoutDashboard';
-import WorkoutHistory from './components/workouts/WorkoutHistory';
-import TrackingDashboard from './components/tracking/TrackingDashboard';
-import BadgeDisplay from './components/badges/BadgeDisplay';
-import GoalCreator from './components/goals/GoalCreator';
-import GoalTracker from './components/goals/GoalTracker';
-import GoalProgressChart from './components/goals/GoalProgressChart';
-import GoalPredictions from './components/goals/GoalPredictions';
-import ProgressPhotos from './components/photos/ProgressPhotos';
-import Dashboard from './components/dashboard/Dashboard';
-import ChallengeSystem from './components/challenges/ChallengeSystem';
-import BuddySystem from './components/social/BuddySystem';
+import LoadingAnimation from './components/common/LoadingAnimation';
 import ThemeSettings from './components/common/ThemeSettings';
 import SearchBar from './components/common/SearchBar';
 import EntranceAnimation from './components/common/EntranceAnimation';
 import SwipeIndicator from './components/common/SwipeIndicator';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import useSwipeNavigation from './hooks/useSwipeNavigation';
 import './styles/theme.css';
 import './styles/animations.css';
+
+// Lazy load heavy components for better performance
+const WorkoutDashboard = lazy(() => import('./components/workouts/WorkoutDashboard'));
+const WorkoutHistory = lazy(() => import('./components/workouts/WorkoutHistory'));
+const TrackingDashboard = lazy(() => import('./components/tracking/TrackingDashboard'));
+const BadgeDisplay = lazy(() => import('./components/badges/BadgeDisplay'));
+const GoalCreator = lazy(() => import('./components/goals/GoalCreator'));
+const GoalTracker = lazy(() => import('./components/goals/GoalTracker'));
+const GoalProgressChart = lazy(() => import('./components/goals/GoalProgressChart'));
+const GoalPredictions = lazy(() => import('./components/goals/GoalPredictions'));
+const ProgressPhotos = lazy(() => import('./components/photos/ProgressPhotos'));
+const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
+const ChallengeSystem = lazy(() => import('./components/challenges/ChallengeSystem'));
+const BuddySystem = lazy(() => import('./components/social/BuddySystem'));
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -273,98 +277,148 @@ const AppContent = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 z-10 pointer-events-none sm:hidden animate-pulse" />
           )}
             {activeTab === 'dashboard' && (
-              <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
+              <ErrorBoundary componentName="Dashboard">
+                <Suspense fallback={<LoadingAnimation type="fitness" size="large" message="Loading Dashboard..." />}>
+                  <Dashboard refreshTrigger={refreshHistory + refreshGoals} />
+                </Suspense>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'workout' && (
-              <WorkoutDashboard 
-                onSuccess={handleWorkoutSuccess} 
-                initialSection={activeWorkoutSection}
-                onSectionChange={setActiveWorkoutSection}
-              />
+              <ErrorBoundary componentName="Workout Dashboard">
+                <Suspense fallback={<LoadingAnimation type="fitness" size="large" message="Loading Workout..." />}>
+                  <WorkoutDashboard 
+                    onSuccess={handleWorkoutSuccess} 
+                    initialSection={activeWorkoutSection}
+                    onSectionChange={setActiveWorkoutSection}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'tracking' && (
-              <TrackingDashboard 
-                initialSection={activeTrackingSection}
-                onSectionChange={setActiveTrackingSection}
-                onWeightSuccess={handleWeightSuccess}
-              />
+              <ErrorBoundary componentName="Tracking Dashboard">
+                <Suspense fallback={<LoadingAnimation type="bars" size="large" message="Loading Analytics..." />}>
+                  <TrackingDashboard 
+                    initialSection={activeTrackingSection}
+                    onSectionChange={setActiveTrackingSection}
+                    onWeightSuccess={handleWeightSuccess}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'badges' && (
-              <BadgeDisplay />
+              <ErrorBoundary componentName="Badge Display">
+                <Suspense fallback={<LoadingAnimation type="dots" size="large" message="Loading Badges..." />}>
+                  <BadgeDisplay />
+                </Suspense>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'challenges' && (
-              <ChallengeSystem key={refreshChallenges} />
+              <ErrorBoundary componentName="Challenge System">
+                <Suspense fallback={<LoadingAnimation type="fitness" size="large" message="Loading Challenges..." />}>
+                  <ChallengeSystem key={refreshChallenges} />
+                </Suspense>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'buddies' && (
-              <BuddySystem userId="default-user" />
+              <ErrorBoundary componentName="Buddy System">
+                <Suspense fallback={<LoadingAnimation type="pulse" size="large" message="Loading Buddies..." />}>
+                  <BuddySystem userId="default-user" />
+                </Suspense>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'goals' && (
-              <div className="space-y-6">
-                {!showGoalCreator ? (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <h2 
-                        className="text-2xl font-bold transition-colors duration-200"
-                        style={{ color: theme.colors.text }}
-                      >
-                        Goals Management
-                      </h2>
-                      <button
-                        onClick={() => setShowGoalCreator(true)}
-                        className="px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                        style={{
-                          backgroundColor: theme.colors.primary,
-                          color: theme.colors.background,
-                          ':hover': {
-                            backgroundColor: theme.colors.primaryHover
-                          }
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = theme.colors.primaryHover;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = theme.colors.primary;
-                        }}
-                      >
-                        + Create New Goal
-                      </button>
-                    </div>
-                    <GoalTracker 
-                      onUpdateGoal={handleGoalUpdated}
-                      refreshTrigger={refreshGoals}
-                      onGoalsLoaded={setGoalsData}
-                    />
-                    <GoalPredictions goals={goalsData} refreshTrigger={refreshGoals} />
-                    <GoalProgressChart goals={goalsData} />
-                    
-                    {/* Progress Photos Section */}
-                    <div className="mt-6">
-                      <h2 
-                        className="text-2xl font-bold mb-4 transition-colors duration-200"
-                        style={{ color: theme.colors.text }}
-                      >
-                        Progress Photos
-                      </h2>
-                      <ProgressPhotos />
-                    </div>
-                  </>
-                ) : (
-                  <GoalCreator 
-                    onGoalCreated={handleGoalCreated}
-                    onCancel={() => setShowGoalCreator(false)}
-                  />
-                )}
-              </div>
+              <ErrorBoundary componentName="Goals Section">
+                <div className="space-y-6">
+                  {!showGoalCreator ? (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <h2 
+                          className="text-2xl font-bold transition-colors duration-200"
+                          style={{ color: theme.colors.text }}
+                        >
+                          Goals Management
+                        </h2>
+                        <button
+                          onClick={() => setShowGoalCreator(true)}
+                          className="px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                          style={{
+                            backgroundColor: theme.colors.primary,
+                            color: theme.colors.background,
+                            ':hover': {
+                              backgroundColor: theme.colors.primaryHover
+                            }
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = theme.colors.primaryHover;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = theme.colors.primary;
+                          }}
+                        >
+                          + Create New Goal
+                        </button>
+                      </div>
+                      <ErrorBoundary componentName="Goal Tracker">
+                        <Suspense fallback={<LoadingAnimation type="dots" size="medium" message="Loading Goals..." />}>
+                          <GoalTracker 
+                            onUpdateGoal={handleGoalUpdated}
+                            refreshTrigger={refreshGoals}
+                            onGoalsLoaded={setGoalsData}
+                          />
+                        </Suspense>
+                      </ErrorBoundary>
+                      <ErrorBoundary componentName="Goal Predictions">
+                        <Suspense fallback={<LoadingAnimation type="bars" size="medium" message="Calculating Predictions..." />}>
+                          <GoalPredictions goals={goalsData} refreshTrigger={refreshGoals} />
+                        </Suspense>
+                      </ErrorBoundary>
+                      <ErrorBoundary componentName="Goal Progress Chart">
+                        <Suspense fallback={<LoadingAnimation type="pulse" size="medium" message="Loading Chart..." />}>
+                          <GoalProgressChart goals={goalsData} />
+                        </Suspense>
+                      </ErrorBoundary>
+                      
+                      {/* Progress Photos Section */}
+                      <div className="mt-6">
+                        <h2 
+                          className="text-2xl font-bold mb-4 transition-colors duration-200"
+                          style={{ color: theme.colors.text }}
+                        >
+                          Progress Photos
+                        </h2>
+                        <ErrorBoundary componentName="Progress Photos">
+                          <Suspense fallback={<LoadingAnimation type="fitness" size="medium" message="Loading Photos..." />}>
+                            <ProgressPhotos />
+                          </Suspense>
+                        </ErrorBoundary>
+                      </div>
+                    </>
+                  ) : (
+                    <ErrorBoundary componentName="Goal Creator">
+                      <Suspense fallback={<LoadingAnimation type="fitness" size="large" message="Loading Goal Creator..." />}>
+                        <GoalCreator 
+                          onGoalCreated={handleGoalCreated}
+                          onCancel={() => setShowGoalCreator(false)}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
+                  )}
+                </div>
+              </ErrorBoundary>
             )}
             
             {activeTab === 'history' && (
-              <WorkoutHistory key={refreshHistory} />
+              <ErrorBoundary componentName="Workout History">
+                <Suspense fallback={<LoadingAnimation type="fitness" size="large" message="Loading History..." />}>
+                  <WorkoutHistory key={refreshHistory} />
+                </Suspense>
+              </ErrorBoundary>
             )}
         </div>
         

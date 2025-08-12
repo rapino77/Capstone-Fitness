@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { format, subDays } from 'date-fns';
 import axios from 'axios';
 
@@ -126,42 +126,50 @@ const WorkoutHistory = () => {
     }, {});
   };
 
-  // Apply client-side filtering
-  const filteredWorkouts = workouts.filter(workout => {
-    // Filter by exercise name
-    if (filters.exercise && !workout.exercise.toLowerCase().includes(filters.exercise.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by date range
-    const workoutDate = new Date(workout.date);
-    const startDate = new Date(filters.startDate);
-    const endDate = new Date(filters.endDate);
-    
-    if (workoutDate < startDate || workoutDate > endDate) {
-      return false;
-    }
-    
-    return true;
-  });
+  // Memoized filtering and sorting for performance
+  const { sortedWorkouts, groupedWorkouts } = useMemo(() => {
+    // Apply client-side filtering
+    const filtered = workouts.filter(workout => {
+      // Filter by exercise name
+      if (filters.exercise && !workout.exercise.toLowerCase().includes(filters.exercise.toLowerCase())) {
+        return false;
+      }
+      
+      // Filter by date range
+      const workoutDate = new Date(workout.date);
+      const startDate = new Date(filters.startDate);
+      const endDate = new Date(filters.endDate);
+      
+      if (workoutDate < startDate || workoutDate > endDate) {
+        return false;
+      }
+      
+      return true;
+    });
 
-  // Sort workouts
-  const sortedWorkouts = [...filteredWorkouts].sort((a, b) => {
-    const direction = filters.sortDirection === 'asc' ? 1 : -1;
-    
-    switch (filters.sortBy) {
-      case 'Date':
-        return direction * (new Date(b.date) - new Date(a.date));
-      case 'Exercise':
-        return direction * a.exercise.localeCompare(b.exercise);
-      case 'Weight':
-        return direction * (b.weight - a.weight);
-      default:
-        return 0;
-    }
-  });
+    // Sort workouts
+    const sorted = [...filtered].sort((a, b) => {
+      const direction = filters.sortDirection === 'asc' ? 1 : -1;
+      
+      switch (filters.sortBy) {
+        case 'Date':
+          return direction * (new Date(b.date) - new Date(a.date));
+        case 'Exercise':
+          return direction * a.exercise.localeCompare(b.exercise);
+        case 'Weight':
+          return direction * (b.weight - a.weight);
+        default:
+          return 0;
+      }
+    });
 
-  const groupedWorkouts = groupWorkoutsByDate(sortedWorkouts);
+    const grouped = groupWorkoutsByDate(sorted);
+
+    return {
+      sortedWorkouts: sorted,
+      groupedWorkouts: grouped
+    };
+  }, [workouts, filters]);
 
   return (
     <div className="bg-blue-primary rounded-lg shadow-md p-6">
