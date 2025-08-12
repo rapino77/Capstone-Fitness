@@ -113,8 +113,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then(response => {
         return response || fetch(request).then(fetchResponse => {
-          const cache = caches.open(STATIC_CACHE_NAME);
-          cache.then(c => c.put(request, fetchResponse.clone()));
+          if (fetchResponse.ok) {
+            const responseClone = fetchResponse.clone();
+            caches.open(STATIC_CACHE_NAME).then(cache => {
+              cache.put(request, responseClone);
+            });
+          }
           return fetchResponse;
         });
       })
@@ -128,9 +132,9 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then(response => {
         return response || fetch(request).then(fetchResponse => {
           if (fetchResponse.ok) {
-            const cache = caches.open(DYNAMIC_CACHE_NAME);
-            cache.then(c => {
-              c.put(request, fetchResponse.clone());
+            const responseClone = fetchResponse.clone();
+            caches.open(DYNAMIC_CACHE_NAME).then(cache => {
+              cache.put(request, responseClone);
               cleanupCache(DYNAMIC_CACHE_NAME, CACHE_LIMITS[DYNAMIC_CACHE_NAME]);
             });
           }
