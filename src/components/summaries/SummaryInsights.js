@@ -114,7 +114,7 @@ const SummaryInsights = ({ refreshTrigger = 0 }) => {
     <div className="space-y-6">
       {/* Header with Period Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-        <div>
+        <div className="progress-summary-header">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Progress Summary</h2>
           <p className="text-sm text-gray-600">
             {summaryData.dateRange.start} to {summaryData.dateRange.end}

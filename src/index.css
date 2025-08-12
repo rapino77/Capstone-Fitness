@@ -62,3 +62,20 @@ code {
 .strength-chart-scroll::-webkit-scrollbar-thumb:hover {
   background: #6B7280;
 }
+
+/* Force ALL text in completed challenges to be black - NUCLEAR OPTION */
+.completed-challenges-section,
+.completed-challenges-section *,
+.completed-challenges-section h4,
+.completed-challenges-section p,
+.completed-challenges-section span {
+  color: black !important;
+}
+
+/* Force ALL text in progress summary header to be black - NUCLEAR OPTION */
+.progress-summary-header,
+.progress-summary-header *,
+.progress-summary-header h2,
+.progress-summary-header p {
+  color: black !important;
+}

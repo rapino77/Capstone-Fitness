@@ -688,7 +688,7 @@ const ChallengeSystem = ({ onSuccess }) => {
 
       {/* Completed Challenges */}
       {completedChallenges.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-6 completed-challenges-section">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
             <span className="mr-2">🏅</span>
             Completed Challenges ({completedChallenges.length})
