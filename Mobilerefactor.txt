@@ -1,0 +1,5 @@
+- take inspiration from the screenshot, and use circles as set indicators. So for example, if my workout set is squats, benchpress, and dealift. It should understand that those workouts need to be broken out into those circles based on those sets and reps. 
+- lets ensure that this dynamic works for all of the workout exercises. 
+- keep our design fluent, dont break from our current design paradime.
+- ensure we keep the idea of the screenshot, but we dont want to copy it entirely. We dont need a timebar shown in the top left, or other extra icons. The idea is to be minimalist and functional. 
+- this isn't for mobile workouts, this should be applied for all workouts. We dont need a new mobile workouts section

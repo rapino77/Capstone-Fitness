@@ -37,6 +37,9 @@ const WorkoutForm = ({ onSuccess }) => {
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [workoutTimerData, setWorkoutTimerData] = useState(null);
   const timerRef = useRef(null);
+  
+  // Circle-based set tracking
+  const [completedSets, setCompletedSets] = useState([]);
   const { celebratePR } = useCelebration();
   
   // Workout Plan State
@@ -63,8 +66,82 @@ const WorkoutForm = ({ onSuccess }) => {
       weight: 0
     }
   });
-
+  
   const selectedExercise = watch('exercise');
+  
+  // Watch form values for circle updates
+  const watchedSets = watch('sets');
+  const watchedReps = watch('reps');
+  const watchedWeight = watch('weight');
+  
+  // Update completed sets when sets change
+  useEffect(() => {
+    if (watchedSets && watchedSets > 0) {
+      setCompletedSets(new Array(parseInt(watchedSets)).fill(0));
+    }
+  }, [watchedSets]);
+  
+  // Circle interaction handlers
+  const handleSetComplete = (setIndex) => {
+    setCompletedSets(prev => {
+      const newSets = [...prev];
+      newSets[setIndex] = newSets[setIndex] === parseInt(watchedReps) ? 0 : parseInt(watchedReps);
+      return newSets;
+    });
+  };
+  
+  const SetCircle = ({ setIndex, reps, targetReps, isCompleted, isActive, onClick }) => (
+    <button
+      type="button"
+      onClick={() => onClick(setIndex)}
+      disabled={!isActive}
+      className={`w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold transition-all border-2 ${
+        isCompleted 
+          ? 'bg-blue-600 text-white border-blue-500 shadow-lg' 
+          : isActive 
+            ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' 
+            : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+      }`}
+    >
+      {reps || targetReps}
+    </button>
+  );
+  
+  const renderSetCircles = () => {
+    if (!watchedSets || watchedSets <= 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-3 justify-center">
+        {completedSets.map((reps, index) => {
+          const isCompleted = reps > 0;
+          const isActive = index === 0 || completedSets[index - 1] > 0;
+          
+          return (
+            <SetCircle
+              key={index}
+              setIndex={index}
+              reps={reps}
+              targetReps={parseInt(watchedReps) || 0}
+              isCompleted={isCompleted}
+              isActive={isActive}
+              onClick={handleSetComplete}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+  
+  const getCompletedSetsCount = () => {
+    return completedSets.filter(reps => reps > 0).length;
+  };
+  
+  // Reset circles when exercise changes
+  useEffect(() => {
+    setCompletedSets([]);
+  }, [selectedExercise]);
+  
+  // Form handling already declared above
 
   const commonExercises = [
     'Bench Press',
@@ -532,14 +609,17 @@ const WorkoutForm = ({ onSuccess }) => {
         }
       }
       
-      // Include progression tracking info, timer data, and userId
+      // Include progression tracking info, timer data, circle data, and userId
+      const completedSetsActual = getCompletedSetsCount();
       const submissionData = {
         ...data,
+        sets: completedSetsActual > 0 ? completedSetsActual : data.sets, // Use actual completed sets if any
         userId: 'default-user',  // Add userId to match what the API expects
         progressionApplied: progressionSuggestion?.suggestion && 
           data.sets === progressionSuggestion.suggestion.sets &&
           data.reps === progressionSuggestion.suggestion.reps &&
           data.weight === progressionSuggestion.suggestion.weight,
+        notes: (data.notes || '') + (completedSetsActual > 0 ? `\nCompleted ${completedSetsActual}/${watchedSets} sets using circle tracker` : ''),
         // Include timer data if available (with fallback for basic timing)
         ...(currentTimerData && currentTimerData.totalDuration > 0 && {
           totalDuration: currentTimerData.totalDuration,
@@ -641,6 +721,7 @@ const WorkoutForm = ({ onSuccess }) => {
         reset();
         setProgressionSuggestion(null);
         setWorkoutTimerData(null); // Clear timer data
+        setCompletedSets([]); // Clear set circles
         if (onSuccess) onSuccess(response.data);
         
         // Re-select the exercise and refresh suggestion for next workout
@@ -1602,6 +1683,30 @@ const WorkoutForm = ({ onSuccess }) => {
             )}
           </div>
         </div>
+
+        {/* Set Tracking Circles */}
+        {selectedExercise && watchedSets > 0 && (
+          <div className="bg-blue-600 bg-opacity-20 rounded-xl p-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-white mb-2">Track Your Sets</h3>
+              <p className="text-sm text-blue-100">
+                Tap circles to mark sets complete • {getCompletedSetsCount()}/{watchedSets} sets completed
+              </p>
+            </div>
+            
+            {renderSetCircles()}
+            
+            {getCompletedSetsCount() > 0 && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center px-4 py-2 bg-blue-600 bg-opacity-40 rounded-lg">
+                  <span className="text-sm text-blue-100">
+                    {selectedExercise}: {getCompletedSetsCount()} × {watchedReps} @ {watchedWeight}lbs
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <label className="block text-base font-semibold text-white mb-3">
