@@ -409,52 +409,74 @@ const BuddySystem = ({ userId = 'default-user' }) => {
 
       {/* User ID Display Section */}
       <div 
-        className="border-b px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 transition-colors duration-200"
+        className="border-b px-4 sm:px-6 py-5 transition-colors duration-200 relative overflow-hidden"
         style={{ 
           borderColor: theme.colors.border,
-          backgroundColor: theme.mode === 'dark' ? `${theme.colors.primary}10` : undefined
+          backgroundColor: theme.mode === 'dark' ? `${theme.colors.primary}15` : `${theme.colors.primary}08`
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {userId.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <div 
-                className="text-sm font-medium transition-colors duration-200"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                Your User ID:
-              </div>
-              <div 
-                className="font-bold text-lg font-mono transition-colors duration-200"
-                style={{ color: theme.colors.text }}
-              >
-                {userId}
-              </div>
-            </div>
-          </div>
-          <div className="flex space-x-2">
-            <MobileButton
-              onClick={copyUserId}
-              variant="secondary"
-              size="small"
-              className="text-xs"
-            >
-              <span className="hidden sm:inline">📋 Copy ID</span>
-              <span className="sm:hidden">📋</span>
-            </MobileButton>
-          </div>
-        </div>
+        {/* Subtle pattern background */}
         <div 
-          className="mt-3 text-xs text-center opacity-75 transition-colors duration-200"
-          style={{ color: theme.colors.textSecondary }}
-        >
-          💡 Share this ID with friends so they can add you manually using the "Add Buddy" button
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, ${theme.colors.primary} 2px, transparent 2px), radial-gradient(circle at 75% 75%, ${theme.colors.primary} 1px, transparent 1px)`,
+            backgroundSize: '30px 30px, 20px 20px'
+          }}
+        />
+        
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div 
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg flex-shrink-0"
+                style={{ backgroundColor: theme.colors.primary }}
+              >
+                {userId.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div 
+                  className="text-xs sm:text-sm font-semibold mb-1 transition-colors duration-200"
+                  style={{ color: theme.colors.text }}
+                >
+                  Your User ID:
+                </div>
+                <div 
+                  className="font-bold text-base sm:text-xl font-mono px-2 sm:px-3 py-2 rounded-lg border-2 transition-colors duration-200 shadow-sm break-all"
+                  style={{ 
+                    color: theme.colors.text,
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.primary,
+                    boxShadow: `0 2px 8px ${theme.colors.primary}20`
+                  }}
+                >
+                  {userId}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-center sm:justify-end space-x-2">
+              <MobileButton
+                onClick={copyUserId}
+                variant="primary"
+                size="small"
+                className="text-xs shadow-lg px-4 sm:px-6"
+              >
+                <span className="hidden sm:inline">📋 Copy User ID</span>
+                <span className="sm:hidden">📋 Copy</span>
+              </MobileButton>
+            </div>
+          </div>
+          <div 
+            className="mt-4 text-xs sm:text-sm text-center font-medium p-3 rounded-lg transition-colors duration-200"
+            style={{ 
+              color: theme.colors.text,
+              backgroundColor: theme.colors.background + '90',
+              border: `1px solid ${theme.colors.border}`,
+              backdropFilter: 'blur(8px)'
+            }}
+          >
+            💡 <span className="hidden sm:inline">Share this ID with friends so they can add you manually using the "Add Buddy" button</span>
+            <span className="sm:hidden">Share this ID with friends to add you as their buddy</span>
+          </div>
         </div>
       </div>
 
