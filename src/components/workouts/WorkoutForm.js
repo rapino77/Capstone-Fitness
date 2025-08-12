@@ -1624,6 +1624,30 @@ const WorkoutForm = ({ onSuccess }) => {
           </>
         )}
 
+        {/* Set Tracking Circles */}
+        {selectedExercise && watchedSets > 0 && (
+          <div className="bg-blue-600 bg-opacity-20 rounded-xl p-6 mb-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-white mb-2">Track Your Sets</h3>
+              <p className="text-sm text-blue-100">
+                Tap circles to mark sets complete • {getCompletedSetsCount()}/{watchedSets} sets completed
+              </p>
+            </div>
+            
+            {renderSetCircles()}
+            
+            {getCompletedSetsCount() > 0 && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center px-4 py-2 bg-blue-600 bg-opacity-40 rounded-lg">
+                  <span className="text-sm text-blue-100">
+                    {selectedExercise}: {getCompletedSetsCount()} × {watchedReps} @ {watchedWeight}lbs
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
             <label className="block text-base font-semibold text-white mb-3">
