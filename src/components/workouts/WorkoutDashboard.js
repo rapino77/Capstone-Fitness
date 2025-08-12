@@ -59,7 +59,7 @@ const WorkoutDashboard = ({ onSuccess, initialSection = 'log', onSectionChange }
       case 'log':
         return <WorkoutForm onSuccess={onSuccess} />;
       case 'templates':
-        return <WorkoutTemplates />;
+        return <WorkoutTemplates onSuccess={onSuccess} />;
       case 'scheduler':
         return <RestDayScheduler />;
       case 'summaries':

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { workoutTemplates, getWorkoutSchedule } from '../../utils/workoutTemplates';
+// import TemplateWorkoutExecutor from './TemplateWorkoutExecutor';
 
-const WorkoutTemplates = () => {
+const WorkoutTemplates = ({ onSuccess }) => {
   const [selectedTemplate, setSelectedTemplate] = useState('pushPullLegs');
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [customTemplates, setCustomTemplates] = useState({});
+  const [activeWorkout, setActiveWorkout] = useState(null);
+  const [showWorkoutExecutor, setShowWorkoutExecutor] = useState(false);
 
   // Load custom templates from localStorage on mount
   React.useEffect(() => {
@@ -139,12 +142,23 @@ const WorkoutTemplates = () => {
                 ))}
               </div>
               
-              <button
-                onClick={() => setSelectedWorkout(selectedWorkout === key ? null : key)}
-                className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-              >
-                {selectedWorkout === key ? 'Hide Details' : 'View Exercise Details'}
-              </button>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setSelectedWorkout(selectedWorkout === key ? null : key)}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                >
+                  {selectedWorkout === key ? 'Hide Details' : 'View Details'}
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveWorkout({ templateKey: selectedTemplate, workoutKey: key, workout: workout });
+                    setShowWorkoutExecutor(true);
+                  }}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-semibold"
+                >
+                  🏋️ Start Workout
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -283,6 +297,25 @@ const WorkoutTemplates = () => {
             setShowCreateModal(false);
           }}
         />
+      )}
+      
+      {/* Workout Executor Modal - Temporarily disabled */}
+      {showWorkoutExecutor && activeWorkout && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6">
+            <h3 className="text-xl font-bold mb-4">Start Workout: {activeWorkout.workout.name}</h3>
+            <p className="mb-4">Template workout functionality coming soon!</p>
+            <button
+              onClick={() => {
+                setShowWorkoutExecutor(false);
+                setActiveWorkout(null);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
