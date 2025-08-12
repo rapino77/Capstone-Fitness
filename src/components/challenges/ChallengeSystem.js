@@ -696,7 +696,7 @@ const ChallengeSystem = ({ onSuccess }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {completedChallenges.slice(-6).map((challenge) => (
-              <div key={challenge.id} className="bg-gradient-to-br from-green-100 to-green-200 rounded-lg p-4 border border-green-300">
+              <div key={challenge.id} className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg p-4 border border-blue-300">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">{challenge.icon}</span>
                   <div>
