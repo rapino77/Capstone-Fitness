@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { format } from 'date-fns';
 import axios from 'axios';
-import {
+// Lazy load charts only when needed
+import { 
   LineChart,
   Line,
   XAxis,
