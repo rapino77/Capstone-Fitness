@@ -32,14 +32,16 @@ export const usePerformanceMonitor = (componentName, options = {}) => {
   
   // Track mount time
   useEffect(() => {
+    const currentMountTime = mountTime.current;
+    
     if (enableLogging) {
-      const mountDuration = Date.now() - mountTime.current;
+      const mountDuration = Date.now() - currentMountTime;
       console.log(`[Performance] ${componentName} mounted in ${mountDuration}ms`);
     }
     
     return () => {
       if (enableLogging) {
-        const totalLifetime = Date.now() - mountTime.current;
+        const totalLifetime = Date.now() - currentMountTime;
         console.log(`[Performance] ${componentName} unmounted after ${totalLifetime}ms, ${renderCount.current} renders`);
       }
     };

@@ -61,15 +61,8 @@ const networkFirst = async (request, cacheName, ttl) => {
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(cacheName);
-      const responseWithTimestamp = new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: {
-          ...response.headers,
-          'sw-cache-timestamp': Date.now()
-        }
-      });
-      cache.put(request, responseWithTimestamp.clone());
+      const responseClone = response.clone();
+      cache.put(request, responseClone);
       return response;
     }
   } catch (error) {
@@ -85,8 +78,10 @@ const staleWhileRevalidate = async (request, cacheName, ttl) => {
   
   const fetchPromise = fetch(request).then(response => {
     if (response.ok) {
-      const cache = caches.open(cacheName);
-      cache.then(c => c.put(request, response.clone()));
+      const responseClone = response.clone();
+      caches.open(cacheName).then(cache => {
+        cache.put(request, responseClone);
+      });
     }
     return response;
   }).catch(() => cached);
