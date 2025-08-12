@@ -86,6 +86,8 @@ const WorkoutForm = ({ onSuccess }) => {
   useEffect(() => {
     if (watchedSets && watchedSets > 0) {
       setCompletedSets(new Array(parseInt(watchedSets)).fill(0));
+    } else {
+      setCompletedSets([]);
     }
   }, [watchedSets]);
   
@@ -116,7 +118,13 @@ const WorkoutForm = ({ onSuccess }) => {
   );
   
   const renderSetCircles = () => {
-    if (!watchedSets || watchedSets <= 0) return null;
+    if (!watchedSets || watchedSets <= 0) {
+      return null;
+    }
+    
+    if (!completedSets || completedSets.length === 0) {
+      return null;
+    }
     
     return (
       <div className="flex flex-wrap gap-3 justify-center">
@@ -1810,18 +1818,24 @@ const WorkoutForm = ({ onSuccess }) => {
         )}
 
         {/* Set Tracking Circles */}
-        {selectedExercise && watchedSets > 0 && (
+        {watchedSets > 0 && (
           <div className="bg-blue-600 bg-opacity-20 rounded-xl p-6 mb-6">
             <div className="text-center mb-4">
               <h3 className="text-lg font-semibold text-white mb-2">Track Your Sets</h3>
-              <p className="text-sm text-blue-100">
-                Tap circles to mark sets complete • {getCompletedSetsCount()}/{watchedSets} sets completed
-              </p>
+              {selectedExercise ? (
+                <p className="text-sm text-blue-100">
+                  Tap circles to mark sets complete • {getCompletedSetsCount()}/{watchedSets} sets completed
+                </p>
+              ) : (
+                <p className="text-sm text-yellow-200">
+                  Select an exercise above to start tracking sets
+                </p>
+              )}
             </div>
             
-            {renderSetCircles()}
+            {selectedExercise && renderSetCircles()}
             
-            {getCompletedSetsCount() > 0 && (
+            {selectedExercise && getCompletedSetsCount() > 0 && (
               <div className="mt-4 text-center">
                 <div className="inline-flex items-center px-4 py-2 bg-blue-600 bg-opacity-40 rounded-lg">
                   <span className="text-sm text-blue-100">

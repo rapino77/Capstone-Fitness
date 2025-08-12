@@ -41,7 +41,8 @@
       "Bash(rg:*)",
       "Bash(start /B netlify dev)",
       "Bash(start cmd /c \"netlify dev\")",
-      "Bash(del \"C:\\Users\\socce\\OneDrive\\Documents\\GitHub\\Capstone-Fitness\\src\\components\\templates\\TemplateWorkoutExecutor.js\")"
+      "Bash(del \"C:\\Users\\socce\\OneDrive\\Documents\\GitHub\\Capstone-Fitness\\src\\components\\templates\\TemplateWorkoutExecutor.js\")",
+      "Bash(start /B npm start)"
     ],
     "deny": []
   }
