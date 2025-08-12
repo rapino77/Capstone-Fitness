@@ -23,15 +23,11 @@ const BuddySystem = ({ userId = 'default-user' }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
   
-  // Check for invitation token in URL on component mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteToken = urlParams.get('buddy_invite');
-    const fromUser = urlParams.get('from');
-    
-    if (inviteToken && fromUser) {
-      handleInvitationFromLink(inviteToken, fromUser);
-    }
+  // Show toast message helper
+  const showToastMessage = useCallback((message, type = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
   }, []);
 
   const fetchBuddyData = useCallback(async () => {
@@ -85,9 +81,50 @@ const BuddySystem = ({ userId = 'default-user' }) => {
     }
   }, [userId]);
 
+  // Handle invitation from shared link
+  const handleInvitationFromLink = useCallback(async (inviteToken, fromUser) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/buddy-system`, {
+        action: 'accept-invite-link',
+        inviteToken,
+        fromUser
+      }, {
+        params: { userId }
+      });
+
+      if (response.data.success) {
+        showToastMessage(`You're now buddies with ${fromUser}! 🤝`, 'success');
+        hapticFeedback.success();
+        fetchBuddyData(); // Refresh buddy data
+        
+        // Clean up URL
+        const url = new URL(window.location);
+        url.searchParams.delete('buddy_invite');
+        url.searchParams.delete('from');
+        window.history.replaceState({}, document.title, url);
+      } else {
+        showToastMessage(response.data.error || 'Failed to accept buddy invitation', 'error');
+      }
+    } catch (err) {
+      console.error('Error accepting invitation from link:', err);
+      showToastMessage('Failed to accept buddy invitation', 'error');
+    }
+  }, [userId, hapticFeedback, fetchBuddyData, showToastMessage]);
+
   useEffect(() => {
     fetchBuddyData();
   }, [fetchBuddyData]);
+
+  // Check for invitation token in URL on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('buddy_invite');
+    const fromUser = urlParams.get('from');
+    
+    if (inviteToken && fromUser) {
+      handleInvitationFromLink(inviteToken, fromUser);
+    }
+  }, [handleInvitationFromLink]);
 
   const sendBuddyRequest = async () => {
     if (!newRequestUserId.trim()) return;
@@ -182,35 +219,6 @@ const BuddySystem = ({ userId = 'default-user' }) => {
     }
   };
 
-  // Handle invitation from shared link
-  const handleInvitationFromLink = async (inviteToken, fromUser) => {
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/buddy-system`, {
-        action: 'accept-invite-link',
-        inviteToken,
-        fromUser
-      }, {
-        params: { userId }
-      });
-
-      if (response.data.success) {
-        showToastMessage(`You're now buddies with ${fromUser}! 🤝`, 'success');
-        hapticFeedback.success();
-        fetchBuddyData(); // Refresh buddy data
-        
-        // Clean up URL
-        const url = new URL(window.location);
-        url.searchParams.delete('buddy_invite');
-        url.searchParams.delete('from');
-        window.history.replaceState({}, document.title, url);
-      } else {
-        showToastMessage(response.data.error || 'Failed to accept buddy invitation', 'error');
-      }
-    } catch (err) {
-      console.error('Error accepting invitation from link:', err);
-      showToastMessage('Failed to accept buddy invitation', 'error');
-    }
-  };
 
   // Copy invitation link to clipboard
   const copyInvitationLink = async () => {
@@ -250,13 +258,6 @@ const BuddySystem = ({ userId = 'default-user' }) => {
     } else {
       copyInvitationLink(); // Fallback to copy
     }
-  };
-
-  // Show toast message helper
-  const showToastMessage = (message, type = 'info') => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
   };
 
   // Copy user ID to clipboard

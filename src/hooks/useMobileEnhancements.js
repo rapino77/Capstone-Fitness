@@ -112,14 +112,14 @@ const useMobileEnhancements = () => {
   }, [isLowPowerMode]);
   
   // Enhanced haptic feedback patterns
-  const hapticFeedback = useCallback({
-    light: () => vibrate(10),
-    medium: () => vibrate(50),
-    heavy: () => vibrate(100),
-    success: () => vibrate([50, 50, 50]),
-    error: () => vibrate([100, 100, 100, 100]),
-    notification: () => vibrate([50, 50, 50, 50, 50])
-  }, [vibrate]);
+  const hapticFeedback = {
+    light: useCallback(() => vibrate(10), [vibrate]),
+    medium: useCallback(() => vibrate(50), [vibrate]),
+    heavy: useCallback(() => vibrate(100), [vibrate]),
+    success: useCallback(() => vibrate([50, 50, 50]), [vibrate]),
+    error: useCallback(() => vibrate([100, 100, 100, 100]), [vibrate]),
+    notification: useCallback(() => vibrate([50, 50, 50, 50, 50]), [vibrate])
+  };
   
   return {
     // PWA features
