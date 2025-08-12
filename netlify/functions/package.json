@@ -4,6 +4,7 @@
   "description": "Netlify functions for fitness app",
   "main": "index.js",
   "dependencies": {
-    "airtable": "^0.12.2"
+    "airtable": "^0.12.2",
+    "date-fns": "^2.30.0"
   }
 }
