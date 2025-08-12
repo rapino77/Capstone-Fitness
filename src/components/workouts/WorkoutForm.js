@@ -1856,14 +1856,18 @@ const WorkoutForm = ({ onSuccess }) => {
             {selectedExercise && (
               <div>
                 <div className="text-xs text-yellow-300 mb-2">
-                  Debug: About to render circles - completedSets: [{completedSets.join(', ')}], length: {completedSets.length}
+                  Debug: About to render circles - completedSets: [{completedSets.join(', ')}], length: {completedSets.length}, watchedSets: {watchedSets}
                 </div>
-                {renderSetCircles()}
-                {!renderSetCircles() && (
-                  <div className="text-xs text-red-300">
-                    renderSetCircles() returned null
-                  </div>
-                )}
+                {(() => {
+                  // Force initialize completedSets if it's empty but we have watchedSets
+                  if (watchedSets > 0 && completedSets.length === 0) {
+                    console.log('Force initializing completedSets array');
+                    const forceArray = new Array(parseInt(watchedSets)).fill(0);
+                    setCompletedSets(forceArray);
+                    return <div className="text-blue-300 text-xs">Initializing circles...</div>;
+                  }
+                  return renderSetCircles();
+                })()}
               </div>
             )}
             
