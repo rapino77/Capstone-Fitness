@@ -49,18 +49,6 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
       description: 'All-time PRs and achievements'
     },
     {
-      id: 'volume',
-      name: 'Training Volume',
-      icon: '📈',
-      description: 'Weekly volume analysis'
-    },
-    {
-      id: 'body-composition',
-      name: 'Body Composition',
-      icon: '📊',
-      description: 'Measurements & ratios'
-    },
-    {
       id: 'trend-alerts',
       name: 'Trend Analysis',
       icon: '🔍',
@@ -84,10 +72,6 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
         return <StrengthProgression />;
       case 'performance':
         return <PersonalRecordsSidebar userId="default-user" />;
-      case 'volume':
-        return <ComingSoonPlaceholder title="Training Volume Analysis" />;
-      case 'body-composition':
-        return <ComingSoonPlaceholder title="Body Composition Tracker" />;
       case 'trend-alerts':
         return <TrendAnalysisAlerts userId="default-user" />;
       case 'summary-insights':
@@ -111,47 +95,6 @@ const TrackingDashboard = ({ initialSection = 'weight', onSectionChange, onWeigh
       {/* Main Content */}
       <div className="flex-1 min-w-0">
         {renderActiveSection()}
-      </div>
-    </div>
-  );
-};
-
-const ComingSoonPlaceholder = ({ title }) => {
-  return (
-    <div className="bg-blue-primary rounded-lg shadow-md p-6">
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">🚧</div>
-        <h2 className="text-2xl section-header mb-4">{title}</h2>
-        <p className="text-white text-lg mb-6">This feature is coming soon!</p>
-        <div className="bg-blue-600 rounded-lg p-6 max-w-md mx-auto">
-          <h3 className="text-lg font-semibold text-white mb-3">What to Expect:</h3>
-          <ul className="text-blue-100 text-sm space-y-2 text-left">
-            {title.includes('Volume') && (
-              <>
-                <li>• Weekly and monthly volume tracking</li>
-                <li>• Exercise-specific volume trends</li>
-                <li>• Progressive overload analysis</li>
-                <li>• Recovery and adaptation insights</li>
-              </>
-            )}
-            {title.includes('Performance') && (
-              <>
-                <li>• Personal record tracking</li>
-                <li>• Strength ratio analysis</li>
-                <li>• Performance prediction models</li>
-                <li>• Comparative benchmarking</li>
-              </>
-            )}
-            {title.includes('Composition') && (
-              <>
-                <li>• Body measurements tracking</li>
-                <li>• Body fat percentage estimates</li>
-                <li>• Muscle mass calculations</li>
-                <li>• Progress photos integration</li>
-              </>
-            )}
-          </ul>
-        </div>
       </div>
     </div>
   );
